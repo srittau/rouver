@@ -1,0 +1,2 @@
+asserts==0.6
+werkzeug==0.12.2
