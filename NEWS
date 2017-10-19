@@ -7,6 +7,7 @@ API Additions
 * rouver.args: Add parse_args(), Multiplicity, FileArgument,
   and CGIFileArgument.
 * rouver.exceptions: Add ArgumentsError.
+* rouver.html: Add http_status_page().
 * rouver.status: Add status_line().
 * rouver.response: Add respond_with_html().
 * rouver.types: Add EnvironmentType, HeaderType, StartResponseReturnType,
