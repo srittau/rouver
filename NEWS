@@ -7,4 +7,5 @@ API Additions
 * rouver.args: Add parse_args(), Multiplicity, FileArgument,
   and CGIFileArgument.
 * rouver.exceptions: Add ArgumentsError.
+* rouver.status: Add status_line().
 * rouver.types: Add EnvironmentType.
