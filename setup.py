@@ -17,7 +17,7 @@ setup(
     author="Sebastian Rittau",
     author_email="srittau@rittau.biz",
     url="https://github.com/srittau/rouver",
-    packages=["rouver"],
+    packages=["rouver", "rouver_test"],
     install_requires=["werkzeug >= 0.12.0"],
     tests_require=["asserts"],
     license="MIT",
