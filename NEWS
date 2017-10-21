@@ -10,5 +10,6 @@ API Additions
 * rouver.html: Add http_status_page() and see_other_page().
 * rouver.status: Add status_line().
 * rouver.response: Add respond_with_html() and see_other().
+* rouver.router: Add Router.
 * rouver.types: Add EnvironmentType, HeaderType, StartResponseReturnType,
-  and StartResponseType.
+  StartResponseType, RouterHandler, RouterType, and RouteTemplateHandler.
