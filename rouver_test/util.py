@@ -3,7 +3,7 @@ from io import BytesIO, StringIO
 import re
 from typing import List
 
-from asserts import fail, assert_false, assert_regex, assert_equal, assert_true
+from asserts import assert_false, assert_regex, assert_equal, assert_true
 
 from rouver.types import StartResponseReturnType, HeaderType, EnvironmentType
 
@@ -15,7 +15,7 @@ class StartResponse:
     def __init__(self) -> None:
         self.was_called = False
         self.status = ""
-        self.headers = []
+        self.headers = []  # type: List[HeaderType]
 
     def __call__(self, status: str, headers: List[HeaderType]) \
             -> StartResponseReturnType:
@@ -48,7 +48,7 @@ class StartResponse:
         for (header_name, header_value) in self.headers:
             if header_name.lower() == name.lower():
                 return header_value
-        fail("missing header '{}'".format(name))
+        raise AssertionError("missing header '{}'".format(name))
 
 
 def default_environment() -> EnvironmentType:
