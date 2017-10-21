@@ -1,12 +1,13 @@
 from http import HTTPStatus
-from typing import Iterable
+from typing import Iterable, List
 
 from rouver.status import status_line
-from rouver.types import StartResponseType
+from rouver.types import StartResponseType, HeaderType
 
 
 def respond_with_html(start_response: StartResponseType, html: str, *,
-                      status: HTTPStatus = HTTPStatus.OK) \
+                      status: HTTPStatus = HTTPStatus.OK,
+                      extra_headers: List[HeaderType] = []) \
         -> Iterable[bytes]:
 
     """Prepare an HTML WSGI response.
@@ -19,5 +20,6 @@ def respond_with_html(start_response: StartResponseType, html: str, *,
     """
 
     sl = status_line(status)
-    start_response(sl, [("Content-Type", "text/html; charset=utf-8")])
+    headers = [("Content-Type", "text/html; charset=utf-8")] + extra_headers
+    start_response(sl, headers)
     return [html.encode("utf-8")]

@@ -35,3 +35,10 @@ class RespondWithHTMLTest(TestCase):
         sr = StartResponse()
         response = respond_with_html(sr, "<div>Täst</div>")
         assert_equal("<div>Täst</div>".encode("utf-8"), b"".join(response))
+
+    def test_additional_headers(self) -> None:
+        sr = StartResponse()
+        response = respond_with_html(sr, "<div>Täst</div>", extra_headers=[
+            ("X-Custom-Header", "Foobar"),
+        ])
+        sr.assert_header_equals("X-Custom-Header", "Foobar")
