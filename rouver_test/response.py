@@ -3,9 +3,11 @@ from unittest import TestCase
 
 from asserts import assert_equal
 
-from rouver.response import respond_with_html
+from werkzeug.wrappers import Request
 
-from rouver_test.util import StartResponse
+from rouver.response import respond_with_html, see_other
+
+from rouver_test.util import StartResponse, default_environment
 
 
 class RespondWithHTMLTest(TestCase):
@@ -38,7 +40,37 @@ class RespondWithHTMLTest(TestCase):
 
     def test_additional_headers(self) -> None:
         sr = StartResponse()
-        response = respond_with_html(sr, "<div>Täst</div>", extra_headers=[
+        respond_with_html(sr, "<div>Täst</div>", extra_headers=[
             ("X-Custom-Header", "Foobar"),
         ])
         sr.assert_header_equals("X-Custom-Header", "Foobar")
+
+
+class SeeOtherTest(TestCase):
+
+    def setUp(self) -> None:
+        self.environment = default_environment()
+        self.start_request = StartResponse()
+
+    def test_headers(self) -> None:
+        self.environment["SERVER_NAME"] = "www.example.com"
+        request = Request(self.environment)
+        see_other(request, self.start_request, "/foo/bar")
+        self.start_request.assert_status(HTTPStatus.SEE_OTHER)
+        self.start_request.assert_header_equals(
+            "Content-Type", "text/html; charset=utf-8")
+        self.start_request.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar")
+
+    def test_url_without_leading_slash(self) -> None:
+        self.environment["SERVER_NAME"] = "www.example.com"
+        request = Request(self.environment)
+        see_other(request, self.start_request, "foo/bar")
+        self.start_request.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar")
+
+    def test_html(self) -> None:
+        request = Request(self.environment)
+        response = see_other(request, self.start_request, "foo/bar")
+        html = b"".join(response).decode("utf-8")
+        assert html.startswith("<!DOCTYPE html>")
