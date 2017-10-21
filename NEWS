@@ -3,3 +3,4 @@ News in rouver 0.1.0
 
 * Add EnvironmentType.
 * Add ArgumentsError.
+* Add parse_args(), Multiplicity, FileArgument, and CGIFileArgument.
