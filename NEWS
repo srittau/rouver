@@ -8,5 +8,6 @@ API Additions
   and CGIFileArgument.
 * rouver.exceptions: Add ArgumentsError.
 * rouver.status: Add status_line().
+* rouver.response: Add respond_with_html().
 * rouver.types: Add EnvironmentType, HeaderType, StartResponseReturnType,
   and StartResponseType.
