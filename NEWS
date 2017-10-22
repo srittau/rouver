@@ -1,6 +1,12 @@
 News in rouver 0.3.0
 ====================
 
+API-Incompatible Changes
+------------------------
+
+* rouver.router: Template handlers must now be installed before calling
+  add_routes().
+
 News in rouver 0.2.1
 ====================
 

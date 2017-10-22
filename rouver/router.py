@@ -35,17 +35,15 @@ def _split_path(s: str) -> List[str]:
 class Router:
 
     def __init__(self) -> None:
-        self._routes = []  # type: List[RouteType]
+        self._handlers = []  # type: List[_RouteHandler]
         self._template_handlers = {}  # type: _TemplateHandlerDict
         self.error_handling = True
 
     def __call__(self, environment: EnvironmentType,
                  start_response: StartResponseType) -> Iterable[bytes]:
         request = Request(environment)
-        handlers = [
-            _RouteHandler(r, self._template_handlers) for r in self._routes]
         try:
-            return _dispatch(request, start_response, handlers,
+            return _dispatch(request, start_response, self._handlers,
                              self._template_handlers)
         except Exception:
             if self.error_handling:
@@ -56,7 +54,8 @@ class Router:
                 raise
 
     def add_routes(self, routes: List[RouteType]) -> None:
-        self._routes.extend(routes)
+        self._handlers.extend(
+            [_RouteHandler(r, self._template_handlers) for r in routes])
 
     def add_template_handler(self, name: str, handler: RouteTemplateHandler) \
             -> None:

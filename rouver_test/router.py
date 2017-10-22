@@ -145,11 +145,10 @@ class RouterTest(TestCase):
     # Path Templates
 
     def test_unknown_template(self) -> None:
-        self.router.add_routes([
-            ("foo/{unknown}/bar", "GET", fail_if_called),
-        ])
         with assert_raises(KeyError):
-            self.handle_wsgi("GET", "/foo/xyz/bar")
+            self.router.add_routes([
+                ("foo/{unknown}/bar", "GET", fail_if_called),
+            ])
 
     def test_template(self) -> None:
         def handle(_, path, start_response):
