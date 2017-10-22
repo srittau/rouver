@@ -1,6 +1,12 @@
 News in rouver 0.1.1
 ====================
 
+Improvements
+------------
+
+* rouver.response: Responses now return an iterator so they can be used as
+  return values from __iter__() methods.
+
 News in rouver 0.1.0
 ====================
 

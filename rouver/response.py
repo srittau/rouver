@@ -25,7 +25,7 @@ def respond_with_html(start_response: StartResponseType, html: str, *,
     sl = status_line(status)
     headers = [("Content-Type", "text/html; charset=utf-8")] + extra_headers
     start_response(sl, headers)
-    return [html.encode("utf-8")]
+    return iter([html.encode("utf-8")])
 
 
 def see_other(request: Request, start_response: StartResponseType,

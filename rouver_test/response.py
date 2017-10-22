@@ -1,7 +1,8 @@
 from http import HTTPStatus
 from unittest import TestCase
 
-from asserts import assert_equal
+from asserts import assert_equal, assert_is_instance
+from collections import Iterator
 
 from werkzeug.wrappers import Request
 
@@ -32,6 +33,11 @@ class RespondWithHTMLTest(TestCase):
         sr = StartResponse()
         response = respond_with_html(sr, "<div>Test</div>")
         assert_equal(b"<div>Test</div>", b"".join(response))
+
+    def test_return_value_is_iterator(self) -> None:
+        sr = StartResponse()
+        response = respond_with_html(sr, "<div>Test</div>")
+        assert_is_instance(response, Iterator)
 
     def test_return_value_encoding(self) -> None:
         sr = StartResponse()
@@ -74,3 +80,8 @@ class SeeOtherTest(TestCase):
         response = see_other(request, self.start_request, "foo/bar")
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
+
+    def test_return_value_is_iterator(self) -> None:
+        request = Request(self.environment)
+        response = see_other(request, self.start_request, "foo/bar")
+        assert_is_instance(response, Iterator)
