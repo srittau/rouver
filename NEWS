@@ -1,6 +1,12 @@
 News in rouver 0.2.1
 ====================
 
+Bug Fixes
+---------
+
+* rouver.handler: Derive RouteHandlerBase from Iterable.
+* rouver.response/rouver.handler: Fix return types of response methods.
+
 News in rouver 0.2.0
 ====================
 

@@ -1,5 +1,6 @@
+import collections
 from http import HTTPStatus
-from typing import List, Any, Iterable, Union
+from typing import List, Any, Union, Iterator
 
 from werkzeug.wrappers import Request
 
@@ -9,7 +10,7 @@ from rouver.response import \
 from rouver.types import StartResponseType, HeaderType
 
 
-class RouteHandlerBase:
+class RouteHandlerBase(collections.Iterable):
 
     """Base class for rouver route handlers.
 
@@ -36,7 +37,7 @@ class RouteHandlerBase:
         self.path_args = path_args
         self.start_response = start_response
 
-    def __iter__(self) -> Iterable[bytes]:
+    def __iter__(self) -> Iterator[bytes]:
         raise NotImplementedError()
 
     def parse_args(self, argument_template: List[ArgumentTemplate]) \
@@ -44,13 +45,13 @@ class RouteHandlerBase:
         return parse_args(self.request.environ, argument_template)
 
     def respond(self, extra_headers: List[HeaderType] = []) \
-            -> Iterable[bytes]:
+            -> Iterator[bytes]:
         return respond(self.start_response, extra_headers=extra_headers)
 
     def respond_with_json(
             self, json: Union[str, bytes, Any], *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: List[HeaderType] = []) -> Iterable[bytes]:
+            extra_headers: List[HeaderType] = []) -> Iterator[bytes]:
         return respond_with_json(
             self.start_response, json,
             status=status, extra_headers=extra_headers)
@@ -58,13 +59,13 @@ class RouteHandlerBase:
     def respond_with_html(
             self, html: str, *, status: HTTPStatus = HTTPStatus.OK,
             extra_headers: List[HeaderType] = []) \
-            -> Iterable[bytes]:
+            -> Iterator[bytes]:
         return respond_with_html(
             self.start_response, html,
             status=status, extra_headers=extra_headers)
 
-    def created_at(self, url_part: str) -> Iterable[bytes]:
+    def created_at(self, url_part: str) -> Iterator[bytes]:
         return created_at(self.request, self.start_response, url_part)
 
-    def see_other(self, url_part: str) -> Iterable[bytes]:
+    def see_other(self, url_part: str) -> Iterator[bytes]:
         return see_other(self.request, self.start_response, url_part)

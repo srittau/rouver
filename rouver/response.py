@@ -1,6 +1,6 @@
 from http import HTTPStatus
 from json import dumps as dumps_json
-from typing import Iterable, List, Union, Any
+from typing import List, Union, Any, Iterator
 
 from werkzeug.wrappers import Request
 
@@ -11,7 +11,7 @@ from rouver.types import StartResponseType, HeaderType
 
 def respond(start_response: StartResponseType, *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: List[HeaderType] = []) -> Iterable[bytes]:
+            extra_headers: List[HeaderType] = []) -> Iterator[bytes]:
 
     """Prepare an empty WSGI response.
 
@@ -35,7 +35,7 @@ def respond_with_json(start_response: StartResponseType,
                       json: Union[str, bytes, Any], *,
                       status: HTTPStatus = HTTPStatus.OK,
                       extra_headers: List[HeaderType] = []) \
-        -> Iterable[bytes]:
+        -> Iterator[bytes]:
 
     """Prepare a JSON WSGI response.
 
@@ -65,7 +65,7 @@ def respond_with_json(start_response: StartResponseType,
 def respond_with_html(start_response: StartResponseType, html: str, *,
                       status: HTTPStatus = HTTPStatus.OK,
                       extra_headers: List[HeaderType] = []) \
-        -> Iterable[bytes]:
+        -> Iterator[bytes]:
 
     """Prepare an HTML WSGI response.
 
@@ -83,7 +83,7 @@ def respond_with_html(start_response: StartResponseType, html: str, *,
 
 
 def created_at(request: Request, start_response: StartResponseType,
-               url_part: str) -> Iterable[bytes]:
+               url_part: str) -> Iterator[bytes]:
 
     """Prepare a 201 Created WSGI response with a Location header."""
 
@@ -96,7 +96,7 @@ def created_at(request: Request, start_response: StartResponseType,
 
 
 def see_other(request: Request, start_response: StartResponseType,
-              url_part: str) -> Iterable[bytes]:
+              url_part: str) -> Iterator[bytes]:
     if url_part.startswith("/"):
         url_part = url_part[1:]
     url = request.host_url + url_part
