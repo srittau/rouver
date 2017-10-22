@@ -4,7 +4,7 @@ from typing import Iterable, List, Union, Any
 
 from werkzeug.wrappers import Request
 
-from rouver.html import see_other_page
+from rouver.html import created_at_page, see_other_page
 from rouver.status import status_line
 from rouver.types import StartResponseType, HeaderType
 
@@ -80,6 +80,19 @@ def respond_with_html(start_response: StartResponseType, html: str, *,
     headers = [("Content-Type", "text/html; charset=utf-8")] + extra_headers
     start_response(sl, headers)
     return iter([html.encode("utf-8")])
+
+
+def created_at(request: Request, start_response: StartResponseType,
+               url_part: str) -> Iterable[bytes]:
+
+    """Prepare a 201 Created WSGI response with a Location header."""
+
+    if url_part.startswith("/"):
+        url_part = url_part[1:]
+    url = request.host_url + url_part
+    html = created_at_page(url)
+    return respond_with_html(start_response, html, status=HTTPStatus.CREATED,
+                             extra_headers=[("Location", url)])
 
 
 def see_other(request: Request, start_response: StartResponseType,
