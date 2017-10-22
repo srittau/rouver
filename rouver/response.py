@@ -9,6 +9,28 @@ from rouver.status import status_line
 from rouver.types import StartResponseType, HeaderType
 
 
+def respond(start_response: StartResponseType, *,
+            status: HTTPStatus = HTTPStatus.OK,
+            extra_headers: List[HeaderType] = []) -> Iterable[bytes]:
+
+    """Prepare an empty WSGI response.
+
+    >>> def handler(start_response, request):
+    ...     return respond(start_response, status=HTTPStatus.ACCEPTED)
+
+    The return value can be ignored to return an arbitrary response body.
+
+    >>> def handler(start_response, request):
+    ...     respond(start_response,
+    ...             extra_headers=[("Content-Type", "text/plain")])
+    ...     return [b"My Response"]
+    """
+
+    sl = status_line(status)
+    start_response(sl, extra_headers)
+    return iter([])
+
+
 def respond_with_json(start_response: StartResponseType,
                       json: Union[str, bytes, Any], *,
                       status: HTTPStatus = HTTPStatus.OK,

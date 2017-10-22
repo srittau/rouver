@@ -6,9 +6,40 @@ from collections import Iterator
 
 from werkzeug.wrappers import Request
 
-from rouver.response import respond_with_html, see_other, respond_with_json
+from rouver.response import \
+    respond, respond_with_json, respond_with_html, see_other
 
 from rouver_test.util import StartResponse, default_environment
+
+
+class RespondTest(TestCase):
+
+    def test_default_status(self) -> None:
+        sr = StartResponse()
+        respond(sr)
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_custom_status(self) -> None:
+        sr = StartResponse()
+        respond(sr, status=HTTPStatus.NOT_ACCEPTABLE)
+        sr.assert_status(HTTPStatus.NOT_ACCEPTABLE)
+
+    def test_extra_headers(self) -> None:
+        sr = StartResponse()
+        respond(sr, extra_headers=[
+            ("X-Custom-Header", "Foobar"),
+        ])
+        sr.assert_header_equals("X-Custom-Header", "Foobar")
+
+    def test_response(self) -> None:
+        sr = StartResponse()
+        response = respond(sr)
+        assert_equal(b'', b"".join(response))
+
+    def test_return_value_is_iterator(self) -> None:
+        sr = StartResponse()
+        response = respond(sr)
+        assert_is_instance(response, Iterator)
 
 
 class RespondWithJSONTest(TestCase):
