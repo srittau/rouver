@@ -2,7 +2,7 @@ from enum import Enum
 from http import HTTPStatus
 import logging
 import re
-from typing import Iterable, List, Dict, Any, Tuple, Iterator
+from typing import Iterable, List, Dict, Any, Tuple, Iterator, cast
 
 from werkzeug.exceptions import NotFound, MethodNotAllowed, HTTPException
 from werkzeug.wrappers import Request
@@ -196,7 +196,7 @@ class _RouteMatcher:
 
 def _respond_not_found(request: Request, start_response: StartResponseType) \
         -> Iterable[bytes]:
-    path = request.environ.get("PATH_INFO", "")  # type: str
+    path = cast(str, request.environ.get("PATH_INFO", ""))
     message = "Path '{}' not found.".format(path)
     page = http_status_page(HTTPStatus.NOT_FOUND, message)
     return respond_with_html(
