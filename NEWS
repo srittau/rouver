@@ -4,6 +4,7 @@ News in rouver 0.2.0
 API Additions
 -------------
 
+* rouver.handler: Add RouteHandlerBase.
 * rouver.html: Add created_at_page().
 * rouver.response: Add respond_ok(), respond_with_json(), and created_at().
 
