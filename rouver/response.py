@@ -1,11 +1,43 @@
 from http import HTTPStatus
-from typing import Iterable, List
+from json import dumps as dumps_json
+from typing import Iterable, List, Union, Any
 
 from werkzeug.wrappers import Request
 
 from rouver.html import see_other_page
 from rouver.status import status_line
 from rouver.types import StartResponseType, HeaderType
+
+
+def respond_with_json(start_response: StartResponseType,
+                      json: Union[str, bytes, Any], *,
+                      status: HTTPStatus = HTTPStatus.OK,
+                      extra_headers: List[HeaderType] = []) \
+        -> Iterable[bytes]:
+
+    """Prepare a JSON WSGI response.
+
+    >>> def handler(start_response, request):
+    ...     return respond_with_json(start_response, {"foo": "bar"})
+
+    The JSON text to return can be supplied as a string, as an UTF-8-encoded
+    bytestring, or as any object that can be serialized using json.dumps().
+
+    The default response status of "200 OK" can be overridden with the
+    "status" keyword argument.
+    """
+
+    sl = status_line(status)
+    headers = \
+        [("Content-Type", "application/json; charset=utf-8")] + extra_headers
+    start_response(sl, headers)
+    if isinstance(json, bytes):
+        encoded = json
+    elif isinstance(json, str):
+        encoded = json.encode("utf-8")
+    else:
+        encoded = dumps_json(json).encode("utf-8")
+    return iter([encoded])
 
 
 def respond_with_html(start_response: StartResponseType, html: str, *,

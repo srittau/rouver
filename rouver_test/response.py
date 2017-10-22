@@ -6,9 +6,55 @@ from collections import Iterator
 
 from werkzeug.wrappers import Request
 
-from rouver.response import respond_with_html, see_other
+from rouver.response import respond_with_html, see_other, respond_with_json
 
 from rouver_test.util import StartResponse, default_environment
+
+
+class RespondWithJSONTest(TestCase):
+
+    def test_default_status(self) -> None:
+        sr = StartResponse()
+        respond_with_json(sr, {})
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_custom_status(self) -> None:
+        sr = StartResponse()
+        respond_with_json(sr, {}, status=HTTPStatus.NOT_ACCEPTABLE)
+        sr.assert_status(HTTPStatus.NOT_ACCEPTABLE)
+
+    def test_content_type(self) -> None:
+        sr = StartResponse()
+        respond_with_json(sr, {})
+        sr.assert_header_equals(
+            "Content-Type", "application/json; charset=utf-8")
+
+    def test_extra_headers(self) -> None:
+        sr = StartResponse()
+        respond_with_json(sr, {}, extra_headers=[
+            ("X-Custom-Header", "Foobar"),
+        ])
+        sr.assert_header_equals("X-Custom-Header", "Foobar")
+
+    def test_json_as_bytes(self) -> None:
+        sr = StartResponse()
+        response = respond_with_json(sr, b'{"foo": 3}')
+        assert_equal(b'{"foo": 3}', b"".join(response))
+
+    def test_json_as_str(self) -> None:
+        sr = StartResponse()
+        response = respond_with_json(sr, '{"föo": 3}')
+        assert_equal('{"föo": 3}'.encode("utf-8"), b"".join(response))
+
+    def test_json_as_object(self) -> None:
+        sr = StartResponse()
+        response = respond_with_json(sr, {"föo": 3})
+        assert_equal(b'{"f\u00f6o": 3}', b"".join(response))
+
+    def test_return_value_is_iterator(self) -> None:
+        sr = StartResponse()
+        response = respond_with_json(sr, {})
+        assert_is_instance(response, Iterator)
 
 
 class RespondWithHTMLTest(TestCase):
@@ -29,6 +75,13 @@ class RespondWithHTMLTest(TestCase):
         respond_with_html(sr, "<div>Test</div>")
         sr.assert_header_equals("Content-Type", "text/html; charset=utf-8")
 
+    def test_extra_headers(self) -> None:
+        sr = StartResponse()
+        respond_with_html(sr, "<div>Täst</div>", extra_headers=[
+            ("X-Custom-Header", "Foobar"),
+        ])
+        sr.assert_header_equals("X-Custom-Header", "Foobar")
+
     def test_return_value(self) -> None:
         sr = StartResponse()
         response = respond_with_html(sr, "<div>Test</div>")
@@ -43,13 +96,6 @@ class RespondWithHTMLTest(TestCase):
         sr = StartResponse()
         response = respond_with_html(sr, "<div>Täst</div>")
         assert_equal("<div>Täst</div>".encode("utf-8"), b"".join(response))
-
-    def test_additional_headers(self) -> None:
-        sr = StartResponse()
-        respond_with_html(sr, "<div>Täst</div>", extra_headers=[
-            ("X-Custom-Header", "Foobar"),
-        ])
-        sr.assert_header_equals("X-Custom-Header", "Foobar")
 
 
 class SeeOtherTest(TestCase):

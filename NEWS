@@ -1,6 +1,11 @@
 News in rouver 0.2.0
 ====================
 
+API Additions
+-------------
+
+* rouver.response: Add respond_with_json().
+
 News in rouver 0.1.1
 ====================
 
