@@ -12,6 +12,7 @@ API-Incompatible Changes
 API Additions
 -------------
 
+* rouver.html: http_status_page(): Add new optional argument "content".
 * rouver.types: Add BadArgumentsDict.
 
 News in rouver 0.2.1

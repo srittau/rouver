@@ -8,7 +8,20 @@ from rouver.html import http_status_page
 
 class HTTPStatusPageTest(TestCase):
 
-    def test_http_status_page(self) -> None:
+    def test_http_status_page_default(self) -> None:
+        html = http_status_page(HTTPStatus.NOT_ACCEPTABLE)
+        assert_equal("""<!DOCTYPE html>
+<html>
+    <head>
+        <title>406 &mdash; Not Acceptable</title>
+    </head>
+    <body>
+        <h1>406 &mdash; Not Acceptable</h1>
+    </body>
+</html>
+""", html)
+
+    def test_http_status_page_with_message(self) -> None:
         html = http_status_page(
             HTTPStatus.NOT_ACCEPTABLE, message="Test message.")
         assert_equal("""<!DOCTYPE html>
@@ -23,8 +36,9 @@ class HTTPStatusPageTest(TestCase):
 </html>
 """, html)
 
-    def test_http_status_page_without_message(self) -> None:
-        html = http_status_page(HTTPStatus.NOT_ACCEPTABLE)
+    def test_http_status_page_with_content(self) -> None:
+        html = http_status_page(
+            HTTPStatus.NOT_ACCEPTABLE, content="<div>Test content.</div>")
         assert_equal("""<!DOCTYPE html>
 <html>
     <head>
@@ -32,6 +46,24 @@ class HTTPStatusPageTest(TestCase):
     </head>
     <body>
         <h1>406 &mdash; Not Acceptable</h1>
+<div>Test content.</div>
+    </body>
+</html>
+""", html)
+
+    def test_http_status_page_with_message_and_content(self) -> None:
+        html = http_status_page(
+            HTTPStatus.NOT_ACCEPTABLE, message="Test message.",
+            content="<div>Test content.</div>")
+        assert_equal("""<!DOCTYPE html>
+<html>
+    <head>
+        <title>406 &mdash; Not Acceptable</title>
+    </head>
+    <body>
+        <h1>406 &mdash; Not Acceptable</h1>
+        <p>Test message.</p>
+<div>Test content.</div>
     </body>
 </html>
 """, html)

@@ -1,13 +1,15 @@
 from http import HTTPStatus
 
 
-def http_status_page(status: HTTPStatus, *, message: str = "") -> str:
+def http_status_page(status: HTTPStatus, *,
+                     message: str = "", content: str = "") -> str:
     """Create an HTML error page for a given status code.
 
-    WARNING: The "message" argument is not safe! Its content will be pasted
-    into the page as is. Do not use with unsanitized data!
+    WARNING: The arguments "message" and "content" are not safe! Their content
+    will be pasted into the page as is. Do not use with unsanitized data!
     """
     paragraph = "\n        <p>{}</p>".format(message) if message else ""
+    content = content + "\n" if content else ""
     return """<!DOCTYPE html>
 <html>
     <head>
@@ -15,9 +17,9 @@ def http_status_page(status: HTTPStatus, *, message: str = "") -> str:
     </head>
     <body>
         <h1>{0.value} &mdash; {0.phrase}</h1>{1}
-    </body>
+{2}    </body>
 </html>
-""".format(status, paragraph)
+""".format(status, paragraph, content)
 
 
 def created_at_page(url: str) -> str:
