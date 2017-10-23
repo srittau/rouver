@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from rouver.args import ArgumentDict
+
 
 def http_status_page(status: HTTPStatus, *,
                      message: str = "", content: str = "") -> str:
@@ -30,3 +32,25 @@ def created_at_page(url: str) -> str:
 def see_other_page(url: str) -> str:
     message = 'Please see <a href="{0}">{0}</a>.'.format(url)
     return http_status_page(HTTPStatus.SEE_OTHER, message=message)
+
+
+def bad_arguments_page(arguments: ArgumentDict) -> str:
+    content = bad_arguments_list(arguments)
+    return http_status_page(
+        HTTPStatus.BAD_REQUEST, message="Invalid arguments:", content=content)
+
+
+def bad_arguments_list(arguments: ArgumentDict) -> str:
+    if not arguments:
+        return ""
+
+    def format_item(name, error):
+        return """    <li class="argument">
+        <span class="argument-name">{name}</span>:
+        <span class="error-message">{error}</span>
+    </li>
+""".format(name=name, error=error)
+
+    items = [format_item(k, arguments[k]) for k in sorted(arguments)]
+
+    return '<ul class="bad-arguments">\n{}</ul>\n'.format("".join(items))

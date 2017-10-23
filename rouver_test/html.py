@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from asserts import assert_equal
 
-from rouver.html import http_status_page
+from rouver.html import http_status_page, bad_arguments_list
 
 
 class HTTPStatusPageTest(TestCase):
@@ -66,4 +66,43 @@ class HTTPStatusPageTest(TestCase):
 <div>Test content.</div>
     </body>
 </html>
+""", html)
+
+
+class BadArgumentsListTest(TestCase):
+
+    def test_empty_dict(self):
+        html = bad_arguments_list({})
+        assert_equal("", html)
+
+    def test_one_item(self):
+        html = bad_arguments_list({"foo": "bar"})
+        assert_equal("""<ul class="bad-arguments">
+    <li class="argument">
+        <span class="argument-name">foo</span>:
+        <span class="error-message">bar</span>
+    </li>
+</ul>
+""", html)
+
+    def test_multiple_items_alphabetically(self):
+        html = bad_arguments_list({
+            "def": "error 1",
+            "abc": "error 2",
+            "ghi": "error 3",
+        })
+        assert_equal("""<ul class="bad-arguments">
+    <li class="argument">
+        <span class="argument-name">abc</span>:
+        <span class="error-message">error 2</span>
+    </li>
+    <li class="argument">
+        <span class="argument-name">def</span>:
+        <span class="error-message">error 1</span>
+    </li>
+    <li class="argument">
+        <span class="argument-name">ghi</span>:
+        <span class="error-message">error 3</span>
+    </li>
+</ul>
 """, html)
