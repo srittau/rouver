@@ -113,10 +113,10 @@ def _dispatch(request: Request, start_response: StartResponseType,
 
     def find_route() -> Tuple[RouteHandler, List[Any]]:
         arguments = _RouteArguments(request, template_handlers)
-        matching_routes = [
+        matchers = [
             _RouteMatcher(h, request.path, arguments) for h in handlers]
 
-        matching_paths = [m for m in matching_routes if m.matches]
+        matching_paths = [m for m in matchers if m.matches]
         if not matching_paths:
             raise NotFound()
 
