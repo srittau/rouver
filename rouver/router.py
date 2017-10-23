@@ -197,7 +197,7 @@ def _respond_not_found(request: Request, start_response: StartResponseType) \
         -> Iterable[bytes]:
     path = cast(str, request.environ.get("PATH_INFO", ""))
     message = "Path '{}' not found.".format(path)
-    page = http_status_page(HTTPStatus.NOT_FOUND, message)
+    page = http_status_page(HTTPStatus.NOT_FOUND, message=message)
     return respond_with_html(
         start_response, page, status=HTTPStatus.NOT_FOUND)
 
@@ -208,7 +208,7 @@ def _respond_method_not_allowed(start_response: StartResponseType,
     method_string = " or ".join(allowed_methods)
     message = "Method '{}' not allowed. Please try {}.".format(
         method, method_string)
-    html = http_status_page(HTTPStatus.METHOD_NOT_ALLOWED, message)
+    html = http_status_page(HTTPStatus.METHOD_NOT_ALLOWED, message=message)
     return respond_with_html(
         start_response, html, status=HTTPStatus.METHOD_NOT_ALLOWED,
         extra_headers=[("Allow", ", ".join(allowed_methods))])
