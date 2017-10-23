@@ -16,6 +16,12 @@ API Additions
 * rouver.html: Add bad_arguments_list().
 * rouver.types: Add BadArgumentsDict.
 
+Improvements
+------------
+
+* rouver.router: Router now returns a custom error page when ArgumentsError
+  is raised.
+
 News in rouver 0.2.1
 ====================
 
