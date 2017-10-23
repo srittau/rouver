@@ -4,8 +4,23 @@ News in rouver 0.3.0
 API-Incompatible Changes
 ------------------------
 
+* rouver.html: http_status_page(): "message" argument is now an optional,
+  keyword-only argument.
 * rouver.router: Template handlers must now be installed before calling
   add_routes().
+
+API Additions
+-------------
+
+* rouver.html: http_status_page(): Add new optional argument "content".
+* rouver.html: Add bad_arguments_list().
+* rouver.types: Add BadArgumentsDict.
+
+Improvements
+------------
+
+* rouver.router: Router now returns a custom error page when ArgumentsError
+  is raised.
 
 News in rouver 0.2.1
 ====================

@@ -1,6 +1,6 @@
-from typing import Dict
-
 from werkzeug.exceptions import BadRequest
+
+from rouver.types import BadArgumentsDict
 
 
 class ArgumentsError(BadRequest):
@@ -20,6 +20,6 @@ class ArgumentsError(BadRequest):
 
     """
 
-    def __init__(self, arguments: Dict[str, str]) -> None:
+    def __init__(self, arguments: BadArgumentsDict) -> None:
         super().__init__("invalid arguments")
         self.arguments = arguments

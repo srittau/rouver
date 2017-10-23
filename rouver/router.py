@@ -7,11 +7,11 @@ from typing import Iterable, List, Dict, Any, Tuple, Iterator, cast
 from werkzeug.exceptions import NotFound, MethodNotAllowed, HTTPException
 from werkzeug.wrappers import Request
 
-from rouver.html import http_status_page
+from rouver.exceptions import ArgumentsError
+from rouver.html import http_status_page, bad_arguments_page
 from rouver.response import respond_with_html
 from rouver.types import StartResponseType, EnvironmentType, RouteType, \
-    RouteHandler, RouteTemplateHandler
-
+    RouteHandler, RouteTemplateHandler, BadArgumentsDict
 
 LOGGER_NAME = "rouver"
 
@@ -134,6 +134,8 @@ def _dispatch(request: Request, start_response: StartResponseType,
             -> Iterable[bytes]:
         try:
             return handler(request, path_args, start_response)
+        except ArgumentsError as exc:
+            return _respond_arguments_error(start_response, exc.arguments)
         except HTTPException as exc:
             return _respond_http_exception(start_response, exc)
 
@@ -197,7 +199,7 @@ def _respond_not_found(request: Request, start_response: StartResponseType) \
         -> Iterable[bytes]:
     path = cast(str, request.environ.get("PATH_INFO", ""))
     message = "Path '{}' not found.".format(path)
-    page = http_status_page(HTTPStatus.NOT_FOUND, message)
+    page = http_status_page(HTTPStatus.NOT_FOUND, message=message)
     return respond_with_html(
         start_response, page, status=HTTPStatus.NOT_FOUND)
 
@@ -208,7 +210,7 @@ def _respond_method_not_allowed(start_response: StartResponseType,
     method_string = " or ".join(allowed_methods)
     message = "Method '{}' not allowed. Please try {}.".format(
         method, method_string)
-    html = http_status_page(HTTPStatus.METHOD_NOT_ALLOWED, message)
+    html = http_status_page(HTTPStatus.METHOD_NOT_ALLOWED, message=message)
     return respond_with_html(
         start_response, html, status=HTTPStatus.METHOD_NOT_ALLOWED,
         extra_headers=[("Allow", ", ".join(allowed_methods))])
@@ -223,7 +225,14 @@ def _respond_internal_server_error(start_response: StartResponseType) \
 
 
 def _respond_http_exception(start_response: StartResponseType,
-                            exception: HTTPException) -> Iterable[bytes]:
+                            exception: HTTPException) -> Iterator[bytes]:
     status = HTTPStatus(exception.code)
     html = http_status_page(status, message=exception.get_description())
     return respond_with_html(start_response, html, status=status)
+
+
+def _respond_arguments_error(start_response: StartResponseType,
+                             arguments: BadArgumentsDict) -> Iterator[bytes]:
+    html = bad_arguments_page(arguments)
+    return respond_with_html(
+        start_response, html, status=HTTPStatus.BAD_REQUEST)

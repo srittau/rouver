@@ -3,11 +3,13 @@ import logging
 from typing import Iterable, List, Any
 from unittest import TestCase
 
-from asserts import assert_equal, assert_raises, assert_is_instance
+from asserts import assert_equal, assert_raises, assert_is_instance, \
+    assert_regex
 
 from werkzeug.exceptions import Conflict
 from werkzeug.wrappers import Request
 
+from rouver.exceptions import ArgumentsError
 from rouver.router import Router, LOGGER_NAME
 from rouver.types import StartResponseType
 
@@ -287,3 +289,19 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.CONFLICT)
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
+
+    def test_arguments_error(self) -> None:
+        def handle(_, __, ___):
+            raise ArgumentsError({"foo": "bar"})
+
+        self.router.add_routes([
+            ("foo", "GET", handle),
+        ])
+        response = self.handle_wsgi("GET", "/foo")
+        self.start_response.assert_status(HTTPStatus.BAD_REQUEST)
+        html = b"".join(response).decode("utf-8")
+        assert html.startswith("<!DOCTYPE html>")
+        assert_regex(html, r'<li class="argument">\s*'
+                           r'<span class="argument-name">foo</span>:\s*'
+                           r'<span class="error-message">bar</span>\s*'
+                           r'</li>')
