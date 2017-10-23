@@ -22,3 +22,6 @@ RouteType = Tuple[str, str, RouteHandler]
 
 # (request, previous_args, path_part) -> result
 RouteTemplateHandler = Callable[[Request, List[Any], str], Any]
+
+
+BadArgumentsDict = Dict[str, str]

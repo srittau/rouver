@@ -9,6 +9,11 @@ API-Incompatible Changes
 * rouver.router: Template handlers must now be installed before calling
   add_routes().
 
+API Additions
+-------------
+
+* rouver.types: Add BadArgumentsDict.
+
 News in rouver 0.2.1
 ====================
 
