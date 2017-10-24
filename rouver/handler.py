@@ -1,6 +1,6 @@
 import collections
 from http import HTTPStatus
-from typing import List, Any, Union, Iterator
+from typing import Any, Union, Iterator, Sequence
 
 from werkzeug.wrappers import Request
 
@@ -31,7 +31,7 @@ class RouteHandlerBase(collections.Iterable):
     ...         ])
     """
 
-    def __init__(self, request: Request, path_args: List[Any],
+    def __init__(self, request: Request, path_args: Sequence[Any],
                  start_response: StartResponseType) -> None:
         self.request = request
         self.path_args = path_args
@@ -40,25 +40,25 @@ class RouteHandlerBase(collections.Iterable):
     def __iter__(self) -> Iterator[bytes]:
         raise NotImplementedError()
 
-    def parse_args(self, argument_template: List[ArgumentTemplate]) \
+    def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \
             -> ArgumentDict:
         return parse_args(self.request.environ, argument_template)
 
-    def respond(self, extra_headers: List[HeaderType] = []) \
+    def respond(self, extra_headers: Sequence[HeaderType] = []) \
             -> Iterator[bytes]:
         return respond(self.start_response, extra_headers=extra_headers)
 
     def respond_with_json(
             self, json: Union[str, bytes, Any], *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: List[HeaderType] = []) -> Iterator[bytes]:
+            extra_headers: Sequence[HeaderType] = []) -> Iterator[bytes]:
         return respond_with_json(
             self.start_response, json,
             status=status, extra_headers=extra_headers)
 
     def respond_with_html(
             self, html: str, *, status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: List[HeaderType] = []) \
+            extra_headers: Sequence[HeaderType] = []) \
             -> Iterator[bytes]:
         return respond_with_html(
             self.start_response, html,

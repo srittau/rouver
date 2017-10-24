@@ -1,6 +1,6 @@
 from http import HTTPStatus
 from json import dumps as dumps_json
-from typing import List, Union, Any, Iterator
+from typing import Union, Any, Iterator, Sequence
 
 from werkzeug.wrappers import Request
 
@@ -11,7 +11,7 @@ from rouver.types import StartResponseType, HeaderType
 
 def respond(start_response: StartResponseType, *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: List[HeaderType] = []) -> Iterator[bytes]:
+            extra_headers: Sequence[HeaderType] = []) -> Iterator[bytes]:
 
     """Prepare an empty WSGI response.
 
@@ -34,7 +34,7 @@ def respond(start_response: StartResponseType, *,
 def respond_with_json(start_response: StartResponseType,
                       json: Union[str, bytes, Any], *,
                       status: HTTPStatus = HTTPStatus.OK,
-                      extra_headers: List[HeaderType] = []) \
+                      extra_headers: Sequence[HeaderType] = []) \
         -> Iterator[bytes]:
 
     """Prepare a JSON WSGI response.
@@ -51,7 +51,8 @@ def respond_with_json(start_response: StartResponseType,
 
     sl = status_line(status)
     headers = \
-        [("Content-Type", "application/json; charset=utf-8")] + extra_headers
+        [("Content-Type", "application/json; charset=utf-8")] + \
+        list(extra_headers)
     start_response(sl, headers)
     if isinstance(json, bytes):
         encoded = json
@@ -64,7 +65,7 @@ def respond_with_json(start_response: StartResponseType,
 
 def respond_with_html(start_response: StartResponseType, html: str, *,
                       status: HTTPStatus = HTTPStatus.OK,
-                      extra_headers: List[HeaderType] = []) \
+                      extra_headers: Sequence[HeaderType] = []) \
         -> Iterator[bytes]:
 
     """Prepare an HTML WSGI response.
@@ -77,7 +78,8 @@ def respond_with_html(start_response: StartResponseType, html: str, *,
     """
 
     sl = status_line(status)
-    headers = [("Content-Type", "text/html; charset=utf-8")] + extra_headers
+    headers = \
+        [("Content-Type", "text/html; charset=utf-8")] + list(extra_headers)
     start_response(sl, headers)
     return iter([html.encode("utf-8")])
 

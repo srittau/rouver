@@ -1,4 +1,4 @@
-from typing import Callable, Tuple, List, Dict, Any, Iterable
+from typing import Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping
 
 from werkzeug.wrappers import Request
 
@@ -11,17 +11,18 @@ EnvironmentType = Dict[str, Any]
 StartResponseReturnType = Callable[[bytes], None]
 
 # (status, headers) -> write
-StartResponseType = Callable[[str, List[HeaderType]], StartResponseReturnType]
+StartResponseType = \
+    Callable[[str, Sequence[HeaderType]], StartResponseReturnType]
 
 # (request, path, start_response) -> response
 RouteHandler = \
-    Callable[[Request, List[Any], StartResponseType], Iterable[bytes]]
+    Callable[[Request, Sequence[Any], StartResponseType], Iterable[bytes]]
 
 # (method, path, callback)
 RouteType = Tuple[str, str, RouteHandler]
 
 # (request, previous_args, path_part) -> result
-RouteTemplateHandler = Callable[[Request, List[Any], str], Any]
+RouteTemplateHandler = Callable[[Request, Sequence[Any], str], Any]
 
 
-BadArgumentsDict = Dict[str, str]
+BadArgumentsDict = Mapping[str, str]

@@ -2,7 +2,7 @@ from enum import Enum
 from http import HTTPStatus
 import logging
 import re
-from typing import Iterable, List, Dict, Any, Tuple, Iterator, cast
+from typing import cast, Iterable, List, Dict, Any, Tuple, Iterator, Sequence
 
 from werkzeug.exceptions import NotFound, MethodNotAllowed, HTTPException
 from werkzeug.wrappers import Request
@@ -53,7 +53,7 @@ class Router:
             else:
                 raise
 
-    def add_routes(self, routes: List[RouteType]) -> None:
+    def add_routes(self, routes: Sequence[RouteType]) -> None:
         self._handlers.extend(
             [_RouteHandler(r, self._template_handlers) for r in routes])
 
@@ -97,7 +97,7 @@ class _RouteHandler:
 
 
 def _dispatch(request: Request, start_response: StartResponseType,
-              handlers: List[_RouteHandler],
+              handlers: Sequence[_RouteHandler],
               template_handlers: _TemplateHandlerDict) -> Iterable[bytes]:
 
     def find_route_and_call_handler() -> Iterable[bytes]:
@@ -130,7 +130,7 @@ def _dispatch(request: Request, start_response: StartResponseType,
         route = matching_routes[0]
         return route.handler, route.path_args
 
-    def _call_handler(handler: RouteHandler, path_args: List[Any]) \
+    def _call_handler(handler: RouteHandler, path_args: Sequence[Any]) \
             -> Iterable[bytes]:
         try:
             return handler(request, path_args, start_response)
@@ -150,7 +150,8 @@ class _RouteArguments:
         self._handlers = template_handlers
         self._cache = {}  # type: Dict[Tuple[str, str], Any]
 
-    def parse_argument(self, paths: List[Any], name: str, path: str) -> Any:
+    def parse_argument(self, paths: Sequence[Any], name: str, path: str) \
+            -> Any:
         key = name, path
         if key not in self._cache:
             handler = self._handlers[name]
@@ -204,8 +205,9 @@ def _respond_not_found(request: Request, start_response: StartResponseType) \
         start_response, page, status=HTTPStatus.NOT_FOUND)
 
 
-def _respond_method_not_allowed(start_response: StartResponseType,
-                                method: str, allowed_methods: List[str]) \
+def _respond_method_not_allowed(
+        start_response: StartResponseType,
+        method: str, allowed_methods: Sequence[str]) \
         -> Iterable[bytes]:
     method_string = " or ".join(allowed_methods)
     message = "Method '{}' not allowed. Please try {}.".format(

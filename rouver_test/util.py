@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from io import BytesIO, StringIO
 import re
-from typing import List
+from typing import List, Sequence
 
 from asserts import assert_false, assert_regex, assert_equal, assert_true
 
@@ -17,13 +17,13 @@ class StartResponse:
         self.status = ""
         self.headers = []  # type: List[HeaderType]
 
-    def __call__(self, status: str, headers: List[HeaderType]) \
+    def __call__(self, status: str, headers: Sequence[HeaderType]) \
             -> StartResponseReturnType:
         assert_false(self.was_called, "start_response() called twice")
         assert_regex(status, _status_re)
         self.was_called = True
         self.status = status
-        self.headers = headers
+        self.headers = list(headers)
         return lambda s: None
 
     @property

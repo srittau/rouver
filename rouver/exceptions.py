@@ -22,4 +22,4 @@ class ArgumentsError(BadRequest):
 
     def __init__(self, arguments: BadArgumentsDict) -> None:
         super().__init__("invalid arguments")
-        self.arguments = arguments
+        self.arguments = dict(arguments)

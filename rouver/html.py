@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from rouver.args import ArgumentDict
+from rouver.types import BadArgumentsDict
 
 
 def http_status_page(status: HTTPStatus, *,
@@ -34,13 +34,13 @@ def see_other_page(url: str) -> str:
     return http_status_page(HTTPStatus.SEE_OTHER, message=message)
 
 
-def bad_arguments_page(arguments: ArgumentDict) -> str:
+def bad_arguments_page(arguments: BadArgumentsDict) -> str:
     content = bad_arguments_list(arguments)
     return http_status_page(
         HTTPStatus.BAD_REQUEST, message="Invalid arguments:", content=content)
 
 
-def bad_arguments_list(arguments: ArgumentDict) -> str:
+def bad_arguments_list(arguments: BadArgumentsDict) -> str:
     if not arguments:
         return ""
 

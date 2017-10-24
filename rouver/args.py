@@ -1,7 +1,7 @@
 import cgi
 from enum import Enum
 from io import BytesIO
-from typing import Callable, Any, Tuple, Dict, List, Union, IO
+from typing import Callable, Any, Tuple, Dict, List, Union, IO, Sequence
 
 from rouver.exceptions import ArgumentsError
 from rouver.types import EnvironmentType
@@ -66,7 +66,7 @@ class CGIFileArgument(FileArgument):
 
 
 def parse_args(environment: EnvironmentType,
-               argument_template: List[ArgumentTemplate]) -> ArgumentDict:
+               argument_template: Sequence[ArgumentTemplate]) -> ArgumentDict:
 
     """Parse CGI/WSGI arguments and return an argument dict.
 

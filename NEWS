@@ -1,6 +1,18 @@
 News in rouver 0.3.1
 ====================
 
+Improvements
+------------
+
+* Type hinting: use Sequence over List and Mapping over Dict in
+  function/method arguments.
+
+Bug Fixes
+---------
+
+* rouver.html: Fix argument types of bad_arguments_page() and
+  bad_arguments_list().
+
 News in rouver 0.3.0
 ====================
 

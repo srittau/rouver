@@ -1,6 +1,6 @@
 from http import HTTPStatus
 import logging
-from typing import Iterable, List, Any
+from typing import Iterable, Any, Sequence
 from unittest import TestCase
 
 from asserts import assert_equal, assert_raises, assert_is_instance, \
@@ -22,7 +22,8 @@ def handle_success(_, __, start_response: StartResponseType) \
     return [b""]
 
 
-def handle_empty_path(_, path: List[str], start_response: StartResponseType) \
+def handle_empty_path(
+        _, path: Sequence[str], start_response: StartResponseType) \
         -> Iterable[bytes]:
     assert_equal([], path)
     start_response("200 OK", [])
@@ -158,7 +159,8 @@ class RouterTest(TestCase):
             start_response("200 OK", [])
             return [b""]
 
-        def handle_path(request: Request, paths: List[Any], path: str) -> str:
+        def handle_path(request: Request, paths: Sequence[Any], path: str) \
+                -> str:
             assert_is_instance(request, Request)
             assert_equal([], paths)
             return path * 2
@@ -176,7 +178,7 @@ class RouterTest(TestCase):
             start_response("200 OK", [])
             return [b""]
 
-        def handle_path(_, paths: List[Any], __) -> int:
+        def handle_path(_, paths: Sequence[Any], __) -> int:
             assert_equal(["xyz"], paths)
             return 123
         self.router.add_template_handler("handler1", lambda _, __, ___: "xyz")
