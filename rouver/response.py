@@ -6,12 +6,12 @@ from werkzeug.wrappers import Request
 
 from rouver.html import created_at_page, see_other_page
 from rouver.status import status_line
-from rouver.types import StartResponse, HeaderType
+from rouver.types import StartResponse, Header
 
 
 def respond(start_response: StartResponse, *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: Sequence[HeaderType] = []) -> Iterator[bytes]:
+            extra_headers: Sequence[Header] = []) -> Iterator[bytes]:
 
     """Prepare an empty WSGI response.
 
@@ -34,7 +34,7 @@ def respond(start_response: StartResponse, *,
 def respond_with_json(start_response: StartResponse,
                       json: Union[str, bytes, Any], *,
                       status: HTTPStatus = HTTPStatus.OK,
-                      extra_headers: Sequence[HeaderType] = []) \
+                      extra_headers: Sequence[Header] = []) \
         -> Iterator[bytes]:
 
     """Prepare a JSON WSGI response.
@@ -65,7 +65,7 @@ def respond_with_json(start_response: StartResponse,
 
 def respond_with_html(start_response: StartResponse, html: str, *,
                       status: HTTPStatus = HTTPStatus.OK,
-                      extra_headers: Sequence[HeaderType] = []) \
+                      extra_headers: Sequence[Header] = []) \
         -> Iterator[bytes]:
 
     """Prepare an HTML WSGI response.

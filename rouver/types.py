@@ -3,7 +3,7 @@ from typing import Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping
 from werkzeug.wrappers import Request
 
 # (name, value)
-HeaderType = Tuple[str, str]
+Header = Tuple[str, str]
 
 WSGIEnvironment = Dict[str, Any]
 
@@ -11,7 +11,7 @@ WSGIEnvironment = Dict[str, Any]
 StartResponseReturnType = Callable[[bytes], None]
 
 # (status, headers) -> response
-StartResponse = Callable[[str, Sequence[HeaderType]], StartResponseReturnType]
+StartResponse = Callable[[str, Sequence[Header]], StartResponseReturnType]
 
 WSGIResponse = Iterable[bytes]
 

@@ -7,7 +7,7 @@ from werkzeug.wrappers import Request
 from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other
-from rouver.types import StartResponse, HeaderType
+from rouver.types import StartResponse, Header
 
 
 class RouteHandlerBase(collections.Iterable):
@@ -44,21 +44,21 @@ class RouteHandlerBase(collections.Iterable):
             -> ArgumentDict:
         return parse_args(self.request.environ, argument_template)
 
-    def respond(self, extra_headers: Sequence[HeaderType] = []) \
+    def respond(self, extra_headers: Sequence[Header] = []) \
             -> Iterator[bytes]:
         return respond(self.start_response, extra_headers=extra_headers)
 
     def respond_with_json(
             self, json: Union[str, bytes, Any], *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: Sequence[HeaderType] = []) -> Iterator[bytes]:
+            extra_headers: Sequence[Header] = []) -> Iterator[bytes]:
         return respond_with_json(
             self.start_response, json,
             status=status, extra_headers=extra_headers)
 
     def respond_with_html(
             self, html: str, *, status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: Sequence[HeaderType] = []) \
+            extra_headers: Sequence[Header] = []) \
             -> Iterator[bytes]:
         return respond_with_html(
             self.start_response, html,

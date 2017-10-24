@@ -4,6 +4,7 @@ News in rouver 0.4.0
 API-Incompatible Changes
 ------------------------
 
+* rouver.types: Rename HeaderType to Header.
 * rouver.types: Rename EnvironmentType to WSGIEnvironment.
 * rouver.types: Rename StartResponseType to StartResponse.
 

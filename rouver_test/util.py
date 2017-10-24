@@ -5,7 +5,7 @@ from typing import List, Sequence
 
 from asserts import assert_false, assert_regex, assert_equal, assert_true
 
-from rouver.types import StartResponseReturnType, HeaderType, WSGIEnvironment
+from rouver.types import StartResponseReturnType, Header, WSGIEnvironment
 
 _status_re = re.compile(r"^(\d\d\d) (.*)$")
 
@@ -15,9 +15,9 @@ class TestingStartResponse:
     def __init__(self) -> None:
         self.was_called = False
         self.status = ""
-        self.headers = []  # type: List[HeaderType]
+        self.headers = []  # type: List[Header]
 
-    def __call__(self, status: str, headers: Sequence[HeaderType]) \
+    def __call__(self, status: str, headers: Sequence[Header]) \
             -> StartResponseReturnType:
         assert_false(self.was_called, "start_response() called twice")
         assert_regex(status, _status_re)
