@@ -7,14 +7,14 @@ from werkzeug.wrappers import Request
 
 from rouver.handler import RouteHandlerBase
 
-from rouver_test.util import default_environment, StartResponse
+from rouver_test.util import default_environment, TestingStartResponse
 
 
 class RouteHandlerBaseTest(TestCase):
 
     def setUp(self) -> None:
         self.request = Request(default_environment())
-        self.start_response = StartResponse()
+        self.start_response = TestingStartResponse()
 
     def call_handler(self, handler_class: Type[RouteHandlerBase]) -> bytes:
         handler = handler_class(self.request, [], self.start_response)

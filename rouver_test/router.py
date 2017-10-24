@@ -13,7 +13,7 @@ from rouver.exceptions import ArgumentsError
 from rouver.router import Router, LOGGER_NAME
 from rouver.types import StartResponseType
 
-from rouver_test.util import StartResponse, default_environment
+from rouver_test.util import TestingStartResponse, default_environment
 
 
 def handle_success(_, __, start_response: StartResponseType) \
@@ -39,7 +39,7 @@ class RouterTest(TestCase):
     def setUp(self) -> None:
         self.router = Router()
         self.router.error_handling = False
-        self.start_response = StartResponse()
+        self.start_response = TestingStartResponse()
         self.environment = default_environment()
         self.disable_logger()
 
