@@ -9,7 +9,7 @@ API-Incompatible Changes
 API Additions
 -------------
 
-* rouver.types: Add WSGIApplication.
+* rouver.types: Add WSGIApplication and WSGIResponse.
 
 News in rouver 0.3.1
 ====================

@@ -14,8 +14,9 @@ StartResponseReturnType = Callable[[bytes], None]
 StartResponseType = \
     Callable[[str, Sequence[HeaderType]], StartResponseReturnType]
 
-WSGIApplication = \
-    Callable[[WSGIEnvironment, StartResponseType], Iterable[bytes]]
+WSGIResponse = Iterable[bytes]
+
+WSGIApplication = Callable[[WSGIEnvironment, StartResponseType], WSGIResponse]
 
 # (request, path, start_response) -> response
 RouteHandler = \
