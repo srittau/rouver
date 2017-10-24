@@ -12,7 +12,7 @@ News in rouver 0.3.1
 Improvements
 ------------
 
-* Type hinting: use Sequence over List and Mapping over Dict in
+* Type hinting: Use Sequence over List and Mapping over Dict in
   function/method arguments.
 
 Bug Fixes
