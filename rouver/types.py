@@ -22,7 +22,7 @@ RouteHandler = \
     Callable[[Request, Sequence[Any], StartResponse], Iterable[bytes]]
 
 # (method, path, callback)
-RouteType = Tuple[str, str, RouteHandler]
+RouteDescription = Tuple[str, str, RouteHandler]
 
 # (request, previous_args, path_part) -> result
 RouteTemplateHandler = Callable[[Request, Sequence[Any], str], Any]

@@ -10,7 +10,7 @@ from werkzeug.wrappers import Request
 from rouver.exceptions import ArgumentsError
 from rouver.html import http_status_page, bad_arguments_page
 from rouver.response import respond_with_html
-from rouver.types import StartResponse, WSGIEnvironment, RouteType, \
+from rouver.types import StartResponse, WSGIEnvironment, RouteDescription, \
     RouteHandler, RouteTemplateHandler, BadArgumentsDict
 
 LOGGER_NAME = "rouver"
@@ -53,7 +53,7 @@ class Router:
             else:
                 raise
 
-    def add_routes(self, routes: Sequence[RouteType]) -> None:
+    def add_routes(self, routes: Sequence[RouteDescription]) -> None:
         self._handlers.extend(
             [_RouteHandler(r, self._template_handlers) for r in routes])
 
@@ -81,7 +81,7 @@ def _parse_route_template_part(
 
 class _RouteHandler:
 
-    def __init__(self, route: RouteType,
+    def __init__(self, route: RouteDescription,
                  template_handlers: _TemplateHandlerDict) -> None:
         self.path = self._parse_path(route[0], template_handlers)
         self.method = route[1]
