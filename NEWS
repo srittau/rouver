@@ -1,6 +1,11 @@
 News in rouver 0.3.2
 ====================
 
+API Additions
+-------------
+
+* rouver.types: Add WSGIApplication.
+
 News in rouver 0.3.1
 ====================
 
