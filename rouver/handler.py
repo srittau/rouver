@@ -7,7 +7,7 @@ from werkzeug.wrappers import Request
 from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other
-from rouver.types import StartResponseType, HeaderType
+from rouver.types import StartResponse, HeaderType
 
 
 class RouteHandlerBase(collections.Iterable):
@@ -32,7 +32,7 @@ class RouteHandlerBase(collections.Iterable):
     """
 
     def __init__(self, request: Request, path_args: Sequence[Any],
-                 start_response: StartResponseType) -> None:
+                 start_response: StartResponse) -> None:
         self.request = request
         self.path_args = path_args
         self.start_response = start_response

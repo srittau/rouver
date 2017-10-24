@@ -10,23 +10,21 @@ WSGIEnvironment = Dict[str, Any]
 # (body) -> None
 StartResponseReturnType = Callable[[bytes], None]
 
-# (status, headers) -> write
-StartResponseType = \
-    Callable[[str, Sequence[HeaderType]], StartResponseReturnType]
+# (status, headers) -> response
+StartResponse = Callable[[str, Sequence[HeaderType]], StartResponseReturnType]
 
 WSGIResponse = Iterable[bytes]
 
-WSGIApplication = Callable[[WSGIEnvironment, StartResponseType], WSGIResponse]
+WSGIApplication = Callable[[WSGIEnvironment, StartResponse], WSGIResponse]
 
 # (request, path, start_response) -> response
 RouteHandler = \
-    Callable[[Request, Sequence[Any], StartResponseType], Iterable[bytes]]
+    Callable[[Request, Sequence[Any], StartResponse], Iterable[bytes]]
 
 # (method, path, callback)
 RouteType = Tuple[str, str, RouteHandler]
 
 # (request, previous_args, path_part) -> result
 RouteTemplateHandler = Callable[[Request, Sequence[Any], str], Any]
-
 
 BadArgumentsDict = Mapping[str, str]

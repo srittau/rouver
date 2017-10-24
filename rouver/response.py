@@ -6,10 +6,10 @@ from werkzeug.wrappers import Request
 
 from rouver.html import created_at_page, see_other_page
 from rouver.status import status_line
-from rouver.types import StartResponseType, HeaderType
+from rouver.types import StartResponse, HeaderType
 
 
-def respond(start_response: StartResponseType, *,
+def respond(start_response: StartResponse, *,
             status: HTTPStatus = HTTPStatus.OK,
             extra_headers: Sequence[HeaderType] = []) -> Iterator[bytes]:
 
@@ -31,7 +31,7 @@ def respond(start_response: StartResponseType, *,
     return iter([])
 
 
-def respond_with_json(start_response: StartResponseType,
+def respond_with_json(start_response: StartResponse,
                       json: Union[str, bytes, Any], *,
                       status: HTTPStatus = HTTPStatus.OK,
                       extra_headers: Sequence[HeaderType] = []) \
@@ -63,7 +63,7 @@ def respond_with_json(start_response: StartResponseType,
     return iter([encoded])
 
 
-def respond_with_html(start_response: StartResponseType, html: str, *,
+def respond_with_html(start_response: StartResponse, html: str, *,
                       status: HTTPStatus = HTTPStatus.OK,
                       extra_headers: Sequence[HeaderType] = []) \
         -> Iterator[bytes]:
@@ -84,7 +84,7 @@ def respond_with_html(start_response: StartResponseType, html: str, *,
     return iter([html.encode("utf-8")])
 
 
-def created_at(request: Request, start_response: StartResponseType,
+def created_at(request: Request, start_response: StartResponse,
                url_part: str) -> Iterator[bytes]:
 
     """Prepare a 201 Created WSGI response with a Location header."""
@@ -97,7 +97,7 @@ def created_at(request: Request, start_response: StartResponseType,
                              extra_headers=[("Location", url)])
 
 
-def see_other(request: Request, start_response: StartResponseType,
+def see_other(request: Request, start_response: StartResponse,
               url_part: str) -> Iterator[bytes]:
     if url_part.startswith("/"):
         url_part = url_part[1:]

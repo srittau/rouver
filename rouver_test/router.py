@@ -11,19 +11,19 @@ from werkzeug.wrappers import Request
 
 from rouver.exceptions import ArgumentsError
 from rouver.router import Router, LOGGER_NAME
-from rouver.types import StartResponseType
+from rouver.types import StartResponse
 
 from rouver_test.util import TestingStartResponse, default_environment
 
 
-def handle_success(_, __, start_response: StartResponseType) \
+def handle_success(_, __, start_response: StartResponse) \
         -> Iterable[bytes]:
     start_response("200 OK", [])
     return [b""]
 
 
 def handle_empty_path(
-        _, path: Sequence[str], start_response: StartResponseType) \
+        _, path: Sequence[str], start_response: StartResponse) \
         -> Iterable[bytes]:
     assert_equal([], path)
     start_response("200 OK", [])

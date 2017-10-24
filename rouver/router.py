@@ -10,7 +10,7 @@ from werkzeug.wrappers import Request
 from rouver.exceptions import ArgumentsError
 from rouver.html import http_status_page, bad_arguments_page
 from rouver.response import respond_with_html
-from rouver.types import StartResponseType, WSGIEnvironment, RouteType, \
+from rouver.types import StartResponse, WSGIEnvironment, RouteType, \
     RouteHandler, RouteTemplateHandler, BadArgumentsDict
 
 LOGGER_NAME = "rouver"
@@ -40,7 +40,7 @@ class Router:
         self.error_handling = True
 
     def __call__(self, environment: WSGIEnvironment,
-                 start_response: StartResponseType) -> Iterable[bytes]:
+                 start_response: StartResponse) -> Iterable[bytes]:
         request = Request(environment)
         try:
             return _dispatch(request, start_response, self._handlers,
@@ -96,7 +96,7 @@ class _RouteHandler:
                 for part in parts]
 
 
-def _dispatch(request: Request, start_response: StartResponseType,
+def _dispatch(request: Request, start_response: StartResponse,
               handlers: Sequence[_RouteHandler],
               template_handlers: _TemplateHandlerDict) -> Iterable[bytes]:
 
@@ -196,7 +196,7 @@ class _RouteMatcher:
         return zip(self._handler.path, self._path)
 
 
-def _respond_not_found(request: Request, start_response: StartResponseType) \
+def _respond_not_found(request: Request, start_response: StartResponse) \
         -> Iterable[bytes]:
     path = cast(str, request.environ.get("PATH_INFO", ""))
     message = "Path '{}' not found.".format(path)
@@ -206,7 +206,7 @@ def _respond_not_found(request: Request, start_response: StartResponseType) \
 
 
 def _respond_method_not_allowed(
-        start_response: StartResponseType,
+        start_response: StartResponse,
         method: str, allowed_methods: Sequence[str]) \
         -> Iterable[bytes]:
     method_string = " or ".join(allowed_methods)
@@ -218,7 +218,7 @@ def _respond_method_not_allowed(
         extra_headers=[("Allow", ", ".join(allowed_methods))])
 
 
-def _respond_internal_server_error(start_response: StartResponseType) \
+def _respond_internal_server_error(start_response: StartResponse) \
         -> Iterable[bytes]:
     html = http_status_page(HTTPStatus.INTERNAL_SERVER_ERROR,
                             message="Internal server error.")
@@ -226,14 +226,14 @@ def _respond_internal_server_error(start_response: StartResponseType) \
                              status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
-def _respond_http_exception(start_response: StartResponseType,
+def _respond_http_exception(start_response: StartResponse,
                             exception: HTTPException) -> Iterator[bytes]:
     status = HTTPStatus(exception.code)
     html = http_status_page(status, message=exception.get_description())
     return respond_with_html(start_response, html, status=status)
 
 
-def _respond_arguments_error(start_response: StartResponseType,
+def _respond_arguments_error(start_response: StartResponse,
                              arguments: BadArgumentsDict) -> Iterator[bytes]:
     html = bad_arguments_page(arguments)
     return respond_with_html(

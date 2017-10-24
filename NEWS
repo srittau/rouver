@@ -5,6 +5,7 @@ API-Incompatible Changes
 ------------------------
 
 * rouver.types: Rename EnvironmentType to WSGIEnvironment.
+* rouver.types: Rename StartResponseType to StartResponse.
 
 API Additions
 -------------
