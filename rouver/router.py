@@ -10,7 +10,7 @@ from werkzeug.wrappers import Request
 from rouver.exceptions import ArgumentsError
 from rouver.html import http_status_page, bad_arguments_page
 from rouver.response import respond_with_html
-from rouver.types import StartResponseType, EnvironmentType, RouteType, \
+from rouver.types import StartResponseType, WSGIEnvironment, RouteType, \
     RouteHandler, RouteTemplateHandler, BadArgumentsDict
 
 LOGGER_NAME = "rouver"
@@ -39,7 +39,7 @@ class Router:
         self._template_handlers = {}  # type: _TemplateHandlerDict
         self.error_handling = True
 
-    def __call__(self, environment: EnvironmentType,
+    def __call__(self, environment: WSGIEnvironment,
                  start_response: StartResponseType) -> Iterable[bytes]:
         request = Request(environment)
         try:

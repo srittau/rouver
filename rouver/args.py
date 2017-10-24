@@ -4,7 +4,7 @@ from io import BytesIO
 from typing import Callable, Any, Tuple, Dict, List, Union, IO, Sequence
 
 from rouver.exceptions import ArgumentsError
-from rouver.types import EnvironmentType
+from rouver.types import WSGIEnvironment
 
 
 class Multiplicity(Enum):
@@ -65,7 +65,7 @@ class CGIFileArgument(FileArgument):
         self._value = value
 
 
-def parse_args(environment: EnvironmentType,
+def parse_args(environment: WSGIEnvironment,
                argument_template: Sequence[ArgumentTemplate]) -> ArgumentDict:
 
     """Parse CGI/WSGI arguments and return an argument dict.

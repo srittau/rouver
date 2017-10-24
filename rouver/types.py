@@ -5,7 +5,7 @@ from werkzeug.wrappers import Request
 # (name, value)
 HeaderType = Tuple[str, str]
 
-EnvironmentType = Dict[str, Any]
+WSGIEnvironment = Dict[str, Any]
 
 # (body) -> None
 StartResponseReturnType = Callable[[bytes], None]
@@ -15,7 +15,7 @@ StartResponseType = \
     Callable[[str, Sequence[HeaderType]], StartResponseReturnType]
 
 WSGIApplication = \
-    Callable[[EnvironmentType, StartResponseType], Iterable[bytes]]
+    Callable[[WSGIEnvironment, StartResponseType], Iterable[bytes]]
 
 # (request, path, start_response) -> response
 RouteHandler = \

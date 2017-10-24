@@ -5,7 +5,7 @@ from typing import List, Sequence
 
 from asserts import assert_false, assert_regex, assert_equal, assert_true
 
-from rouver.types import StartResponseReturnType, HeaderType, EnvironmentType
+from rouver.types import StartResponseReturnType, HeaderType, WSGIEnvironment
 
 _status_re = re.compile(r"^(\d\d\d) (.*)$")
 
@@ -51,7 +51,7 @@ class StartResponse:
         raise AssertionError("missing header '{}'".format(name))
 
 
-def default_environment() -> EnvironmentType:
+def default_environment() -> WSGIEnvironment:
     return {
         "REQUEST_METHOD": "GET",
         "SERVER_NAME": "www.example.com",
