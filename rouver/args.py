@@ -30,8 +30,8 @@ class FileArgument:
 
     """File argument result.
 
-    This is a file-like object, containing a bytes. It has additional
-    fields "filename" and "content_type", as supplied by the client.
+    This is a file-like object, containing a byte stream. It has additional
+    fields "filename" and "content_type".
 
     >>> args = parse_args(..., [
     ...     ("file-arg", "file", Multiplicity.REQUIRED),
