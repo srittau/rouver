@@ -5,4 +5,4 @@ python:
 install: pip install -r requirements.txt
 script:
   - python -Wall -m unittest discover -t . -s rouver_test -p "*.py"
-  - "MYPYPATH=`pip show mypy | grep Location: | cut -d ' ' -f 2` mypy rouver rouver_test --follow-imports=silent"
+  - "MYPYPATH=`pip show mypy | grep Location: | cut -d ' ' -f 2` mypy rouver rouver_test"
