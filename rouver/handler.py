@@ -1,6 +1,6 @@
 import collections
 from http import HTTPStatus
-from typing import Any, Union, Iterator, Sequence
+from typing import cast, Any, Union, Iterator, Sequence, Dict
 
 from werkzeug.wrappers import Request
 
@@ -42,7 +42,8 @@ class RouteHandlerBase(collections.Iterable):
 
     def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \
             -> ArgumentDict:
-        return parse_args(self.request.environ, argument_template)
+        return parse_args(cast(Dict[str, Any], self.request.environ),
+                          argument_template)
 
     def respond(self, extra_headers: Sequence[Header] = []) \
             -> Iterator[bytes]:
