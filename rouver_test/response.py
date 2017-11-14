@@ -80,7 +80,7 @@ class RespondWithJSONTest(TestCase):
     def test_json_as_object(self) -> None:
         sr = TestingStartResponse()
         response = respond_with_json(sr, {"föo": 3})
-        assert_equal(b'{"f\u00f6o": 3}', b"".join(response))
+        assert_equal(b'{"f\\u00f6o": 3}', b"".join(response))
 
     def test_return_value_is_iterator(self) -> None:
         sr = TestingStartResponse()
