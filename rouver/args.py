@@ -3,6 +3,8 @@ from enum import Enum
 from io import BytesIO
 from typing import Callable, Any, Tuple, Dict, List, Union, IO, Sequence
 
+from werkzeug.exceptions import BadRequest
+
 from rouver.exceptions import ArgumentsError
 from rouver.types import WSGIEnvironment
 
@@ -19,6 +21,9 @@ ArgumentValueParser = Callable[[str], Any]
 ArgumentValueType = Union[ArgumentValueParser, str]
 ArgumentTemplate = Tuple[str, ArgumentValueType, Multiplicity]
 ArgumentDict = Dict[str, Any]
+
+
+_FORM_TYPES = ["application/x-www-form-urlencoded", "multipart/form-data"]
 
 
 class _ArgumentError(Exception):
@@ -124,6 +129,17 @@ def parse_args(environment: WSGIEnvironment,
     >>>
 
     """
+
+    def has_wrong_content_type() -> bool:
+        method = environment.get("REQUEST_METHOD", "GET")
+        if method.upper() not in ["POST", "PUT"]:
+            return False
+        content_type = environment.get("CONTENT_TYPE", "").split(";")[0]
+        return content_type not in _FORM_TYPES
+
+    if has_wrong_content_type():
+        raise BadRequest("incorrect content type, expected {}".format(
+            " or ".join(_FORM_TYPES)))
 
     arguments = cgi.FieldStorage(
         environment["wsgi.input"], environ=environment,

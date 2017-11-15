@@ -1,6 +1,12 @@
 News in rouver 0.4.1
 ====================
 
+Bug Fixes
+---------
+
+* ``rouvers.args``: ``parse_args()`` will now throw a ``BadRequest`` if
+  the Content-Type is incorrect for POST and PUT requests.
+
 News in rouver 0.4.0
 ====================
 

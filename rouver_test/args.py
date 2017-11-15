@@ -1,8 +1,10 @@
 from unittest import TestCase
 from urllib.parse import quote_plus
 
-from asserts import assert_equal, fail, assert_raises, assert_in
+from asserts import assert_equal, fail, assert_raises, assert_in, assert_not_in
 from io import BytesIO
+
+from werkzeug.exceptions import BadRequest
 
 from rouver.args import parse_args, Multiplicity
 from rouver.exceptions import ArgumentsError
@@ -300,3 +302,17 @@ class ParseArgsTest(TestCase):
         assert_equal("", f.filename)
         assert_equal("application/octet-stream", f.content_type)
         assert_equal("bär".encode("utf-8"), f.read())
+
+    def test_post_wrong_content_type(self) -> None:
+        """This exposes a bug in Python's cgi module that will raise a
+        TypeError when no request string was provided. See
+        <https://bugs.python.org/issue32029>.
+        """
+        self.env["REQUEST_METHOD"] = "POST"
+        self.env["CONTENT_TYPE"] = "application/octet-stream"
+        self.env["CONTENT_LENGTH"] = "2"
+        self.env["wsgi.input"] = BytesIO(b"AB")
+        with assert_raises(BadRequest):
+            parse_args(self.env, [
+                ("foo", str, Multiplicity.OPTIONAL),
+            ])
