@@ -1,7 +1,7 @@
 from unittest import TestCase
 from urllib.parse import quote_plus
 
-from asserts import assert_equal, fail, assert_raises, assert_in, assert_not_in
+from asserts import assert_equal, fail, assert_raises, assert_in
 from io import BytesIO
 
 from werkzeug.exceptions import BadRequest
