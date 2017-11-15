@@ -229,7 +229,7 @@ def _respond_internal_server_error(start_response: StartResponse) \
 def _respond_http_exception(start_response: StartResponse,
                             exception: HTTPException) -> Iterator[bytes]:
     status = HTTPStatus(exception.code)
-    html = http_status_page(status, message=exception.get_description())
+    html = http_status_page(status, message=exception.description)
     return respond_with_html(start_response, html, status=status)
 
 

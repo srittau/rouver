@@ -290,7 +290,17 @@ class RouterTest(TestCase):
         response = self.handle_wsgi("GET", "/foo")
         self.start_response.assert_status(HTTPStatus.CONFLICT)
         html = b"".join(response).decode("utf-8")
-        assert html.startswith("<!DOCTYPE html>")
+        assert_equal("""<!DOCTYPE html>
+<html>
+    <head>
+        <title>409 &mdash; Conflict</title>
+    </head>
+    <body>
+        <h1>409 &mdash; Conflict</h1>
+        <p>A conflict happened while processing the request.  The resource might have been modified while the request was being processed.</p>
+    </body>
+</html>
+""", html)
 
     def test_arguments_error(self) -> None:
         def handle(_, __, ___):

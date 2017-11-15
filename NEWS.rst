@@ -1,6 +1,11 @@
 News in rouver 0.4.2
 ====================
 
+Bug Fixes
+---------
+
+* ``rouver.router``: Fix nested <p> element in error pages.
+
 News in rouver 0.4.1
 ====================
 
