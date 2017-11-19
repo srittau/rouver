@@ -29,6 +29,11 @@ def created_at_page(url: str) -> str:
     return http_status_page(HTTPStatus.CREATED, message=message)
 
 
+def temporary_redirect_page(url: str) -> str:
+    message = 'Please see <a href="{0}">{0}</a>.'.format(url)
+    return http_status_page(HTTPStatus.TEMPORARY_REDIRECT, message=message)
+
+
 def see_other_page(url: str) -> str:
     message = 'Please see <a href="{0}">{0}</a>.'.format(url)
     return http_status_page(HTTPStatus.SEE_OTHER, message=message)

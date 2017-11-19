@@ -7,7 +7,7 @@ from werkzeug.wrappers import Request
 from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other, \
-    created_as_json
+    created_as_json, temporary_redirect
 from rouver.types import StartResponse, Header
 
 
@@ -73,6 +73,9 @@ class RouteHandlerBase(collections.Iterable):
             -> Iterator[bytes]:
         return created_as_json(
             self.request, self.start_response, url_part, json)
+
+    def temporary_redirect(self, url_part: str) -> Iterator[bytes]:
+        return temporary_redirect(self.request, self.start_response, url_part)
 
     def see_other(self, url_part: str) -> Iterator[bytes]:
         return see_other(self.request, self.start_response, url_part)

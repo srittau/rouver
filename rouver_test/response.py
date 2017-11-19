@@ -1,15 +1,15 @@
+from collections import Iterator
 from http import HTTPStatus
 from json import loads as json_decode
 from unittest import TestCase
 
-from asserts import assert_equal, assert_is_instance
-from collections import Iterator
+from asserts import assert_equal, assert_is_instance, assert_in
 
 from werkzeug.wrappers import Request
 
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other, \
-    created_as_json
+    created_as_json, temporary_redirect
 
 from rouver_test.util import TestingStartResponse, default_environment
 
@@ -198,6 +198,37 @@ class CreatedAsJSONTest(TestCase):
         assert_equal({"foo": 3}, json)
 
 
+class TemporaryRedirectTest(TestCase):
+
+    def setUp(self) -> None:
+        self.environment = default_environment()
+        self.start_request = TestingStartResponse()
+
+    def test_headers(self) -> None:
+        self.environment["SERVER_NAME"] = "www.example.com"
+        request = Request(self.environment)
+        temporary_redirect(request, self.start_request, "/foo/bar")
+        self.start_request.assert_status(HTTPStatus.TEMPORARY_REDIRECT)
+        self.start_request.assert_header_equals(
+            "Content-Type", "text/html; charset=utf-8")
+        self.start_request.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar")
+
+    def test_url_without_leading_slash(self) -> None:
+        self.environment["SERVER_NAME"] = "www.example.com"
+        request = Request(self.environment)
+        temporary_redirect(request, self.start_request, "foo/bar")
+        self.start_request.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar")
+
+    def test_html(self) -> None:
+        request = Request(self.environment)
+        response = temporary_redirect(request, self.start_request, "foo/bar")
+        html = b"".join(response).decode("utf-8")
+        assert html.startswith("<!DOCTYPE html>")
+        assert_in("http://www.example.com/foo/bar", html)
+
+
 class SeeOtherTest(TestCase):
 
     def setUp(self) -> None:
@@ -226,6 +257,7 @@ class SeeOtherTest(TestCase):
         response = see_other(request, self.start_request, "foo/bar")
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
+        assert_in("http://www.example.com/foo/bar", html)
 
     def test_return_value_is_iterator(self) -> None:
         request = Request(self.environment)

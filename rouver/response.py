@@ -4,7 +4,8 @@ from typing import Union, Any, Iterator, Sequence
 
 from werkzeug.wrappers import Request
 
-from rouver.html import created_at_page, see_other_page
+from rouver.html import created_at_page, see_other_page, \
+    temporary_redirect_page
 from rouver.status import status_line
 from rouver.types import StartResponse, Header
 
@@ -12,11 +13,14 @@ from rouver.types import StartResponse, Header
 _JSON_HEADER = ("Content-Type", "application/json; charset=utf-8")
 
 
-def _location_header(request: Request, url_part: str) -> Header:
+def _absolute_url(request: Request, url_part: str) -> str:
     if url_part.startswith("/"):
         url_part = url_part[1:]
-    url = request.host_url + url_part
-    return "Location", url
+    return request.host_url + url_part
+
+
+def _location_header(request: Request, url_part: str) -> Header:
+    return "Location", _absolute_url(request, url_part)
 
 
 def respond(start_response: StartResponse, *,
@@ -101,7 +105,7 @@ def created_at(request: Request, start_response: StartResponse,
     a simple HTML body.
     """
 
-    url = request.host_url + url_part
+    url = _absolute_url(request, url_part)
     html = created_at_page(url)
     return respond_with_html(
         start_response, html, status=HTTPStatus.CREATED,
@@ -120,11 +124,21 @@ def created_as_json(request: Request, start_response: StartResponse,
         ])
 
 
+def temporary_redirect(request: Request, start_response: StartResponse,
+                       url_part: str) -> Iterator[bytes]:
+    url = _absolute_url(request, url_part)
+    html = temporary_redirect_page(url)
+    return respond_with_html(
+        start_response, html, status=HTTPStatus.TEMPORARY_REDIRECT,
+        extra_headers=[
+            _location_header(request, url_part),
+        ])
+
+
 def see_other(request: Request, start_response: StartResponse,
               url_part: str) -> Iterator[bytes]:
-    if url_part.startswith("/"):
-        url_part = url_part[1:]
-    url = request.host_url + url_part
+    url = _absolute_url(request, url_part)
     html = see_other_page(url)
-    return respond_with_html(start_response, html, status=HTTPStatus.SEE_OTHER,
-                             extra_headers=[("Location", url)])
+    return respond_with_html(
+        start_response, html, status=HTTPStatus.SEE_OTHER,
+        extra_headers=[_location_header(request, url_part)])

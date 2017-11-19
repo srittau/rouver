@@ -4,8 +4,10 @@ News in rouver 0.4.2
 API Additions
 -------------
 
-* ``rouver.handler``: Add ``RouteHandlerBase.created_as_json()``.
-* ``rouver.response``: Add ``created_as_json()``.
+* ``rouver.handler``: Add ``RouteHandlerBase.temporary_redirect()`` and
+  ``created_as_json()``.
+* ``rouver.html``: Add ``temporary_redirect_page()``.
+* ``rouver.response``: Add ``temporary_redirect`` and ``created_as_json()``.
 
 Bug Fixes
 ---------
