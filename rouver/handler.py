@@ -6,7 +6,8 @@ from werkzeug.wrappers import Request
 
 from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
 from rouver.response import \
-    respond, respond_with_json, respond_with_html, created_at, see_other
+    respond, respond_with_json, respond_with_html, created_at, see_other, \
+    created_as_json
 from rouver.types import StartResponse, Header
 
 
@@ -67,6 +68,11 @@ class RouteHandlerBase(collections.Iterable):
 
     def created_at(self, url_part: str) -> Iterator[bytes]:
         return created_at(self.request, self.start_response, url_part)
+
+    def created_as_json(self, url_part: str, json: Union[str, bytes, Any]) \
+            -> Iterator[bytes]:
+        return created_as_json(
+            self.request, self.start_response, url_part, json)
 
     def see_other(self, url_part: str) -> Iterator[bytes]:
         return see_other(self.request, self.start_response, url_part)

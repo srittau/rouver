@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from json import loads as json_decode
 from unittest import TestCase
 
 from asserts import assert_equal, assert_is_instance
@@ -7,7 +8,8 @@ from collections import Iterator
 from werkzeug.wrappers import Request
 
 from rouver.response import \
-    respond, respond_with_json, respond_with_html, created_at, see_other
+    respond, respond_with_json, respond_with_html, created_at, see_other, \
+    created_as_json
 
 from rouver_test.util import TestingStartResponse, default_environment
 
@@ -162,6 +164,38 @@ class CreatedAtTest(TestCase):
         request = Request(self.environment)
         response = created_at(request, self.start_request, "foo/bar")
         assert_is_instance(response, Iterator)
+
+
+class CreatedAsJSONTest(TestCase):
+
+    def setUp(self) -> None:
+        self.environment = default_environment()
+        self.start_request = TestingStartResponse()
+
+    def test_headers(self) -> None:
+        self.environment["SERVER_NAME"] = "www.example.com"
+        request = Request(self.environment)
+        created_as_json(request, self.start_request, "/foo/bar", {})
+        self.start_request.assert_status(HTTPStatus.CREATED)
+        self.start_request.assert_header_equals(
+            "Content-Type", "application/json; charset=utf-8")
+        self.start_request.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar")
+
+    def test_url_without_leading_slash(self) -> None:
+        self.environment["SERVER_NAME"] = "www.example.com"
+        request = Request(self.environment)
+        created_as_json(request, self.start_request, "foo/bar", {})
+        self.start_request.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar")
+
+    def test_json(self) -> None:
+        request = Request(self.environment)
+        response = created_as_json(request, self.start_request, "foo/bar", {
+            "foo": 3,
+        })
+        json = json_decode(b"".join(response).decode("utf-8"))
+        assert_equal({"foo": 3}, json)
 
 
 class SeeOtherTest(TestCase):

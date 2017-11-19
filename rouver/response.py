@@ -9,6 +9,16 @@ from rouver.status import status_line
 from rouver.types import StartResponse, Header
 
 
+_JSON_HEADER = ("Content-Type", "application/json; charset=utf-8")
+
+
+def _location_header(request: Request, url_part: str) -> Header:
+    if url_part.startswith("/"):
+        url_part = url_part[1:]
+    url = request.host_url + url_part
+    return "Location", url
+
+
 def respond(start_response: StartResponse, *,
             status: HTTPStatus = HTTPStatus.OK,
             extra_headers: Sequence[Header] = []) -> Iterator[bytes]:
@@ -50,9 +60,7 @@ def respond_with_json(start_response: StartResponse,
     """
 
     sl = status_line(status)
-    headers = \
-        [("Content-Type", "application/json; charset=utf-8")] + \
-        list(extra_headers)
+    headers = [_JSON_HEADER] + list(extra_headers)
     start_response(sl, headers)
     if isinstance(json, bytes):
         encoded = json
@@ -87,14 +95,29 @@ def respond_with_html(start_response: StartResponse, html: str, *,
 def created_at(request: Request, start_response: StartResponse,
                url_part: str) -> Iterator[bytes]:
 
-    """Prepare a 201 Created WSGI response with a Location header."""
+    """Prepare a 201 Created WSGI response with a Location header.
 
-    if url_part.startswith("/"):
-        url_part = url_part[1:]
+    The default content-type is "text/html" and the return value generates
+    a simple HTML body.
+    """
+
     url = request.host_url + url_part
     html = created_at_page(url)
-    return respond_with_html(start_response, html, status=HTTPStatus.CREATED,
-                             extra_headers=[("Location", url)])
+    return respond_with_html(
+        start_response, html, status=HTTPStatus.CREATED,
+        extra_headers=[_location_header(request, url_part)])
+
+
+def created_as_json(request: Request, start_response: StartResponse,
+                    url_part: str, json: Union[str, bytes, Any]) \
+        -> Iterator[bytes]:
+    """Prepare a 201 Created WSGI response with a Location header and JSON body.
+    """
+
+    return respond_with_json(
+        start_response, json, status=HTTPStatus.CREATED, extra_headers=[
+            _location_header(request, url_part),
+        ])
 
 
 def see_other(request: Request, start_response: StartResponse,

@@ -1,6 +1,12 @@
 News in rouver 0.4.2
 ====================
 
+API Additions
+-------------
+
+* ``rouver.handler``: Add ``RouteHandlerBase.created_as_json()``.
+* ``rouver.response``: Add ``created_as_json()``.
+
 Bug Fixes
 ---------
 
