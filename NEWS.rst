@@ -1,6 +1,11 @@
 News in rouver 0.4.3
 ====================
 
+Bug Fixes
+---------
+
+* ``rouver.response``: Quote non-UTF-8 URLs correctly in Location headers.
+
 News in rouver 0.4.2
 ====================
 

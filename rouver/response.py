@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from json import dumps as dumps_json
 from typing import Union, Any, Iterator, Sequence
+from urllib.parse import quote
 
 from werkzeug.wrappers import Request
 
@@ -16,7 +17,7 @@ _JSON_HEADER = ("Content-Type", "application/json; charset=utf-8")
 def _absolute_url(request: Request, url_part: str) -> str:
     if url_part.startswith("/"):
         url_part = url_part[1:]
-    return request.host_url + url_part
+    return request.host_url + quote(url_part)
 
 
 def _location_header(request: Request, url_part: str) -> Header:
