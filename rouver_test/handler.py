@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Type
+from typing import Type, Iterator
 from unittest import TestCase
 
 from asserts import assert_is, assert_equal
@@ -28,7 +28,7 @@ class RouteHandlerBaseTest(TestCase):
 
     def test_respond(self) -> None:
         class TestingHandler(RouteHandlerBase):
-            def __iter__(self):
+            def __iter__(self) -> Iterator[bytes]:
                 return self.respond()
         response = self.call_handler(TestingHandler)
         self.start_response.assert_status(HTTPStatus.OK)

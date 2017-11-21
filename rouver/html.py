@@ -49,7 +49,7 @@ def bad_arguments_list(arguments: BadArgumentsDict) -> str:
     if not arguments:
         return ""
 
-    def format_item(name, error):
+    def format_item(name: str, error: str) -> str:
         return """    <li class="argument">
         <span class="argument-name">{name}</span>:
         <span class="error-message">{error}</span>

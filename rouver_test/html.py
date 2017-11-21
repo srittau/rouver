@@ -71,11 +71,11 @@ class HTTPStatusPageTest(TestCase):
 
 class BadArgumentsListTest(TestCase):
 
-    def test_empty_dict(self):
+    def test_empty_dict(self) -> None:
         html = bad_arguments_list({})
         assert_equal("", html)
 
-    def test_one_item(self):
+    def test_one_item(self) -> None:
         html = bad_arguments_list({"foo": "bar"})
         assert_equal("""<ul class="bad-arguments">
     <li class="argument">
@@ -85,7 +85,7 @@ class BadArgumentsListTest(TestCase):
 </ul>
 """, html)
 
-    def test_multiple_items_alphabetically(self):
+    def test_multiple_items_alphabetically(self) -> None:
         html = bad_arguments_list({
             "def": "error 1",
             "abc": "error 2",

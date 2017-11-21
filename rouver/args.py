@@ -64,6 +64,8 @@ class CGIFileArgument(FileArgument):
     def __init__(self, value: cgi.FieldStorage) -> None:
         content_type = value.headers.get(
             "content-type", "application/octet-stream").split(";")[0]
+        assert value.file is not None
+        assert value.filename is not None
         super().__init__(value.file, value.filename, content_type)
         # We keep a reference to the FieldStorage around, otherwise the
         # file will get closed in FieldStorage.__del__().
@@ -188,6 +190,7 @@ class _FunctionValueParser(_ValueParserWrapper):
             raise _ArgumentError(str(exc)) from exc
 
     def parse_from_file(self, value: cgi.FieldStorage) -> Any:
+        assert value.file is not None
         content = value.file.read()
         decoded = \
             content.decode("utf-8") if isinstance(content, bytes) else content

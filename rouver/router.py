@@ -174,7 +174,7 @@ class _RouteMatcher:
         else:
             self.matches = self._match_parts()
 
-    def _do_path_and_tmpl_differ_in_length(self):
+    def _do_path_and_tmpl_differ_in_length(self) -> bool:
         return len(self._handler.path) != len(self._path)
 
     def _match_parts(self) -> bool:

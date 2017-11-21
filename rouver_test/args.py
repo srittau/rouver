@@ -57,7 +57,7 @@ class ParseArgsTest(TestCase):
 
     def setup_multipart_file_request(
             self, name: str, filename: str, file_content: str,
-            content_type) -> None:
+            content_type: str) -> None:
         self.env["CONTENT_TYPE"] = \
             "multipart/form-data; boundary=1234567890"
         body = MULTIPART_FILE_BODY_TMPL.format(

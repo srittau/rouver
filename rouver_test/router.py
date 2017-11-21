@@ -16,21 +16,23 @@ from rouver.types import StartResponse
 from rouver_test.util import TestingStartResponse, default_environment
 
 
-def handle_success(_, __, start_response: StartResponse) \
+def handle_success(
+        _: Request, __: Sequence[str], start_response: StartResponse) \
         -> Iterable[bytes]:
     start_response("200 OK", [])
     return [b""]
 
 
 def handle_empty_path(
-        _, path: Sequence[str], start_response: StartResponse) \
+        _: Request, path: Sequence[str], start_response: StartResponse) \
         -> Iterable[bytes]:
     assert_equal([], path)
     start_response("200 OK", [])
     return [b""]
 
 
-def fail_if_called(_, __, ___) -> Iterable[bytes]:
+def fail_if_called(_: Request, __: Sequence[str], ___: StartResponse) \
+        -> Iterable[bytes]:
     raise AssertionError("handler should not be called")
 
 
@@ -71,7 +73,8 @@ class RouterTest(TestCase):
 """, html)
 
     def test_handler_request(self) -> None:
-        def handle(request: Request, _, start_response):
+        def handle(request: Request, _: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
             assert_equal("test.example.com", request.host)
             start_response("200 OK", [])
             return [b""]
@@ -154,7 +157,8 @@ class RouterTest(TestCase):
             ])
 
     def test_template(self) -> None:
-        def handle(_, path, start_response):
+        def handle(_: Request, path: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["xyzxyz"], path)
             start_response("200 OK", [])
             return [b""]
@@ -173,12 +177,13 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_multiple_templates(self) -> None:
-        def handle(_, path, start_response):
+        def handle(_: Request, path: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["xyz", 123], path)
             start_response("200 OK", [])
             return [b""]
 
-        def handle_path(_, paths: Sequence[Any], __) -> int:
+        def handle_path(_: Request, paths: Sequence[Any], __: str) -> int:
             assert_equal(["xyz"], paths)
             return 123
         self.router.add_template_handler("handler1", lambda _, __, ___: "xyz")
@@ -191,7 +196,7 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_template_value_error(self) -> None:
-        def raise_value_error(_, __, ___):
+        def raise_value_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise ValueError()
         self.router.add_template_handler("handler", raise_value_error)
 
@@ -204,7 +209,7 @@ class RouterTest(TestCase):
     def test_template_call_once_per_value(self) -> None:
         calls = 0
 
-        def increase_count(_, __, ___):
+        def increase_count(_: Request, __: Sequence[str], ___: str) -> None:
             nonlocal calls
             calls += 1
         self.router.add_template_handler("handler", increase_count)
@@ -219,7 +224,7 @@ class RouterTest(TestCase):
     def test_template_call_twice_for_differing_values(self) -> None:
         calls = 0
 
-        def increase_count(_, __, ___):
+        def increase_count(_: Request, __: Sequence[str], ___: str) -> None:
             nonlocal calls
             calls += 1
         self.router.add_template_handler("handler", increase_count)
@@ -234,7 +239,7 @@ class RouterTest(TestCase):
     # Error Handling
 
     def test_template_key_error_with_error_handling(self) -> None:
-        def raise_key_error(_, __, ___):
+        def raise_key_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise KeyError()
         self.router.add_template_handler("handler", raise_key_error)
 
@@ -246,7 +251,7 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.INTERNAL_SERVER_ERROR)
 
     def test_template_key_error_without_error_handling(self) -> None:
-        def raise_key_error(_, __, ___):
+        def raise_key_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise KeyError()
         self.router.add_template_handler("handler", raise_key_error)
 
@@ -258,7 +263,8 @@ class RouterTest(TestCase):
             self.handle_wsgi("GET", "/foo/xyz/bar")
 
     def test_handler_key_error_with_error_handling(self) -> None:
-        def handle(_, __, ___):
+        def handle(_: Request, __: Sequence[str], ___: StartResponse) \
+                -> Iterable[bytes]:
             raise KeyError()
 
         self.router.error_handling = True
@@ -269,7 +275,8 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.INTERNAL_SERVER_ERROR)
 
     def test_handler_key_error_without_error_handling(self) -> None:
-        def handle(_, __, ___):
+        def handle(_: Request, __: Sequence[str], ___: StartResponse) \
+                -> Iterable[bytes]:
             raise KeyError()
 
         self.router.add_routes([
@@ -280,7 +287,8 @@ class RouterTest(TestCase):
             self.handle_wsgi("GET", "/foo")
 
     def test_http_error(self) -> None:
-        def handle(_, __, ___):
+        def handle(_: Request, __: Sequence[str], ___: StartResponse) \
+                -> Iterable[bytes]:
             raise Conflict()
 
         self.router.error_handling = False
@@ -303,7 +311,8 @@ class RouterTest(TestCase):
 """, html)
 
     def test_arguments_error(self) -> None:
-        def handle(_, __, ___):
+        def handle(_: Request, __: Sequence[str], ___: StartResponse) \
+                -> Iterable[bytes]:
             raise ArgumentsError({"foo": "bar"})
 
         self.router.add_routes([
