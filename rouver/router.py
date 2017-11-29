@@ -68,6 +68,8 @@ _pattern_re = re.compile(r"^{(.*)}$")
 def _parse_route_template_part(
         part: str, template_handlers: _TemplateHandlerDict) \
         -> _RouteTemplatePart:
+    if part == "*":
+        raise ValueError("wildcard not at end of path")
     m = _pattern_re.match(part)
     if m:
         name = m.group(1)
@@ -83,17 +85,25 @@ class _RouteHandler:
 
     def __init__(self, route: RouteDescription,
                  template_handlers: _TemplateHandlerDict) -> None:
-        self.path = self._parse_path(route[0], template_handlers)
+        self.path, self.wildcard = \
+            self._parse_path(route[0], template_handlers)
         self.method = route[1]
         self.handler = route[2]
 
     @staticmethod
     def _parse_path(path_string: str,
                     template_handlers: _TemplateHandlerDict) \
-            -> List[_RouteTemplatePart]:
+            -> Tuple[List[_RouteTemplatePart], bool]:
         parts = _split_path(path_string)
-        return [_parse_route_template_part(part, template_handlers)
-                for part in parts]
+        if parts and parts[-1] == "*":
+            parts = parts[:-1]
+            wildcard = True
+        else:
+            wildcard = False
+        templates = [
+            _parse_route_template_part(part, template_handlers)
+            for part in parts]
+        return templates, wildcard
 
 
 def _dispatch(request: Request, start_response: StartResponse,
@@ -175,7 +185,10 @@ class _RouteMatcher:
             self.matches = self._match_parts()
 
     def _do_path_and_tmpl_differ_in_length(self) -> bool:
-        return len(self._handler.path) != len(self._path)
+        if self._handler.wildcard:
+            return len(self._handler.path) > len(self._path)
+        else:
+            return len(self._handler.path) != len(self._path)
 
     def _match_parts(self) -> bool:
         for tmpl_part, path_part in self._path_compare_iter():
@@ -190,6 +203,11 @@ class _RouteMatcher:
                 except ValueError:
                     return False
                 self.path_args.append(arg)
+            else:
+                raise AssertionError("unhandled template type")
+        if self._handler.wildcard:
+            remaining_path = [""] + self._path[len(self._handler.path):]
+            self.path_args.append("/".join(remaining_path))
         return True
 
     def _path_compare_iter(self) -> Iterator[Tuple[_RouteTemplatePart, str]]:

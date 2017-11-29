@@ -1,6 +1,11 @@
 News in rouver 0.4.4
 ====================
 
+API Additions
+-------------
+
+* ``rouver.router``: Support wildcard paths.
+
 News in rouver 0.4.3
 ====================
 
