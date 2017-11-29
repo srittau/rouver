@@ -236,6 +236,81 @@ class RouterTest(TestCase):
         self.handle_wsgi("GET", "/foo/xyz/baz")
         assert_equal(2, calls)
 
+    # Wildcard Paths
+
+    def test_wildcard_path__no_trailing_slash(self) -> None:
+        def handle(_: Request, path: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
+            assert_equal([""], path)
+            start_response("200 OK", [])
+            return [b""]
+
+        self.router.add_routes([
+            ("foo/bar/*", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_wildcard_path__with_trailing_slash(self) -> None:
+        def handle(_: Request, path: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
+            assert_equal(["/"], path)
+            start_response("200 OK", [])
+            return [b""]
+
+        self.router.add_routes([
+            ("foo/bar/*", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/bar/")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_wildcard_path__additional_path(self) -> None:
+        def handle(_: Request, path: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
+            assert_equal(["/abc/def"], path)
+            start_response("200 OK", [])
+            return [b""]
+
+        self.router.add_routes([
+            ("foo/bar/*", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/bar/abc/def")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_wildcard_path__with_template(self) -> None:
+        def handle(_: Request, path: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
+            assert_equal(["value", "/abc/def"], path)
+            start_response("200 OK", [])
+            return [b""]
+
+        self.router.add_template_handler("bar", lambda *args: "value")
+        self.router.add_routes([
+            ("foo/{bar}/*", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/unknown/abc/def")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_wildcard_path__too_short(self) -> None:
+        self.router.add_routes([
+            ("foo/bar/*", "GET", handle_success),
+        ])
+        self.handle_wsgi("GET", "/foo")
+        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+
+    def test_wildcard_path__does_not_match(self) -> None:
+        self.router.add_routes([
+            ("foo/bar/*", "GET", handle_success),
+        ])
+        self.handle_wsgi("GET", "/foo/wrong")
+        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+
+    def test_wildcard_path__not_at_end(self) -> None:
+        with assert_raises(ValueError):
+            self.router.add_routes([
+                ("foo/*/bar", "GET", handle_success),
+            ])
+
     # Error Handling
 
     def test_template_key_error_with_error_handling(self) -> None:
