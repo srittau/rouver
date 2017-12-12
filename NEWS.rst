@@ -6,6 +6,8 @@ API-Incompatible Changes
 
 * ``rouver.handler``: Redesign RouteHandlerBase API. Implementation must now
   implement ``prepare_response()`` instead of ``__iter__()``.
+* ``rouver.handler``: All response methods now return an iterable instead
+  of an iterator.
 
 News in rouver 0.4.5
 ====================

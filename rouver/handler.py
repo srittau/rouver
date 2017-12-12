@@ -52,13 +52,13 @@ class RouteHandlerBase(collections.Iterable):
                           argument_template)
 
     def respond(self, extra_headers: Sequence[Header] = []) \
-            -> Iterator[bytes]:
+            -> Iterable[bytes]:
         return respond(self.start_response, extra_headers=extra_headers)
 
     def respond_with_json(
             self, json: Union[str, bytes, Any], *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: Sequence[Header] = []) -> Iterator[bytes]:
+            extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
         return respond_with_json(
             self.start_response, json,
             status=status, extra_headers=extra_headers)
@@ -66,21 +66,21 @@ class RouteHandlerBase(collections.Iterable):
     def respond_with_html(
             self, html: str, *, status: HTTPStatus = HTTPStatus.OK,
             extra_headers: Sequence[Header] = []) \
-            -> Iterator[bytes]:
+            -> Iterable[bytes]:
         return respond_with_html(
             self.start_response, html,
             status=status, extra_headers=extra_headers)
 
-    def created_at(self, url_part: str) -> Iterator[bytes]:
+    def created_at(self, url_part: str) -> Iterable[bytes]:
         return created_at(self.request, self.start_response, url_part)
 
     def created_as_json(self, url_part: str, json: Union[str, bytes, Any]) \
-            -> Iterator[bytes]:
+            -> Iterable[bytes]:
         return created_as_json(
             self.request, self.start_response, url_part, json)
 
-    def temporary_redirect(self, url_part: str) -> Iterator[bytes]:
+    def temporary_redirect(self, url_part: str) -> Iterable[bytes]:
         return temporary_redirect(self.request, self.start_response, url_part)
 
-    def see_other(self, url_part: str) -> Iterator[bytes]:
+    def see_other(self, url_part: str) -> Iterable[bytes]:
         return see_other(self.request, self.start_response, url_part)
