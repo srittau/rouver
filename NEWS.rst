@@ -4,6 +4,9 @@ News in rouver 0.5.0
 API-Incompatible Changes
 ------------------------
 
+* ``rouver.handler``: RouteHandlerBase is now an ordinary WSGI application.
+  It takes an WSGI environment and a start response handler as constructor
+  arguments.
 * ``rouver.handler``: Redesign RouteHandlerBase API. Implementations must now
   implement ``prepare_response()`` instead of ``__iter__()``.
 * ``rouver.handler``: All response methods now return an iterable instead

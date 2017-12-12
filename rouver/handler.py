@@ -8,7 +8,7 @@ from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other, \
     created_as_json, temporary_redirect
-from rouver.types import StartResponse, Header
+from rouver.types import StartResponse, Header, WSGIEnvironment
 
 
 class RouteHandlerBase(collections.Iterable):
@@ -33,9 +33,9 @@ class RouteHandlerBase(collections.Iterable):
     ...         ])
     """
 
-    def __init__(self, request: Request, _: Sequence[Any],
+    def __init__(self, environ: WSGIEnvironment,
                  start_response: StartResponse) -> None:
-        self.request = request
+        self.request = Request(environ)
         self.start_response = start_response
         self._response = self.prepare_response()
 
