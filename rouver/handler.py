@@ -49,6 +49,13 @@ class RouteHandlerBase(collections.Iterable):
             return []
         return path_args
 
+    @property
+    def wildcard_path(self) -> str:
+        path = self.request.environ.get("rouver.wildcard_path")
+        if not isinstance(path, str):
+            return ""
+        return path
+
     def prepare_response(self) -> Iterable[bytes]:
         raise NotImplementedError()
 

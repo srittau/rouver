@@ -49,6 +49,20 @@ class RouteHandlerBaseTest(TestCase):
         handler = TestingHandler(self.request, [], self.start_response)
         assert_equal([], handler.path_args)
 
+    def test_wildcard_path__from_environment(self) -> None:
+        self.request.environ["rouver.wildcard_path"] = "/foo/bar"
+        handler = TestingHandler(self.request, [], self.start_response)
+        assert_equal("/foo/bar", handler.wildcard_path)
+
+    def test_wildcard_path__default(self) -> None:
+        handler = TestingHandler(self.request, [], self.start_response)
+        assert_equal("", handler.wildcard_path)
+
+    def test_wildcard_path__not_a_string(self) -> None:
+        self.request.environ["rouver.wildcard_path"] = b"not-a-str"
+        handler = TestingHandler(self.request, [], self.start_response)
+        assert_equal("", handler.wildcard_path)
+
     def test_respond(self) -> None:
         TestingHandler.response = [b"foo", b"bar"]
         response = self.call_handler(TestingHandler)

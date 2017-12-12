@@ -16,6 +16,7 @@ API-Incompatible Changes
 API Additions
 -------------
 
+* ``rouver.handler``: Add ``RouterHandlerBase.wildcard_path``.
 * ``rouver.router``: Add a field ``rouver.path_args`` to the WSGI environment
   that contains the path arguments formerly passed to route handlers as the
   second argument. The wildcard path is not added to this field.
