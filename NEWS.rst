@@ -8,6 +8,8 @@ API-Incompatible Changes
   implement ``prepare_response()`` instead of ``__iter__()``.
 * ``rouver.handler``: All response methods now return an iterable instead
   of an iterator.
+* ``rouver.handler``: ``RouteHandlerBase.path_args`` is now acquired from the
+  WSGI environment and will not contain the wildcard path.
 * ``rouver.response``: All response functions now return an iterable instead
   of an iterator.
 

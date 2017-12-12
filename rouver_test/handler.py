@@ -11,6 +11,15 @@ from rouver.handler import RouteHandlerBase
 from rouver_test.util import default_environment, TestingStartResponse
 
 
+class TestingHandler(RouteHandlerBase):
+
+    response = []  # type: Iterable[bytes]
+
+    def prepare_response(self) -> Iterable[bytes]:
+        self.respond()
+        return self.response
+
+
 class RouteHandlerBaseTest(TestCase):
 
     def setUp(self) -> None:
@@ -22,19 +31,26 @@ class RouteHandlerBaseTest(TestCase):
         return b"".join(handler)
 
     def test_attributes(self) -> None:
-        class TestingHandler(RouteHandlerBase):
-            def prepare_response(self) -> Iterable[bytes]:
-                pass
-        handler = TestingHandler(self.request, ["foo"], self.start_response)
+        handler = TestingHandler(self.request, [], self.start_response)
         assert_is(self.request, handler.request)
-        assert_equal(["foo"], handler.path_args)
         assert_is(self.start_response, handler.start_response)
 
+    def test_path_args__from_environment(self) -> None:
+        self.request.environ["rouver.path_args"] = ["foo"]
+        handler = TestingHandler(self.request, [], self.start_response)
+        assert_equal(["foo"], handler.path_args)
+
+    def test_path_args__default(self) -> None:
+        handler = TestingHandler(self.request, [], self.start_response)
+        assert_equal([], handler.path_args)
+
+    def test_path_args__not_a_list(self) -> None:
+        self.request.environ["rouver.path_args"] = "not-a-list"
+        handler = TestingHandler(self.request, [], self.start_response)
+        assert_equal([], handler.path_args)
+
     def test_respond(self) -> None:
-        class TestingHandler(RouteHandlerBase):
-            def prepare_response(self) -> Iterable[bytes]:
-                self.respond()
-                return [b"foo", b"bar"]
+        TestingHandler.response = [b"foo", b"bar"]
         response = self.call_handler(TestingHandler)
         self.start_response.assert_status(HTTPStatus.OK)
         assert_equal(b"foobar", response)
