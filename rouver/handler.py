@@ -1,6 +1,7 @@
 import collections
 from http import HTTPStatus
 from typing import cast, Any, Union, Iterator, Sequence, Dict, Iterable, List
+from urllib.parse import unquote
 
 from werkzeug.wrappers import Request
 
@@ -54,7 +55,7 @@ class RouteHandlerBase(collections.Iterable):
         path = self.request.environ.get("rouver.wildcard_path")
         if not isinstance(path, str):
             return ""
-        return path
+        return unquote(path)
 
     def prepare_response(self) -> Iterable[bytes]:
         raise NotImplementedError()
