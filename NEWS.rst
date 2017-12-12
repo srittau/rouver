@@ -17,6 +17,8 @@ API Additions
 * ``rouver.router``: Add a field ``rouver.path_args`` to the WSGI environment
   that contains the path arguments formerly passed to route handlers as the
   second argument. The wildcard path is not added to this field.
+* ``rouver.router``: Add a field ``rouver.wildcard_path`` to the WSGI
+  environment that contains the wildcard path or the empty string.
 
 News in rouver 0.4.5
 ====================

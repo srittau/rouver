@@ -263,11 +263,25 @@ class RouterTest(TestCase):
 
     # Wildcard Paths
 
+    def test_no_wildcard_path(self) -> None:
+        def handle(request: Request, _: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
+            assert_equal("", request.environ["rouver.wildcard_path"])
+            start_response("200 OK", [])
+            return [b""]
+
+        self.router.add_routes([
+            ("foo/bar", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
     def test_wildcard_path__no_trailing_slash(self) -> None:
         def handle(request: Request, path: Sequence[str],
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal([""], path)
             assert_equal([], request.environ["rouver.path_args"])
+            assert_equal("", request.environ["rouver.wildcard_path"])
             start_response("200 OK", [])
             return [b""]
 
@@ -282,6 +296,7 @@ class RouterTest(TestCase):
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["/"], path)
             assert_equal([], request.environ["rouver.path_args"])
+            assert_equal("/", request.environ["rouver.wildcard_path"])
             start_response("200 OK", [])
             return [b""]
 
@@ -296,6 +311,7 @@ class RouterTest(TestCase):
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["/abc/def"], path)
             assert_equal([], request.environ["rouver.path_args"])
+            assert_equal("/abc/def", request.environ["rouver.wildcard_path"])
             start_response("200 OK", [])
             return [b""]
 
@@ -310,6 +326,7 @@ class RouterTest(TestCase):
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["value", "/abc/def"], path)
             assert_equal(["value"], request.environ["rouver.path_args"])
+            assert_equal("/abc/def", request.environ["rouver.wildcard_path"])
             start_response("200 OK", [])
             return [b""]
 

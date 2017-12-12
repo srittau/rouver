@@ -304,6 +304,7 @@ class _RouteMatcher(_MatcherBase):
     def call(self, request: Request, start_response: StartResponse) \
             -> Iterable[bytes]:
         request.environ["rouver.path_args"] = self.path_args
+        request.environ["rouver.wildcard_path"] = self.remaining_path
         if self._match_full_path:
             pa = self.path_args
         else:
