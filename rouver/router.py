@@ -67,7 +67,7 @@ class Router:
 
         The following router will handle a route "/foo/sub":
 
-        >>> def handle_sub(_, __, start_response):
+        >>> def handle_sub(_, start_response):
         ...     start_response("200 OK", [])
         ...     return []
         >>> sub = Router()
@@ -86,7 +86,7 @@ class Router:
         Sub routers are matched after regular paths. This allows you to
         override selected paths in the super router:
 
-        >>> def redirect(_, __, sr):
+        >>> def redirect(_, sr):
         ...     sr("307 Temporary Redirect",
         ...        [("Location", "https://www.example.com/")])
         ...     return []
@@ -198,7 +198,7 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
 
     def call_handler(matcher: _RouteMatcher) -> Iterable[bytes]:
         try:
-            return matcher.call(request, start_response)
+            return matcher.call(environment, start_response)
         except ArgumentsError as exc:
             return _respond_arguments_error(start_response, exc.arguments)
         except HTTPException as exc:
@@ -217,7 +217,7 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
         raise NotFound()
 
     def call_sub_router(matcher: _SubRouterMatcher) -> Iterable[bytes]:
-        new_environ = cast(Dict[str, Any], request.environ).copy()
+        new_environ = environment.copy()
         new_environ["PATH_INFO"] = matcher.remaining_path
         return matcher.call(new_environ, start_response)
 
@@ -301,15 +301,11 @@ class _RouteMatcher(_MatcherBase):
         self.method = handler.method
         self._handler = handler.handler
 
-    def call(self, request: Request, start_response: StartResponse) \
+    def call(self, environ: WSGIEnvironment, start_response: StartResponse) \
             -> Iterable[bytes]:
-        request.environ["rouver.path_args"] = self.path_args
-        request.environ["rouver.wildcard_path"] = self.remaining_path
-        if self._match_full_path:
-            pa = self.path_args
-        else:
-            pa = self.path_args + [self.remaining_path]
-        return self._handler(request, pa, start_response)
+        environ["rouver.path_args"] = self.path_args
+        environ["rouver.wildcard_path"] = self.remaining_path
+        return self._handler(environ, start_response)
 
 
 class _SubRouterMatcher(_MatcherBase):

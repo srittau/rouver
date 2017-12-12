@@ -15,6 +15,10 @@ API-Incompatible Changes
   WSGI environment and will not contain the wildcard path.
 * ``rouver.response``: All response functions now return an iterable instead
   of an iterator.
+* ``rouver.router``: ``add_routes()`` now requires a regular WSGI
+  application instead of a route handler.
+* ``rouver.types``: Remove ``RouteHandler``. ``RouteDescription`` now expects
+  an ``WSGIApplication`` in the third field.
 
 API Additions
 -------------
