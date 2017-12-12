@@ -1,6 +1,11 @@
 News in rouver 0.4.5
 ====================
 
+API Additions
+-------------
+
+* ``rouver.router``: Support sub-routers.
+
 News in rouver 0.4.4
 ====================
 

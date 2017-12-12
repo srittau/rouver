@@ -11,7 +11,8 @@ from werkzeug.wrappers import Request
 
 from rouver.exceptions import ArgumentsError
 from rouver.router import Router, LOGGER_NAME
-from rouver.types import StartResponse
+from rouver.types import StartResponse, WSGIEnvironment, WSGIResponse, \
+    RouteHandler
 
 from rouver_test.util import TestingStartResponse, default_environment
 
@@ -47,6 +48,14 @@ class RouterTest(TestCase):
 
     def disable_logger(self) -> None:
         logging.getLogger(LOGGER_NAME).disabled = True
+
+    def _create_path_checker(self, expected_path: str) -> RouteHandler:
+        def handle(request: Request, __: Sequence[str],
+                   sr: StartResponse) -> Sequence[bytes]:
+            assert_equal(expected_path, request.environ["PATH_INFO"])
+            sr("200 OK", [])
+            return []
+        return handle
 
     def handle_wsgi(self, method: str = "GET", path: str = "/") \
             -> Iterable[bytes]:
@@ -310,6 +319,122 @@ class RouterTest(TestCase):
             self.router.add_routes([
                 ("foo/*/bar", "GET", handle_success),
             ])
+
+    # Sub routers
+
+    def test_sub_router(self) -> None:
+        sub = Router()
+        sub.error_handling = False
+        sub.add_routes([
+            ("sub", "GET", self._create_path_checker("/sub")),
+        ])
+        self.router.add_sub_router("foo/bar", sub)
+        self.handle_wsgi("GET", "/foo/bar/sub")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_sub_router__no_match(self) -> None:
+        sub = Router()
+        sub.error_handling = False
+        sub.add_routes([
+            ("sub", "GET", fail_if_called),
+        ])
+        self.router.add_sub_router("foo", sub)
+        self.handle_wsgi("GET", "/wrong/sub")
+        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+
+    def test_sub_router__base_with_slash(self) -> None:
+        sub = Router()
+        sub.error_handling = False
+        sub.add_routes([
+            ("", "GET", self._create_path_checker("/")),
+        ])
+        self.router.add_sub_router("foo/bar", sub)
+        self.handle_wsgi("GET", "/foo/bar/")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_sub_router__base_without_slash(self) -> None:
+        sub = Router()
+        sub.error_handling = False
+        sub.add_routes([
+            ("", "GET", self._create_path_checker("")),
+        ])
+        self.router.add_sub_router("foo/bar", sub)
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_sub_router__template_in_super_router(self) -> None:
+        def handle_tmpl(_: Request, path: Sequence[str], sr: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal([], path)
+            sr("200 OK", [])
+            return []
+
+        def tmpl(_: Request, path: Sequence[str], v: str) -> str:
+            assert_equal([], path)
+            return v * 2
+
+        sub = Router()
+        sub.error_handling = False
+        sub.add_template_handler("tmpl", tmpl)
+        sub.add_routes([
+            ("sub", "GET", handle_tmpl),
+        ])
+        self.router.add_template_handler("tmpl", tmpl)
+        self.router.add_sub_router("foo/{tmpl}", sub)
+        self.handle_wsgi("GET", "/foo/bar/sub")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_sub_router__template_in_sub_router(self) -> None:
+        def handle_tmpl(_: Request, path: Sequence[str], sr: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal(["xyzxyz"], path)
+            sr("200 OK", [])
+            return []
+
+        def tmpl(_: Request, path: Sequence[str], v: str) -> str:
+            assert_equal([], path)
+            return v * 2
+
+        sub = Router()
+        sub.error_handling = False
+        sub.add_template_handler("tmpl", tmpl)
+        sub.add_routes([
+            ("{tmpl}", "GET", handle_tmpl),
+        ])
+        self.router.add_sub_router("foo/bar", sub)
+        self.handle_wsgi("GET", "/foo/bar/xyz")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_sub_router__path_component(self) -> None:
+        sub = Router()
+        sub.error_handling = False
+        sub.add_routes([
+            ("sub", "GET", handle_success),
+        ])
+        self.router.add_sub_router("foo/bar", sub)
+        self.handle_wsgi("GET", "/foo/barsub")
+        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+
+    def test_sub_router__match_after_other_routes(self) -> None:
+        sub = Router()
+        sub.error_handling = False
+        sub.add_routes([
+            ("sub", "GET", fail_if_called),
+        ])
+        self.router.add_routes([("foo/bar/sub", "GET", handle_success)])
+        self.router.add_sub_router("foo/bar", sub)
+        self.handle_wsgi("GET", "/foo/bar/sub")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_sub_router__accepts_any_wsgi_app(self) -> None:
+        def sub(environ: WSGIEnvironment, sr: StartResponse) -> WSGIResponse:
+            assert_equal("/sub", environ["PATH_INFO"])
+            sr("204 No Content", [])
+            return []
+
+        self.router.add_sub_router("foo/bar", sub)
+        self.handle_wsgi("GET", "/foo/bar/sub")
+        self.start_response.assert_status(HTTPStatus.NO_CONTENT)
 
     # Error Handling
 
