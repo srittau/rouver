@@ -1,6 +1,6 @@
 import collections
 from http import HTTPStatus
-from typing import cast, Any, Union, Iterator, Sequence, Dict
+from typing import cast, Any, Union, Iterator, Sequence, Dict, Iterable
 
 from werkzeug.wrappers import Request
 
@@ -18,12 +18,13 @@ class RouteHandlerBase(collections.Iterable):
     Sub-classes of RouteHandlerBase can act as route handlers. They provide
     convenient, opaque access to several rouver services.
 
-    Implementations must implement the __iter__() method.
+    Implementations must implement the prepare_response() method.
 
     >>> from rouver.router import Router
     >>> class MyRouteHandler(RouteHandlerBase):
-    ...     def __iter__(self):
+    ...     def prepare_response(self):
     ...         return self.respond_with_html("<div>Hello World!</div>")
+
     >>> class MyRouter(Router):
     ...     def __init__(self):
     ...         super().__init__()
@@ -37,8 +38,12 @@ class RouteHandlerBase(collections.Iterable):
         self.request = request
         self.path_args = path_args
         self.start_response = start_response
+        self._response = self.prepare_response()
 
     def __iter__(self) -> Iterator[bytes]:
+        return iter(self._response)
+
+    def prepare_response(self) -> Iterable[bytes]:
         raise NotImplementedError()
 
     def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \

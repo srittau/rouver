@@ -1,6 +1,12 @@
 News in rouver 0.5.0
 ====================
 
+API-Incompatible Changes
+------------------------
+
+* ``rouver.handler``: Redesign RouteHandlerBase API. Implementation must now
+  implement ``prepare_response()`` instead of ``__iter__()``.
+
 News in rouver 0.4.5
 ====================
 
