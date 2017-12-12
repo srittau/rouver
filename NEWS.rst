@@ -8,6 +8,8 @@ API-Incompatible Changes
   implement ``prepare_response()`` instead of ``__iter__()``.
 * ``rouver.handler``: All response methods now return an iterable instead
   of an iterator.
+* ``rouver.response``: All response functions now return an iterable instead
+  of an iterator.
 
 News in rouver 0.4.5
 ====================

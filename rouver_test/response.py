@@ -1,9 +1,8 @@
-from collections import Iterator
 from http import HTTPStatus
 from json import loads as json_decode
 from unittest import TestCase
 
-from asserts import assert_equal, assert_is_instance, assert_in
+from asserts import assert_equal, assert_in
 
 from werkzeug.wrappers import Request
 
@@ -37,11 +36,6 @@ class RespondTest(TestCase):
         sr = TestingStartResponse()
         response = respond(sr)
         assert_equal(b'', b"".join(response))
-
-    def test_return_value_is_iterator(self) -> None:
-        sr = TestingStartResponse()
-        response = respond(sr)
-        assert_is_instance(response, Iterator)
 
 
 class RespondWithJSONTest(TestCase):
@@ -84,11 +78,6 @@ class RespondWithJSONTest(TestCase):
         response = respond_with_json(sr, {"föo": 3})
         assert_equal(b'{"f\\u00f6o": 3}', b"".join(response))
 
-    def test_return_value_is_iterator(self) -> None:
-        sr = TestingStartResponse()
-        response = respond_with_json(sr, {})
-        assert_is_instance(response, Iterator)
-
 
 class RespondWithHTMLTest(TestCase):
 
@@ -119,11 +108,6 @@ class RespondWithHTMLTest(TestCase):
         sr = TestingStartResponse()
         response = respond_with_html(sr, "<div>Test</div>")
         assert_equal(b"<div>Test</div>", b"".join(response))
-
-    def test_return_value_is_iterator(self) -> None:
-        sr = TestingStartResponse()
-        response = respond_with_html(sr, "<div>Test</div>")
-        assert_is_instance(response, Iterator)
 
     def test_return_value_encoding(self) -> None:
         sr = TestingStartResponse()
@@ -166,11 +150,6 @@ class CreatedAtTest(TestCase):
         response = created_at(request, self.start_request, "foo/bar")
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
-
-    def test_return_value_is_iterator(self) -> None:
-        request = Request(self.environment)
-        response = created_at(request, self.start_request, "foo/bar")
-        assert_is_instance(response, Iterator)
 
 
 class CreatedAsJSONTest(TestCase):
@@ -286,8 +265,3 @@ class SeeOtherTest(TestCase):
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
         assert_in("http://www.example.com/foo/bar", html)
-
-    def test_return_value_is_iterator(self) -> None:
-        request = Request(self.environment)
-        response = see_other(request, self.start_request, "foo/bar")
-        assert_is_instance(response, Iterator)
