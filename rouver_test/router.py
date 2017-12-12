@@ -107,10 +107,29 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_first_level(self) -> None:
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal("", environ["rouver.wildcard_path"])
+            start_response("200 OK", [])
+            return []
+
         self.router.add_routes([
-            ("foo", "GET", handle_empty_path),
+            ("foo", "GET", handle),
         ])
         self.handle_wsgi("GET", "/foo")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_first_level__trailing_slash(self) -> None:
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal("/", environ["rouver.wildcard_path"])
+            start_response("200 OK", [])
+            return []
+
+        self.router.add_routes([
+            ("foo", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/")
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_first_level_wrong_path(self) -> None:

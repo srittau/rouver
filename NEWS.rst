@@ -1,6 +1,11 @@
 News in rouver 0.5.1
 ====================
 
+Bug Fixes
+---------
+
+* ``rouver.router``: Ignore trailing slashes.
+
 News in rouver 0.5.0
 ====================
 

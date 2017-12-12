@@ -246,6 +246,11 @@ class _MatcherBase:
     def __init__(self, match_path: Sequence[_RouteTemplatePart],
                  request_path: Sequence[str], arguments: _RouteArguments,
                  *, match_full_path: bool = False) -> None:
+        if request_path and request_path[-1] == "":
+            request_path = request_path[:-1]
+            self._trailing_slash = True
+        else:
+            self._trailing_slash = False
         self._match_path = match_path
         self._request_path = request_path
         self._arguments = arguments
@@ -289,7 +294,10 @@ class _MatcherBase:
     def remaining_path(self) -> str:
         remaining_path = \
             list(self._request_path[len(self._match_path):])
-        return "/".join([""] + remaining_path)
+        path = "/".join([""] + remaining_path)
+        if self._trailing_slash:
+            path += "/"
+        return path
 
 
 class _RouteMatcher(_MatcherBase):
