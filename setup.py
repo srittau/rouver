@@ -19,7 +19,7 @@ setup(
     url="https://github.com/srittau/rouver",
     packages=["rouver", "rouver_test"],
     install_requires=["werkzeug >= 0.12.0"],
-    tests_require=["asserts >= 0.7.0, < 0.8"],
+    tests_require=["asserts >= 0.7.0, < 0.9"],
     license="MIT",
     classifiers=[
         "Development Status :: 3 - Alpha",
