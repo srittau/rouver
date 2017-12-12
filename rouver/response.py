@@ -1,6 +1,6 @@
 from http import HTTPStatus
 from json import dumps as dumps_json
-from typing import Union, Any, Iterator, Sequence
+from typing import Union, Any, Iterable, Sequence
 from urllib.parse import quote
 
 from werkzeug.wrappers import Request
@@ -26,7 +26,7 @@ def _location_header(request: Request, url_part: str) -> Header:
 
 def respond(start_response: StartResponse, *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: Sequence[Header] = []) -> Iterator[bytes]:
+            extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
 
     """Prepare an empty WSGI response.
 
@@ -43,14 +43,14 @@ def respond(start_response: StartResponse, *,
 
     sl = status_line(status)
     start_response(sl, extra_headers)
-    return iter([])
+    return []
 
 
 def respond_with_json(start_response: StartResponse,
                       json: Union[str, bytes, Any], *,
                       status: HTTPStatus = HTTPStatus.OK,
                       extra_headers: Sequence[Header] = []) \
-        -> Iterator[bytes]:
+        -> Iterable[bytes]:
 
     """Prepare a JSON WSGI response.
 
@@ -73,13 +73,13 @@ def respond_with_json(start_response: StartResponse,
         encoded = json.encode("utf-8")
     else:
         encoded = dumps_json(json).encode("utf-8")
-    return iter([encoded])
+    return [encoded]
 
 
 def respond_with_html(start_response: StartResponse, html: str, *,
                       status: HTTPStatus = HTTPStatus.OK,
                       extra_headers: Sequence[Header] = []) \
-        -> Iterator[bytes]:
+        -> Iterable[bytes]:
 
     """Prepare an HTML WSGI response.
 
@@ -94,11 +94,11 @@ def respond_with_html(start_response: StartResponse, html: str, *,
     headers = \
         [("Content-Type", "text/html; charset=utf-8")] + list(extra_headers)
     start_response(sl, headers)
-    return iter([html.encode("utf-8")])
+    return [html.encode("utf-8")]
 
 
 def created_at(request: Request, start_response: StartResponse,
-               url_part: str) -> Iterator[bytes]:
+               url_part: str) -> Iterable[bytes]:
 
     """Prepare a 201 Created WSGI response with a Location header.
 
@@ -115,7 +115,7 @@ def created_at(request: Request, start_response: StartResponse,
 
 def created_as_json(request: Request, start_response: StartResponse,
                     url_part: str, json: Union[str, bytes, Any]) \
-        -> Iterator[bytes]:
+        -> Iterable[bytes]:
     """Prepare a 201 Created WSGI response with a Location header and JSON body.
     """
 
@@ -126,7 +126,7 @@ def created_as_json(request: Request, start_response: StartResponse,
 
 
 def temporary_redirect(request: Request, start_response: StartResponse,
-                       url_part: str) -> Iterator[bytes]:
+                       url_part: str) -> Iterable[bytes]:
     url = _absolute_url(request, url_part)
     html = temporary_redirect_page(url)
     return respond_with_html(
@@ -137,7 +137,7 @@ def temporary_redirect(request: Request, start_response: StartResponse,
 
 
 def see_other(request: Request, start_response: StartResponse,
-              url_part: str) -> Iterator[bytes]:
+              url_part: str) -> Iterable[bytes]:
     url = _absolute_url(request, url_part)
     html = see_other_page(url)
     return respond_with_html(

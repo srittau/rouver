@@ -352,14 +352,14 @@ def _respond_internal_server_error(start_response: StartResponse) \
 
 
 def _respond_http_exception(start_response: StartResponse,
-                            exception: HTTPException) -> Iterator[bytes]:
+                            exception: HTTPException) -> Iterable[bytes]:
     status = HTTPStatus(exception.code)
     html = http_status_page(status, message=exception.description)
     return respond_with_html(start_response, html, status=status)
 
 
 def _respond_arguments_error(start_response: StartResponse,
-                             arguments: BadArgumentsDict) -> Iterator[bytes]:
+                             arguments: BadArgumentsDict) -> Iterable[bytes]:
     html = bad_arguments_page(arguments)
     return respond_with_html(
         start_response, html, status=HTTPStatus.BAD_REQUEST)

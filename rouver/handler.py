@@ -1,6 +1,6 @@
 import collections
 from http import HTTPStatus
-from typing import cast, Any, Union, Iterator, Sequence, Dict
+from typing import cast, Any, Union, Iterator, Sequence, Dict, Iterable
 
 from werkzeug.wrappers import Request
 
@@ -18,12 +18,13 @@ class RouteHandlerBase(collections.Iterable):
     Sub-classes of RouteHandlerBase can act as route handlers. They provide
     convenient, opaque access to several rouver services.
 
-    Implementations must implement the __iter__() method.
+    Implementations must implement the prepare_response() method.
 
     >>> from rouver.router import Router
     >>> class MyRouteHandler(RouteHandlerBase):
-    ...     def __iter__(self):
+    ...     def prepare_response(self):
     ...         return self.respond_with_html("<div>Hello World!</div>")
+
     >>> class MyRouter(Router):
     ...     def __init__(self):
     ...         super().__init__()
@@ -37,8 +38,12 @@ class RouteHandlerBase(collections.Iterable):
         self.request = request
         self.path_args = path_args
         self.start_response = start_response
+        self._response = self.prepare_response()
 
     def __iter__(self) -> Iterator[bytes]:
+        return iter(self._response)
+
+    def prepare_response(self) -> Iterable[bytes]:
         raise NotImplementedError()
 
     def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \
@@ -47,13 +52,13 @@ class RouteHandlerBase(collections.Iterable):
                           argument_template)
 
     def respond(self, extra_headers: Sequence[Header] = []) \
-            -> Iterator[bytes]:
+            -> Iterable[bytes]:
         return respond(self.start_response, extra_headers=extra_headers)
 
     def respond_with_json(
             self, json: Union[str, bytes, Any], *,
             status: HTTPStatus = HTTPStatus.OK,
-            extra_headers: Sequence[Header] = []) -> Iterator[bytes]:
+            extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
         return respond_with_json(
             self.start_response, json,
             status=status, extra_headers=extra_headers)
@@ -61,21 +66,21 @@ class RouteHandlerBase(collections.Iterable):
     def respond_with_html(
             self, html: str, *, status: HTTPStatus = HTTPStatus.OK,
             extra_headers: Sequence[Header] = []) \
-            -> Iterator[bytes]:
+            -> Iterable[bytes]:
         return respond_with_html(
             self.start_response, html,
             status=status, extra_headers=extra_headers)
 
-    def created_at(self, url_part: str) -> Iterator[bytes]:
+    def created_at(self, url_part: str) -> Iterable[bytes]:
         return created_at(self.request, self.start_response, url_part)
 
     def created_as_json(self, url_part: str, json: Union[str, bytes, Any]) \
-            -> Iterator[bytes]:
+            -> Iterable[bytes]:
         return created_as_json(
             self.request, self.start_response, url_part, json)
 
-    def temporary_redirect(self, url_part: str) -> Iterator[bytes]:
+    def temporary_redirect(self, url_part: str) -> Iterable[bytes]:
         return temporary_redirect(self.request, self.start_response, url_part)
 
-    def see_other(self, url_part: str) -> Iterator[bytes]:
+    def see_other(self, url_part: str) -> Iterable[bytes]:
         return see_other(self.request, self.start_response, url_part)
