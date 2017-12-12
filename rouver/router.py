@@ -280,8 +280,6 @@ class _MatcherBase:
                 path_args.append(arg)
             else:
                 raise AssertionError("unhandled template type")
-        if not self._match_full_path:
-            path_args.append(self.remaining_path)
         return True, path_args
 
     def _path_compare_iter(self) -> Iterator[Tuple[_RouteTemplatePart, str]]:
@@ -305,7 +303,12 @@ class _RouteMatcher(_MatcherBase):
 
     def call(self, request: Request, start_response: StartResponse) \
             -> Iterable[bytes]:
-        return self._handler(request, self.path_args, start_response)
+        request.environ["rouver.path_args"] = self.path_args
+        if self._match_full_path:
+            pa = self.path_args
+        else:
+            pa = self.path_args + [self.remaining_path]
+        return self._handler(request, pa, start_response)
 
 
 class _SubRouterMatcher(_MatcherBase):

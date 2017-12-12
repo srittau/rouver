@@ -11,6 +11,13 @@ API-Incompatible Changes
 * ``rouver.response``: All response functions now return an iterable instead
   of an iterator.
 
+API Additions
+-------------
+
+* ``rouver.router``: Add a field ``rouver.path_args`` to the WSGI environment
+  that contains the path arguments formerly passed to route handlers as the
+  second argument. The wildcard path is not added to this field.
+
 News in rouver 0.4.5
 ====================
 

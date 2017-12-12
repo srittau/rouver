@@ -165,10 +165,25 @@ class RouterTest(TestCase):
                 ("foo/{unknown}/bar", "GET", fail_if_called),
             ])
 
+    def test_no_template(self) -> None:
+        def handle(request: Request, path: Sequence[str],
+                   start_response: StartResponse) -> Iterable[bytes]:
+            assert_equal([], path)
+            assert_equal([], request.environ["rouver.path_args"])
+            start_response("200 OK", [])
+            return [b""]
+
+        self.router.add_routes([
+            ("foo/bar", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
     def test_template(self) -> None:
-        def handle(_: Request, path: Sequence[str],
+        def handle(request: Request, path: Sequence[str],
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["xyzxyz"], path)
+            assert_equal(["xyzxyz"], request.environ["rouver.path_args"])
             start_response("200 OK", [])
             return [b""]
 
@@ -186,9 +201,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_multiple_templates(self) -> None:
-        def handle(_: Request, path: Sequence[str],
+        def handle(request: Request, path: Sequence[str],
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["xyz", 123], path)
+            assert_equal(["xyz", 123], request.environ["rouver.path_args"])
             start_response("200 OK", [])
             return [b""]
 
@@ -248,9 +264,10 @@ class RouterTest(TestCase):
     # Wildcard Paths
 
     def test_wildcard_path__no_trailing_slash(self) -> None:
-        def handle(_: Request, path: Sequence[str],
+        def handle(request: Request, path: Sequence[str],
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal([""], path)
+            assert_equal([], request.environ["rouver.path_args"])
             start_response("200 OK", [])
             return [b""]
 
@@ -261,9 +278,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_wildcard_path__with_trailing_slash(self) -> None:
-        def handle(_: Request, path: Sequence[str],
+        def handle(request: Request, path: Sequence[str],
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["/"], path)
+            assert_equal([], request.environ["rouver.path_args"])
             start_response("200 OK", [])
             return [b""]
 
@@ -274,9 +292,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_wildcard_path__additional_path(self) -> None:
-        def handle(_: Request, path: Sequence[str],
+        def handle(request: Request, path: Sequence[str],
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["/abc/def"], path)
+            assert_equal([], request.environ["rouver.path_args"])
             start_response("200 OK", [])
             return [b""]
 
@@ -287,9 +306,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_wildcard_path__with_template(self) -> None:
-        def handle(_: Request, path: Sequence[str],
+        def handle(request: Request, path: Sequence[str],
                    start_response: StartResponse) -> Iterable[bytes]:
             assert_equal(["value", "/abc/def"], path)
+            assert_equal(["value"], request.environ["rouver.path_args"])
             start_response("200 OK", [])
             return [b""]
 
