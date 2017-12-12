@@ -1,6 +1,6 @@
 import collections
 from http import HTTPStatus
-from typing import cast, Any, Union, Iterator, Sequence, Dict, Iterable
+from typing import cast, Any, Union, Iterator, Sequence, Dict, Iterable, List
 
 from werkzeug.wrappers import Request
 
@@ -8,7 +8,7 @@ from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other, \
     created_as_json, temporary_redirect
-from rouver.types import StartResponse, Header
+from rouver.types import StartResponse, Header, WSGIEnvironment
 
 
 class RouteHandlerBase(collections.Iterable):
@@ -33,15 +33,28 @@ class RouteHandlerBase(collections.Iterable):
     ...         ])
     """
 
-    def __init__(self, request: Request, path_args: Sequence[Any],
+    def __init__(self, environ: WSGIEnvironment,
                  start_response: StartResponse) -> None:
-        self.request = request
-        self.path_args = path_args
+        self.request = Request(environ)
         self.start_response = start_response
         self._response = self.prepare_response()
 
     def __iter__(self) -> Iterator[bytes]:
         return iter(self._response)
+
+    @property
+    def path_args(self) -> List[Any]:
+        path_args = self.request.environ.get("rouver.path_args")
+        if not isinstance(path_args, list):
+            return []
+        return path_args
+
+    @property
+    def wildcard_path(self) -> str:
+        path = self.request.environ.get("rouver.wildcard_path")
+        if not isinstance(path, str):
+            return ""
+        return path
 
     def prepare_response(self) -> Iterable[bytes]:
         raise NotImplementedError()

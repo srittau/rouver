@@ -17,12 +17,8 @@ WSGIResponse = Iterable[bytes]
 
 WSGIApplication = Callable[[WSGIEnvironment, StartResponse], WSGIResponse]
 
-# (request, path, start_response) -> response
-RouteHandler = \
-    Callable[[Request, Sequence[Any], StartResponse], Iterable[bytes]]
-
 # (method, path, callback)
-RouteDescription = Tuple[str, str, RouteHandler]
+RouteDescription = Tuple[str, str, WSGIApplication]
 
 # (request, previous_args, path_part) -> result
 RouteTemplateHandler = Callable[[Request, Sequence[Any], str], Any]

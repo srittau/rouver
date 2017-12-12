@@ -11,29 +11,26 @@ from werkzeug.wrappers import Request
 
 from rouver.exceptions import ArgumentsError
 from rouver.router import Router, LOGGER_NAME
-from rouver.types import StartResponse, WSGIEnvironment, WSGIResponse, \
-    RouteHandler
+from rouver.types import \
+    StartResponse, WSGIEnvironment, WSGIResponse, WSGIApplication
 
 from rouver_test.util import TestingStartResponse, default_environment
 
 
-def handle_success(
-        _: Request, __: Sequence[str], start_response: StartResponse) \
+def handle_success(_: WSGIEnvironment, start_response: StartResponse) \
         -> Iterable[bytes]:
     start_response("200 OK", [])
     return [b""]
 
 
-def handle_empty_path(
-        _: Request, path: Sequence[str], start_response: StartResponse) \
-        -> Iterable[bytes]:
-    assert_equal([], path)
+def handle_empty_path(environ: WSGIEnvironment,
+                      start_response: StartResponse) -> Iterable[bytes]:
+    assert_equal([], environ["rouver.path_args"])
     start_response("200 OK", [])
     return [b""]
 
 
-def fail_if_called(_: Request, __: Sequence[str], ___: StartResponse) \
-        -> Iterable[bytes]:
+def fail_if_called(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
     raise AssertionError("handler should not be called")
 
 
@@ -49,10 +46,10 @@ class RouterTest(TestCase):
     def disable_logger(self) -> None:
         logging.getLogger(LOGGER_NAME).disabled = True
 
-    def _create_path_checker(self, expected_path: str) -> RouteHandler:
-        def handle(request: Request, __: Sequence[str],
-                   sr: StartResponse) -> Sequence[bytes]:
-            assert_equal(expected_path, request.environ["PATH_INFO"])
+    def _create_path_checker(self, expected_path: str) -> WSGIApplication:
+        def handle(environ: WSGIEnvironment, sr: StartResponse) \
+                -> Sequence[bytes]:
+            assert_equal(expected_path, environ["PATH_INFO"])
             sr("200 OK", [])
             return []
         return handle
@@ -82,9 +79,9 @@ class RouterTest(TestCase):
 """, html)
 
     def test_handler_request(self) -> None:
-        def handle(request: Request, _: Sequence[str],
-                   start_response: StartResponse) -> Iterable[bytes]:
-            assert_equal("test.example.com", request.host)
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal("test.example.com", environ["SERVER_NAME"])
             start_response("200 OK", [])
             return [b""]
 
@@ -165,10 +162,23 @@ class RouterTest(TestCase):
                 ("foo/{unknown}/bar", "GET", fail_if_called),
             ])
 
+    def test_no_template(self) -> None:
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal([], environ["rouver.path_args"])
+            start_response("200 OK", [])
+            return [b""]
+
+        self.router.add_routes([
+            ("foo/bar", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
     def test_template(self) -> None:
-        def handle(_: Request, path: Sequence[str],
-                   start_response: StartResponse) -> Iterable[bytes]:
-            assert_equal(["xyzxyz"], path)
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal(["xyzxyz"], environ["rouver.path_args"])
             start_response("200 OK", [])
             return [b""]
 
@@ -186,9 +196,9 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_multiple_templates(self) -> None:
-        def handle(_: Request, path: Sequence[str],
-                   start_response: StartResponse) -> Iterable[bytes]:
-            assert_equal(["xyz", 123], path)
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal(["xyz", 123], environ["rouver.path_args"])
             start_response("200 OK", [])
             return [b""]
 
@@ -247,10 +257,24 @@ class RouterTest(TestCase):
 
     # Wildcard Paths
 
+    def test_no_wildcard_path(self) -> None:
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal("", environ["rouver.wildcard_path"])
+            start_response("200 OK", [])
+            return [b""]
+
+        self.router.add_routes([
+            ("foo/bar", "GET", handle),
+        ])
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
     def test_wildcard_path__no_trailing_slash(self) -> None:
-        def handle(_: Request, path: Sequence[str],
-                   start_response: StartResponse) -> Iterable[bytes]:
-            assert_equal([""], path)
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal([], environ["rouver.path_args"])
+            assert_equal("", environ["rouver.wildcard_path"])
             start_response("200 OK", [])
             return [b""]
 
@@ -261,9 +285,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_wildcard_path__with_trailing_slash(self) -> None:
-        def handle(_: Request, path: Sequence[str],
-                   start_response: StartResponse) -> Iterable[bytes]:
-            assert_equal(["/"], path)
+        def handle(environ: WSGIEnvironment,  start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal([], environ["rouver.path_args"])
+            assert_equal("/", environ["rouver.wildcard_path"])
             start_response("200 OK", [])
             return [b""]
 
@@ -274,9 +299,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_wildcard_path__additional_path(self) -> None:
-        def handle(_: Request, path: Sequence[str],
-                   start_response: StartResponse) -> Iterable[bytes]:
-            assert_equal(["/abc/def"], path)
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal([], environ["rouver.path_args"])
+            assert_equal("/abc/def", environ["rouver.wildcard_path"])
             start_response("200 OK", [])
             return [b""]
 
@@ -287,9 +313,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_wildcard_path__with_template(self) -> None:
-        def handle(_: Request, path: Sequence[str],
-                   start_response: StartResponse) -> Iterable[bytes]:
-            assert_equal(["value", "/abc/def"], path)
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
+                -> Iterable[bytes]:
+            assert_equal(["value"], environ["rouver.path_args"])
+            assert_equal("/abc/def", environ["rouver.wildcard_path"])
             start_response("200 OK", [])
             return [b""]
 
@@ -363,10 +390,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_sub_router__template_in_super_router(self) -> None:
-        def handle_tmpl(_: Request, path: Sequence[str], sr: StartResponse) \
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
                 -> Iterable[bytes]:
-            assert_equal([], path)
-            sr("200 OK", [])
+            assert_equal([], environ["rouver.path_args"])
+            start_response("200 OK", [])
             return []
 
         def tmpl(_: Request, path: Sequence[str], v: str) -> str:
@@ -377,7 +404,7 @@ class RouterTest(TestCase):
         sub.error_handling = False
         sub.add_template_handler("tmpl", tmpl)
         sub.add_routes([
-            ("sub", "GET", handle_tmpl),
+            ("sub", "GET", handle),
         ])
         self.router.add_template_handler("tmpl", tmpl)
         self.router.add_sub_router("foo/{tmpl}", sub)
@@ -385,10 +412,10 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.OK)
 
     def test_sub_router__template_in_sub_router(self) -> None:
-        def handle_tmpl(_: Request, path: Sequence[str], sr: StartResponse) \
+        def handle(environ: WSGIEnvironment, start_response: StartResponse) \
                 -> Iterable[bytes]:
-            assert_equal(["xyzxyz"], path)
-            sr("200 OK", [])
+            assert_equal(["xyzxyz"], environ["rouver.path_args"])
+            start_response("200 OK", [])
             return []
 
         def tmpl(_: Request, path: Sequence[str], v: str) -> str:
@@ -399,7 +426,7 @@ class RouterTest(TestCase):
         sub.error_handling = False
         sub.add_template_handler("tmpl", tmpl)
         sub.add_routes([
-            ("{tmpl}", "GET", handle_tmpl),
+            ("{tmpl}", "GET", handle),
         ])
         self.router.add_sub_router("foo/bar", sub)
         self.handle_wsgi("GET", "/foo/bar/xyz")
@@ -463,8 +490,7 @@ class RouterTest(TestCase):
             self.handle_wsgi("GET", "/foo/xyz/bar")
 
     def test_handler_key_error_with_error_handling(self) -> None:
-        def handle(_: Request, __: Sequence[str], ___: StartResponse) \
-                -> Iterable[bytes]:
+        def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise KeyError()
 
         self.router.error_handling = True
@@ -475,8 +501,7 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.INTERNAL_SERVER_ERROR)
 
     def test_handler_key_error_without_error_handling(self) -> None:
-        def handle(_: Request, __: Sequence[str], ___: StartResponse) \
-                -> Iterable[bytes]:
+        def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise KeyError()
 
         self.router.add_routes([
@@ -487,8 +512,7 @@ class RouterTest(TestCase):
             self.handle_wsgi("GET", "/foo")
 
     def test_http_error(self) -> None:
-        def handle(_: Request, __: Sequence[str], ___: StartResponse) \
-                -> Iterable[bytes]:
+        def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise Conflict()
 
         self.router.error_handling = False
@@ -511,8 +535,7 @@ class RouterTest(TestCase):
 """, html)
 
     def test_arguments_error(self) -> None:
-        def handle(_: Request, __: Sequence[str], ___: StartResponse) \
-                -> Iterable[bytes]:
+        def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise ArgumentsError({"foo": "bar"})
 
         self.router.add_routes([

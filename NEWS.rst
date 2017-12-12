@@ -4,12 +4,31 @@ News in rouver 0.5.0
 API-Incompatible Changes
 ------------------------
 
-* ``rouver.handler``: Redesign RouteHandlerBase API. Implementation must now
+* ``rouver.handler``: RouteHandlerBase is now an ordinary WSGI application.
+  It takes an WSGI environment and a start response handler as constructor
+  arguments.
+* ``rouver.handler``: Redesign RouteHandlerBase API. Implementations must now
   implement ``prepare_response()`` instead of ``__iter__()``.
 * ``rouver.handler``: All response methods now return an iterable instead
   of an iterator.
+* ``rouver.handler``: ``RouteHandlerBase.path_args`` is now acquired from the
+  WSGI environment and will not contain the wildcard path.
 * ``rouver.response``: All response functions now return an iterable instead
   of an iterator.
+* ``rouver.router``: ``add_routes()`` now requires a regular WSGI
+  application instead of a route handler.
+* ``rouver.types``: Remove ``RouteHandler``. ``RouteDescription`` now expects
+  an ``WSGIApplication`` in the third field.
+
+API Additions
+-------------
+
+* ``rouver.handler``: Add ``RouterHandlerBase.wildcard_path``.
+* ``rouver.router``: Add a field ``rouver.path_args`` to the WSGI environment
+  that contains the path arguments formerly passed to route handlers as the
+  second argument. The wildcard path is not added to this field.
+* ``rouver.router``: Add a field ``rouver.wildcard_path`` to the WSGI
+  environment that contains the wildcard path or the empty string.
 
 News in rouver 0.4.5
 ====================
