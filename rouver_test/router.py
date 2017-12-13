@@ -399,6 +399,22 @@ class RouterTest(TestCase):
                 ("foo/*/bar", "GET", handle_success),
             ])
 
+    def test_wildcard__before_more_specific(self) -> None:
+        self.router.add_routes([
+            ("foo/*", "GET", handle_success),
+            ("foo/bar", "GET", fail_if_called),
+        ])
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_wildcard__after_more_specific(self) -> None:
+        self.router.add_routes([
+            ("foo/bar", "GET", handle_success),
+            ("foo/*", "GET", fail_if_called),
+        ])
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
     # Sub routers
 
     def test_sub_router(self) -> None:
