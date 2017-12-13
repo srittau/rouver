@@ -1,6 +1,11 @@
 News in rouver 0.5.2
 ====================
 
+Improvements
+------------
+
+* Include Content-Length header in JSON and HTML responses.
+
 News in rouver 0.5.1
 ====================
 

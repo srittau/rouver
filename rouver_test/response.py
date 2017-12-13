@@ -56,6 +56,12 @@ class RespondWithJSONTest(TestCase):
         sr.assert_header_equals(
             "Content-Type", "application/json; charset=utf-8")
 
+    def test_content_length(self) -> None:
+        sr = TestingStartResponse()
+        respond_with_json(sr, {"foo": 33})
+        sr.assert_header_equals(
+            "Content-Length", "11")
+
     def test_extra_headers(self) -> None:
         sr = TestingStartResponse()
         respond_with_json(sr, {}, extra_headers=[
@@ -96,6 +102,11 @@ class RespondWithHTMLTest(TestCase):
         sr = TestingStartResponse()
         respond_with_html(sr, "<div>Test</div>")
         sr.assert_header_equals("Content-Type", "text/html; charset=utf-8")
+
+    def test_content_length(self) -> None:
+        sr = TestingStartResponse()
+        respond_with_html(sr, "<div>Test</div>")
+        sr.assert_header_equals("Content-Length", "15")
 
     def test_extra_headers(self) -> None:
         sr = TestingStartResponse()

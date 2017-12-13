@@ -11,9 +11,6 @@ from rouver.status import status_line
 from rouver.types import StartResponse, Header
 
 
-_JSON_HEADER = ("Content-Type", "application/json; charset=utf-8")
-
-
 def _absolute_url(request: Request, url_part: str) -> str:
     if url_part.startswith("/"):
         url_part = url_part[1:]
@@ -46,6 +43,20 @@ def respond(start_response: StartResponse, *,
     return []
 
 
+def _respond_with_content(
+        start_response: StartResponse, content: bytes, *,
+        status: HTTPStatus = HTTPStatus.OK,
+        content_type: str = "application/octet-stream",
+        extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
+    sl = status_line(status)
+    headers = [
+        ("Content-Type", content_type),
+        ("Content-Length", str(len(content))),
+    ] + list(extra_headers)
+    start_response(sl, headers)
+    return [content]
+
+
 def respond_with_json(start_response: StartResponse,
                       json: Union[str, bytes, Any], *,
                       status: HTTPStatus = HTTPStatus.OK,
@@ -64,16 +75,17 @@ def respond_with_json(start_response: StartResponse,
     "status" keyword argument.
     """
 
-    sl = status_line(status)
-    headers = [_JSON_HEADER] + list(extra_headers)
-    start_response(sl, headers)
     if isinstance(json, bytes):
         encoded = json
     elif isinstance(json, str):
         encoded = json.encode("utf-8")
     else:
         encoded = dumps_json(json).encode("utf-8")
-    return [encoded]
+
+    return _respond_with_content(
+        start_response, encoded, status=status,
+        content_type="application/json; charset=utf-8",
+        extra_headers=extra_headers)
 
 
 def respond_with_html(start_response: StartResponse, html: str, *,
@@ -90,11 +102,10 @@ def respond_with_html(start_response: StartResponse, html: str, *,
     "status" keyword argument.
     """
 
-    sl = status_line(status)
-    headers = \
-        [("Content-Type", "text/html; charset=utf-8")] + list(extra_headers)
-    start_response(sl, headers)
-    return [html.encode("utf-8")]
+    encoded = html.encode("utf-8")
+    return _respond_with_content(
+        start_response, encoded, status=status,
+        content_type="text/html; charset=utf-8", extra_headers=extra_headers)
 
 
 def created_at(request: Request, start_response: StartResponse,
