@@ -39,6 +39,15 @@ Routes with placeholders:
 ...     ("add/{numeric}/{numeric}", "GET", get_addition),
 ... ])
 
+Routes with wildcards:
+
+>>> def get_wildcard(environ, start_response):
+...     # environ["rouver.wildcard_path"] contains the remaining path
+...     respond(start_response)
+>>> router.add_routes([
+...     ("wild/*", "GET", get_wildcard),
+... ])
+
 Argument Handling
 -----------------
 
