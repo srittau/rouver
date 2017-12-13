@@ -17,9 +17,9 @@ Routing
 
 >>> from rouver.router import Router
 >>> from rouver.response import respond_with_html, respond_with_json
->>> def get_index(request, path, start_response):
+>>> def get_index(environ, start_response):
 ...     return respond_with_html(start_response, "<div>Foo</div>")
->>> def get_count(request, path, start_response):
+>>> def get_count(environ, start_response):
 ...     return respond_with_json(start_response, {"count": 42})
 >>> router = Router()
 >>> router.add_routes([
@@ -29,7 +29,7 @@ Routing
 
 Routes with placeholders:
 
->>> def get_addition(request, path, start_response):
+>>> def get_addition(environ, start_response):
 ...     num1, num2 = path
 ...     return response_with_json(start_response, {"result": num1 + num2})
 >>> def numeric_arg(request, path, value):
