@@ -188,10 +188,10 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
         matching_routes = \
             [m for m in matching_paths if m.method == request.method]
         if not matching_routes:
-            valid_methods = sorted(m.method for m in matching_paths)
+            valid_methods = sorted(set(m.method for m in matching_paths))
             raise MethodNotAllowed(valid_methods)
 
-        assert len(matching_routes) == 1
+        assert len(matching_routes) >= 1
         # Workaround for https://github.com/python/mypy/issues/4345
         assert isinstance(matching_routes[0], _RouteMatcher)
         return matching_routes[0]

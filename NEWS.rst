@@ -12,6 +12,12 @@ Improvements
 
 * Include Content-Length header in JSON and HTML responses.
 
+Bug Fixes
+---------
+
+* Use first matching route handler, instead of crashing when multiple routes
+  match.
+
 News in rouver 0.5.1
 ====================
 

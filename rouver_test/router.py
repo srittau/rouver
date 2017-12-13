@@ -164,6 +164,15 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.METHOD_NOT_ALLOWED)
         self.start_response.assert_header_equals("Allow", "GET, PUT")
 
+    def test_wrong_method__multiple_matches(self) -> None:
+        self.router.add_routes([
+            ("foo", "GET", fail_if_called),
+            ("foo", "GET", fail_if_called),
+        ])
+        self.handle_wsgi("POST", "/foo")
+        self.start_response.assert_status(HTTPStatus.METHOD_NOT_ALLOWED)
+        self.start_response.assert_header_equals("Allow", "GET")
+
     def test_call_right_method(self) -> None:
         self.router.add_routes([
             ("foo", "GET", fail_if_called),
@@ -243,6 +252,30 @@ class RouterTest(TestCase):
         ])
         self.handle_wsgi("GET", "/foo/xyz/bar")
         self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+
+    def test_template_multiple_matches(self) -> None:
+        def raise_value_error(_: Request, __: Sequence[str], ___: str) -> None:
+            raise ValueError()
+        self.router.add_template_handler("handler1", raise_value_error)
+        self.router.add_template_handler("handler2", lambda _, __, ___: None)
+
+        self.router.add_routes([
+            ("foo/{handler1}/bar", "GET", fail_if_called),
+            ("foo/{handler2}/bar", "GET", handle_success),
+        ])
+        self.handle_wsgi("GET", "/foo/xyz/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    def test_template_multiple_matches__match_first(self) -> None:
+        self.router.add_template_handler("handler1", lambda _, __, ___: None)
+        self.router.add_template_handler("handler2", lambda _, __, ___: None)
+
+        self.router.add_routes([
+            ("foo/{handler1}/bar", "GET", handle_success),
+            ("foo/{handler2}/bar", "GET", fail_if_called),
+        ])
+        self.handle_wsgi("GET", "/foo/xyz/bar")
+        self.start_response.assert_status(HTTPStatus.OK)
 
     def test_template_call_once_per_value(self) -> None:
         calls = 0
