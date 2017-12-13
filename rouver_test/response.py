@@ -8,7 +8,7 @@ from werkzeug.wrappers import Request
 
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other, \
-    created_as_json, temporary_redirect
+    created_as_json, temporary_redirect, respond_with_content
 
 from rouver_test.util import TestingStartResponse, default_environment
 
@@ -36,6 +36,46 @@ class RespondTest(TestCase):
         sr = TestingStartResponse()
         response = respond(sr)
         assert_equal(b'', b"".join(response))
+
+
+class RespondWithContentTest(TestCase):
+
+    def test_default_status(self) -> None:
+        sr = TestingStartResponse()
+        respond_with_content(sr, b"")
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_custom_status(self) -> None:
+        sr = TestingStartResponse()
+        respond_with_content(sr, b"", status=HTTPStatus.NOT_ACCEPTABLE)
+        sr.assert_status(HTTPStatus.NOT_ACCEPTABLE)
+
+    def test_default_content_type(self) -> None:
+        sr = TestingStartResponse()
+        respond_with_content(sr, b"")
+        sr.assert_header_equals("Content-Type", "application/octet-stream")
+
+    def test_custom_content_type(self) -> None:
+        sr = TestingStartResponse()
+        respond_with_content(sr, b"", content_type="text/plain")
+        sr.assert_header_equals("Content-Type", "text/plain")
+
+    def test_content_length(self) -> None:
+        sr = TestingStartResponse()
+        respond_with_content(sr, b"foobar")
+        sr.assert_header_equals("Content-Length", "6")
+
+    def test_extra_headers(self) -> None:
+        sr = TestingStartResponse()
+        respond_with_content(sr, b"", extra_headers=[
+            ("X-Custom-Header", "Foobar"),
+        ])
+        sr.assert_header_equals("X-Custom-Header", "Foobar")
+
+    def test_return_value(self) -> None:
+        sr = TestingStartResponse()
+        response = respond_with_content(sr, b"foobar")
+        assert_equal(b"foobar", b"".join(response))
 
 
 class RespondWithJSONTest(TestCase):

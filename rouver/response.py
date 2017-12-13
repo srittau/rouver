@@ -43,11 +43,21 @@ def respond(start_response: StartResponse, *,
     return []
 
 
-def _respond_with_content(
+def respond_with_content(
         start_response: StartResponse, content: bytes, *,
         status: HTTPStatus = HTTPStatus.OK,
         content_type: str = "application/octet-stream",
         extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
+
+    """Prepare an WSGI response.
+
+    >>> def handler(start_response, request):
+    ...     return respond_with_content(start_response, b"content")
+
+    The response will include a Content-Type and a Content-Length header.
+
+    """
+
     sl = status_line(status)
     headers = [
         ("Content-Type", content_type),
@@ -82,7 +92,7 @@ def respond_with_json(start_response: StartResponse,
     else:
         encoded = dumps_json(json).encode("utf-8")
 
-    return _respond_with_content(
+    return respond_with_content(
         start_response, encoded, status=status,
         content_type="application/json; charset=utf-8",
         extra_headers=extra_headers)
@@ -103,7 +113,7 @@ def respond_with_html(start_response: StartResponse, html: str, *,
     """
 
     encoded = html.encode("utf-8")
-    return _respond_with_content(
+    return respond_with_content(
         start_response, encoded, status=status,
         content_type="text/html; charset=utf-8", extra_headers=extra_headers)
 

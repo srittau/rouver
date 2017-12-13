@@ -8,7 +8,7 @@ from werkzeug.wrappers import Request
 from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other, \
-    created_as_json, temporary_redirect
+    created_as_json, temporary_redirect, respond_with_content
 from rouver.types import StartResponse, Header, WSGIEnvironment
 
 
@@ -68,6 +68,23 @@ class RouteHandlerBase(collections.Iterable):
     def respond(self, extra_headers: Sequence[Header] = []) \
             -> Iterable[bytes]:
         return respond(self.start_response, extra_headers=extra_headers)
+
+    def respond_with_content(
+            self, content: bytes, *,
+            status: HTTPStatus = HTTPStatus.OK,
+            content_type: str = "application/octet-stream",
+            extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
+        """Prepare an WSGI response.
+
+        >>> def handler(start_response, request):
+        ...     return respond_with_content(start_response, b"content")
+
+        The response will include a Content-Type and a Content-Length header.
+        """
+        return respond_with_content(
+            self.start_response, content,
+            status=status, content_type=content_type,
+            extra_headers=extra_headers)
 
     def respond_with_json(
             self, json: Union[str, bytes, Any], *,
