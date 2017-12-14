@@ -4,6 +4,7 @@ News in rouver 0.5.2
 API Additions
 -------------
 
+* ``rouver.handler``: Add ``RouteHandlerBase.parse_json_request()``.
 * ``rouver.handler``: Add ``RouteHandlerBase.respond_with_content()``.
 * ``rouver.response``: Add ``respond_with_content()``.
 

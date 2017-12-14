@@ -2,8 +2,10 @@ from http import HTTPStatus
 from typing import Type, Iterable
 from unittest import TestCase
 
-from asserts import assert_is, assert_equal, assert_is_instance
+from asserts import assert_is, assert_equal, assert_is_instance, assert_raises
+from io import BytesIO
 
+from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 
 from rouver.handler import RouteHandlerBase
@@ -73,6 +75,53 @@ class RouteHandlerBaseTest(TestCase):
         self.environ["rouver.wildcard_path"] = b"not-a-str"
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal("", handler.wildcard_path)
+
+    def test_parse_json_request__default_encoding(self) -> None:
+        self.environ["wsgi.input"] = BytesIO(b'{ "f\xc3\xb6o": 42 }')
+        self.environ["CONTENT_LENGTH"] = "14"
+        self.environ["CONTENT_TYPE"] = "application/json"
+        handler = TestingHandler(self.environ, self.start_response)
+        j = handler.parse_json_request()
+        assert_equal({"föo": 42}, j)
+
+    def test_parse_json_request__explicit_encoding(self) -> None:
+        self.environ["wsgi.input"] = BytesIO(b'{ "f\xf6o": 42 }')
+        self.environ["CONTENT_LENGTH"] = "13"
+        self.environ["CONTENT_TYPE"] = "application/json; charset=iso-8859-1"
+        handler = TestingHandler(self.environ, self.start_response)
+        j = handler.parse_json_request()
+        assert_equal({"föo": 42}, j)
+
+    def test_parse_json_request__unknown_encoding(self) -> None:
+        self.environ["wsgi.input"] = BytesIO(b'{}')
+        self.environ["CONTENT_LENGTH"] = "2"
+        self.environ["CONTENT_TYPE"] = "application/json; charset=unknown"
+        handler = TestingHandler(self.environ, self.start_response)
+        with assert_raises(UnsupportedMediaType):
+            handler.parse_json_request()
+
+    def test_parse_json_request__no_content_type(self) -> None:
+        self.environ["wsgi.input"] = BytesIO(b'{}')
+        self.environ["CONTENT_LENGTH"] = "2"
+        handler = TestingHandler(self.environ, self.start_response)
+        with assert_raises(UnsupportedMediaType):
+            handler.parse_json_request()
+
+    def test_parse_json_request__wrong_content_type(self) -> None:
+        self.environ["wsgi.input"] = BytesIO(b'{}')
+        self.environ["CONTENT_LENGTH"] = "2"
+        self.environ["CONTENT_TYPE"] = "application/octet-stream"
+        handler = TestingHandler(self.environ, self.start_response)
+        with assert_raises(UnsupportedMediaType):
+            handler.parse_json_request()
+
+    def test_parse_json_request__invalid_data(self) -> None:
+        self.environ["wsgi.input"] = BytesIO(b'INVALID')
+        self.environ["CONTENT_LENGTH"] = "7"
+        self.environ["CONTENT_TYPE"] = "application/json"
+        handler = TestingHandler(self.environ, self.start_response)
+        with assert_raises(UnsupportedMediaType):
+            handler.parse_json_request()
 
     def test_respond(self) -> None:
         TestingHandler.response = [b"foo", b"bar"]
