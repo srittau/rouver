@@ -80,8 +80,8 @@ class RouteHandlerBase(collections.Iterable):
 
         if self.request.mimetype != "application/json":
             raise UnsupportedMediaType()
-        j = cast(bytes, self.request.data).decode(self._charset)
         try:
+            j = cast(bytes, self.request.data).decode(self._charset)
             return json_loads(j)
         except (LookupError, JSONDecodeError) as exc:
             raise UnsupportedMediaType(str(exc)) from exc
