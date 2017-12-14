@@ -1,13 +1,14 @@
 import collections
 from http import HTTPStatus
 from json import loads as json_loads, JSONDecodeError
+from typing import Optional
 from typing import cast, Any, Union, Iterator, Sequence, Dict, Iterable, List
 from urllib.parse import unquote
 
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 
-from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
+from rouver.args import ArgumentParser, ArgumentTemplate, ArgumentDict
 from rouver.response import \
     respond, respond_with_json, respond_with_html, created_at, see_other, \
     created_as_json, temporary_redirect, respond_with_content
@@ -41,6 +42,7 @@ class RouteHandlerBase(collections.Iterable):
         self.request = Request(environ)
         self.start_response = start_response
         self._response = self.prepare_response()
+        self._argument_parser = None  # type: Optional[ArgumentParser]
 
     def __iter__(self) -> Iterator[bytes]:
         return iter(self._response)
@@ -68,8 +70,10 @@ class RouteHandlerBase(collections.Iterable):
 
     def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \
             -> ArgumentDict:
-        return parse_args(cast(Dict[str, Any], self.request.environ),
-                          argument_template)
+        if self._argument_parser is None:
+            environ = cast(Dict[ str, Any], self.request.environ)
+            self._argument_parser = ArgumentParser(environ)
+        return self._argument_parser.parse_args(argument_template)
 
     def parse_json_request(self) -> Any:
         """Parse the request body as JSON.

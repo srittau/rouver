@@ -6,6 +6,12 @@ API Additions
 
 * ``rouver.args``: Add ``ArgumentParser``.
 
+Improvements
+------------
+
+* ``rouver.handler``: ``RouteHandlerBase.parse_args()`` can now be called
+  multiple times.
+
 News in rouver 0.5.2
 ====================
 

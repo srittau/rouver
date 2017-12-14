@@ -8,6 +8,7 @@ from io import BytesIO
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 
+from rouver.args import Multiplicity
 from rouver.handler import RouteHandlerBase
 
 from rouver_test.util import default_environment, TestingStartResponse
@@ -75,6 +76,22 @@ class RouteHandlerBaseTest(TestCase):
         self.environ["rouver.wildcard_path"] = b"not-a-str"
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal("", handler.wildcard_path)
+
+    def test_parse_args__post_twice(self) -> None:
+        self.environ["wsgi.input"] = BytesIO(b"foo=bar&abc=def")
+        self.environ["REQUEST_METHOD"] = "POST"
+        self.environ["CONTENT_LENGTH"] = "15"
+        self.environ["CONTENT_TYPE"] = "application/x-www-form-urlencoded"
+        handler = TestingHandler(self.environ, self.start_response)
+        args1 = handler.parse_args([
+            ("foo", str, Multiplicity.REQUIRED),
+        ])
+        assert_equal({"foo": "bar"}, args1)
+        args2 = handler.parse_args([
+            ("foo", str, Multiplicity.REQUIRED),
+            ("abc", str, Multiplicity.REQUIRED),
+        ])
+        assert_equal({"foo": "bar", "abc": "def"}, args2)
 
     def test_parse_json_request__default_encoding(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'{ "f\xc3\xb6o": 42 }')
