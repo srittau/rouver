@@ -1,8 +1,10 @@
 import collections
 from http import HTTPStatus
+from json import loads as json_loads, JSONDecodeError
 from typing import cast, Any, Union, Iterator, Sequence, Dict, Iterable, List
 from urllib.parse import unquote
 
+from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 
 from rouver.args import ArgumentTemplate, ArgumentDict, parse_args
@@ -44,6 +46,10 @@ class RouteHandlerBase(collections.Iterable):
         return iter(self._response)
 
     @property
+    def _charset(self) -> str:
+        return cast(str, self.request.mimetype_params.get("charset", "utf-8"))
+
+    @property
     def path_args(self) -> List[Any]:
         path_args = self.request.environ.get("rouver.path_args")
         if not isinstance(path_args, list):
@@ -64,6 +70,21 @@ class RouteHandlerBase(collections.Iterable):
             -> ArgumentDict:
         return parse_args(cast(Dict[str, Any], self.request.environ),
                           argument_template)
+
+    def parse_json_request(self) -> Any:
+        """Parse the request body as JSON.
+
+        Raise UnsupportedMediaType if the content type does not indicate
+        a JSON request or if it contains invalid JSON.
+        """
+
+        if self.request.mimetype != "application/json":
+            raise UnsupportedMediaType()
+        j = cast(bytes, self.request.data).decode(self._charset)
+        try:
+            return json_loads(j)
+        except (LookupError, JSONDecodeError) as exc:
+            raise UnsupportedMediaType(str(exc)) from exc
 
     def respond(self, extra_headers: Sequence[Header] = []) \
             -> Iterable[bytes]:
