@@ -1,6 +1,12 @@
 News in rouver 0.5.4
 ====================
 
+Bug Fixes
+---------
+
+* ``rouver.handler``: ``RouteHandlerBase.parse_args()`` can now be called
+  inside ``prepare_response()``.
+
 News in rouver 0.5.3
 ====================
 

@@ -41,8 +41,8 @@ class RouteHandlerBase(collections.Iterable):
                  start_response: StartResponse) -> None:
         self.request = Request(environ)
         self.start_response = start_response
-        self._response = self.prepare_response()
         self._argument_parser = None  # type: Optional[ArgumentParser]
+        self._response = self.prepare_response()
 
     def __iter__(self) -> Iterator[bytes]:
         return iter(self._response)

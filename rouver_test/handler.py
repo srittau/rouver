@@ -93,6 +93,19 @@ class RouteHandlerBaseTest(TestCase):
         ])
         assert_equal({"foo": "bar", "abc": "def"}, args2)
 
+    def test_parse_args__works_in_response_handler(self) -> None:
+        class MyHandler(RouteHandlerBase):
+            def prepare_response(self) -> Iterable[bytes]:
+                self.parse_args([])
+                return self.respond()
+
+        self.environ["wsgi.input"] = BytesIO(b"foo=bar&abc=def")
+        self.environ["REQUEST_METHOD"] = "POST"
+        self.environ["CONTENT_LENGTH"] = "15"
+        self.environ["CONTENT_TYPE"] = "application/x-www-form-urlencoded"
+        handler = MyHandler(self.environ, self.start_response)
+        iter(handler)
+
     def test_parse_json_request__default_encoding(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'{ "f\xc3\xb6o": 42 }')
         self.environ["CONTENT_LENGTH"] = "14"
