@@ -130,6 +130,8 @@ def parse_args(environment: WSGIEnvironment,
     ArgumentsError: 400 Bad Request
     >>>
 
+    parse_args() consumes the request input, so multiple calls per request
+    are not possible.
     """
 
     def has_wrong_content_type() -> bool:
