@@ -1,6 +1,11 @@
 News in rouver 0.5.3
 ====================
 
+API Additions
+-------------
+
+* ``rouver.args``: Add ``ArgumentParser``.
+
 News in rouver 0.5.2
 ====================
 

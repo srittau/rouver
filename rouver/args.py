@@ -72,7 +72,58 @@ class CGIFileArgument(FileArgument):
         self._value = value
 
 
-def parse_args(environment: WSGIEnvironment,
+class ArgumentParser:
+
+    """Parse CGI/WSGI arguments.
+
+    As opposed to parse_args(), ArgumentParser.parse_args() can be called
+    multiple times on the same instance during an request.
+    """
+
+    def __init__(self, environ: WSGIEnvironment) -> None:
+        self.environ = environ
+
+        if _has_wrong_content_type(environ):
+            raise BadRequest("incorrect content type, expected {}".format(
+                " or ".join(_FORM_TYPES)))
+
+        self._fields = cgi.FieldStorage(
+            environ["wsgi.input"], environ=environ,
+            keep_blank_values=True)
+
+    def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \
+            -> ArgumentDict:
+
+        errors = {}  # type: Dict[str, str]
+        parsed_arguments = {}  # type: ArgumentDict
+
+        def parse_template(name: str, value_parser: ArgumentValueType,
+                           multiplicity: Multiplicity) -> None:
+            cls = _VALUE_PARSER_CLASSES[multiplicity]
+            argument_parser = cls(self._fields, name, value_parser)
+            if argument_parser.should_parse():
+                try:
+                    parsed_arguments[name] = argument_parser.parse()
+                except _ArgumentError as exc:
+                    errors[name] = exc.args[0]
+
+        for tmpl in argument_template:
+            parse_template(*tmpl)
+
+        if len(errors) > 0:
+            raise ArgumentsError(errors)
+        return parsed_arguments
+
+
+def _has_wrong_content_type(environ: WSGIEnvironment) -> bool:
+    method = environ.get("REQUEST_METHOD", "GET")
+    if method.upper() not in ["POST", "PUT"]:
+        return False
+    content_type = environ.get("CONTENT_TYPE", "").split(";")[0]
+    return content_type not in _FORM_TYPES
+
+
+def parse_args(environ: WSGIEnvironment,
                argument_template: Sequence[ArgumentTemplate]) -> ArgumentDict:
 
     """Parse CGI/WSGI arguments and return an argument dict.
@@ -134,40 +185,8 @@ def parse_args(environment: WSGIEnvironment,
     are not possible.
     """
 
-    def has_wrong_content_type() -> bool:
-        method = environment.get("REQUEST_METHOD", "GET")
-        if method.upper() not in ["POST", "PUT"]:
-            return False
-        content_type = environment.get("CONTENT_TYPE", "").split(";")[0]
-        return content_type not in _FORM_TYPES
-
-    if has_wrong_content_type():
-        raise BadRequest("incorrect content type, expected {}".format(
-            " or ".join(_FORM_TYPES)))
-
-    arguments = cgi.FieldStorage(
-        environment["wsgi.input"], environ=environment,
-        keep_blank_values=True)
-
-    errors = {}  # type: Dict[str, str]
-    parsed_arguments = {}  # type: ArgumentDict
-
-    def parse_template(name: str, value_parser: ArgumentValueType,
-                       multiplicity: Multiplicity) -> None:
-        cls = _VALUE_PARSER_CLASSES[multiplicity]
-        argument_parser = cls(arguments, name, value_parser)
-        if argument_parser.should_parse():
-            try:
-                parsed_arguments[name] = argument_parser.parse()
-            except _ArgumentError as exc:
-                errors[name] = exc.args[0]
-
-    for tmpl in argument_template:
-        parse_template(*tmpl)
-
-    if len(errors) > 0:
-        raise ArgumentsError(errors)
-    return parsed_arguments
+    parser = ArgumentParser(environ)
+    return parser.parse_args(argument_template)
 
 
 class _ValueParserWrapper:

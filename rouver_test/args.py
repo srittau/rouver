@@ -6,7 +6,7 @@ from io import BytesIO
 
 from werkzeug.exceptions import BadRequest
 
-from rouver.args import parse_args, Multiplicity
+from rouver.args import parse_args, Multiplicity, ArgumentParser
 from rouver.exceptions import ArgumentsError
 
 from rouver_test.util import default_environment
@@ -316,3 +316,24 @@ class ParseArgsTest(TestCase):
             parse_args(self.env, [
                 ("foo", str, Multiplicity.OPTIONAL),
             ])
+
+
+class ArgumentParserTest(TestCase):
+
+    def test_parse_args__post_twice(self) -> None:
+        environ = {
+            "wsgi.input": BytesIO(b"foo=bar&abc=def"),
+            "REQUEST_METHOD": "POST",
+            "CONTENT_LENGTH": "15",
+            "CONTENT_TYPE": "application/x-www-form-urlencoded",
+        }
+        parser = ArgumentParser(environ)
+        args1 = parser.parse_args([
+            ("foo", str, Multiplicity.REQUIRED),
+        ])
+        assert_equal({"foo": "bar"}, args1)
+        args2 = parser.parse_args([
+            ("foo", str, Multiplicity.REQUIRED),
+            ("abc", str, Multiplicity.REQUIRED),
+        ])
+        assert_equal({"foo": "bar", "abc": "def"}, args2)
