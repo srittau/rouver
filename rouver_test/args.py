@@ -1,7 +1,7 @@
 from unittest import TestCase
 from urllib.parse import quote_plus
 
-from asserts import assert_equal, fail, assert_raises, assert_in
+from asserts import assert_equal, fail, assert_raises, assert_in, assert_not_in
 from io import BytesIO
 
 from werkzeug.exceptions import BadRequest
@@ -182,6 +182,31 @@ class ParseArgsTest(TestCase):
             ("föo", str, Multiplicity.OPTIONAL),
         ])
         assert_equal({"föo": "bär"}, args)
+
+    def test_urlencoded_delete_request(self) -> None:
+        self.env["REQUEST_METHOD"] = "DELETE"
+        self.setup_urlencoded_request("foo", "bar")
+        args = parse_args(self.env, [
+            ("foo", str, Multiplicity.OPTIONAL),
+        ])
+        assert_equal({"foo": "bar"}, args)
+
+    def test_empty_delete__optional(self) -> None:
+        self.env["REQUEST_METHOD"] = "DELETE"
+        args = parse_args(self.env, [
+            ("opt", str, Multiplicity.OPTIONAL),
+            ("any", str, Multiplicity.ANY),
+        ])
+        assert_not_in("opt", args)
+        assert_equal([], args["any"])
+
+    def test_empty_delete__required_not_supplied(self) -> None:
+        self.env["REQUEST_METHOD"] = "DELETE"
+        with assert_raises(ArgumentsError):
+            parse_args(self.env, [
+                ("req", str, Multiplicity.REQUIRED),
+                ("once", str, Multiplicity.REQUIRED_ANY),
+            ])
 
     def test_urlencoded_put_request(self) -> None:
         self.env["REQUEST_METHOD"] = "PUT"

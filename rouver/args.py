@@ -267,6 +267,13 @@ class _SingleArgumentParser(_ArgumentParser):
             return self.value_parser.parse_from_string(value)
 
     @property
+    def arg_supplied(self) -> bool:
+        try:
+            return self.name in self.args
+        except TypeError:
+            return False
+
+    @property
     def is_argument_a_file(self) -> bool:
         argv = self.args[self.name]
         return hasattr(argv, "file") and argv.file is not None
@@ -275,7 +282,7 @@ class _SingleArgumentParser(_ArgumentParser):
 class _RequiredArgumentParser(_SingleArgumentParser):
 
     def parse(self) -> Any:
-        if self.name not in self.args:
+        if not self.arg_supplied:
             raise _ArgumentError("mandatory argument missing")
         return self.parse_single_arg()
 
@@ -283,9 +290,7 @@ class _RequiredArgumentParser(_SingleArgumentParser):
 class _OptionalArgumentParser(_SingleArgumentParser):
 
     def should_parse(self) -> bool:
-        if self.name not in self.args:
-            return False
-        return True
+        return self.arg_supplied
 
     def parse(self) -> Any:
         assert self.should_parse()
@@ -295,7 +300,10 @@ class _OptionalArgumentParser(_SingleArgumentParser):
 class _MultiArgumentParser(_ArgumentParser):
 
     def parse(self) -> List[Any]:
-        values = self.args.getlist(self.name)
+        try:
+            values = self.args.getlist(self.name)
+        except TypeError:
+            return []
         return [self.value_parser.parse_from_string(v) for v in values]
 
 

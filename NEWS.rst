@@ -1,6 +1,12 @@
 News in rouver 0.5.5
 ====================
 
+Bug Fixes
+---------
+
+* ``rouver.args``: ``parse_args()`` will now work for all methods, even if
+  no arguments are supplied.
+
 News in rouver 0.5.4
 ====================
 
