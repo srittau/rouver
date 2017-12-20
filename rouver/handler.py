@@ -90,9 +90,12 @@ class RouteHandlerBase(collections.Iterable):
         except (LookupError, JSONDecodeError) as exc:
             raise UnsupportedMediaType(str(exc)) from exc
 
-    def respond(self, extra_headers: Sequence[Header] = []) \
+    def respond(self, *,
+                status: HTTPStatus = HTTPStatus.OK,
+                extra_headers: Sequence[Header] = []) \
             -> Iterable[bytes]:
-        return respond(self.start_response, extra_headers=extra_headers)
+        return respond(self.start_response, status=status,
+                       extra_headers=extra_headers)
 
     def respond_with_content(
             self, content: bytes, *,

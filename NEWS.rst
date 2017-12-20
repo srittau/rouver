@@ -1,5 +1,16 @@
-News in rouver 0.5.6
+News in rouver 0.6.0
 ====================
+
+API-Incompatible Changes
+------------------------
+
+* ``rouver.handler``: ``RouteHandlerBase.respond``: ``extra_headers`` is now a
+  keyword-only argument.
+
+API Additions
+-------------
+
+* ``rouver.handler``: ``RouteHandlerBase.respond``: Add ``status`` argument.
 
 News in rouver 0.5.5
 ====================
