@@ -1,7 +1,6 @@
 from http import HTTPStatus
 from json import dumps as dumps_json
 from typing import Union, Any, Iterable, Sequence
-from urllib.parse import quote
 
 from werkzeug.wrappers import Request
 
@@ -12,9 +11,10 @@ from rouver.types import StartResponse, Header
 
 
 def _absolute_url(request: Request, url_part: str) -> str:
+    url_part.encode("ascii")
     if url_part.startswith("/"):
         url_part = url_part[1:]
-    return request.host_url + quote(url_part, safe="/?&=")
+    return request.host_url + url_part
 
 
 def _location_header(request: Request, url_part: str) -> Header:

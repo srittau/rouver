@@ -1,5 +1,17 @@
-News in rouver 0.6.2
+News in rouver 0.7.0
 ====================
+
+API-Incompatible Changes
+------------------------
+
+* ``rouver.response``: The following functions now only accept already
+  URL-encoded partial URLs:
+    + ``created_at()``
+    + ``created_as_json()``
+    + ``temporary_redirect()``
+    + ``see_other()``
+  Non-ASCII URLs with raise a ``ValueError``.
+* ``rouver.handler``: See above.
 
 News in rouver 0.6.1
 ====================

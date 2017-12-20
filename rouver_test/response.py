@@ -2,7 +2,7 @@ from http import HTTPStatus
 from json import loads as json_decode
 from unittest import TestCase
 
-from asserts import assert_equal, assert_in
+from asserts import assert_equal, assert_in, assert_raises
 
 from werkzeug.wrappers import Request
 
@@ -192,9 +192,8 @@ class CreatedAtTest(TestCase):
     def test_non_utf8_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        created_at(request, self.start_request, "foo/bär")
-        self.start_request.assert_header_equals(
-            "Location", "http://www.example.com/foo/b%C3%A4r")
+        with assert_raises(ValueError):
+            created_at(request, self.start_request, "foo/bär")
 
     def test_html(self) -> None:
         request = Request(self.environment)
@@ -229,9 +228,8 @@ class CreatedAsJSONTest(TestCase):
     def test_non_utf8_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        created_as_json(request, self.start_request, "foo/bär", {})
-        self.start_request.assert_header_equals(
-            "Location", "http://www.example.com/foo/b%C3%A4r")
+        with assert_raises(ValueError):
+            created_as_json(request, self.start_request, "foo/bär", {})
 
     def test_json(self) -> None:
         request = Request(self.environment)
@@ -268,16 +266,16 @@ class TemporaryRedirectTest(TestCase):
     def test_non_utf8_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        temporary_redirect(request, self.start_request, "foo/bär")
-        self.start_request.assert_header_equals(
-            "Location", "http://www.example.com/foo/b%C3%A4r")
+        with assert_raises(ValueError):
+            temporary_redirect(request, self.start_request, "foo/bär")
 
     def test_do_not_encode_cgi_arguments(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        temporary_redirect(request, self.start_request, "foo?bar=baz&abc=def")
+        temporary_redirect(request, self.start_request,
+                           "foo?bar=baz&abc=%6A;+,@:$")
         self.start_request.assert_header_equals(
-            "Location", "http://www.example.com/foo?bar=baz&abc=def")
+            "Location", "http://www.example.com/foo?bar=baz&abc=%6A;+,@:$")
 
     def test_html(self) -> None:
         request = Request(self.environment)
@@ -313,9 +311,8 @@ class SeeOtherTest(TestCase):
     def test_non_utf8_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        see_other(request, self.start_request, "foo/bär")
-        self.start_request.assert_header_equals(
-            "Location", "http://www.example.com/foo/b%C3%A4r")
+        with assert_raises(ValueError):
+            see_other(request, self.start_request, "foo/bär")
 
     def test_html(self) -> None:
         request = Request(self.environment)
