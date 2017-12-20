@@ -1,6 +1,12 @@
 News in rouver 0.6.1
 ====================
 
+Bug Fixes
+---------
+
+* ``rouver.response``: Partial URLs in ``temporary_redirect()`` etc. were
+  URL-encoded by accident.
+
 News in rouver 0.6.0
 ====================
 

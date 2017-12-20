@@ -272,6 +272,13 @@ class TemporaryRedirectTest(TestCase):
         self.start_request.assert_header_equals(
             "Location", "http://www.example.com/foo/b%C3%A4r")
 
+    def test_do_not_encode_cgi_arguments(self) -> None:
+        self.environment["SERVER_NAME"] = "www.example.com"
+        request = Request(self.environment)
+        temporary_redirect(request, self.start_request, "foo?bar=baz&abc=def")
+        self.start_request.assert_header_equals(
+            "Location", "http://www.example.com/foo?bar=baz&abc=def")
+
     def test_html(self) -> None:
         request = Request(self.environment)
         response = temporary_redirect(request, self.start_request, "foo/bar")

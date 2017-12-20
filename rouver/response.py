@@ -14,7 +14,7 @@ from rouver.types import StartResponse, Header
 def _absolute_url(request: Request, url_part: str) -> str:
     if url_part.startswith("/"):
         url_part = url_part[1:]
-    return request.host_url + quote(url_part)
+    return request.host_url + quote(url_part, safe="/?&=")
 
 
 def _location_header(request: Request, url_part: str) -> Header:
