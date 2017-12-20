@@ -43,10 +43,20 @@ Routes with wildcards:
 
 >>> def get_wildcard(environ, start_response):
 ...     # environ["rouver.wildcard_path"] contains the remaining path
-...     respond(start_response)
+...     return respond(start_response)
 >>> router.add_routes([
 ...     ("wild/*", "GET", get_wildcard),
 ... ])
+
+Sub-routers:
+
+>>> def get_sub(environ, start_response):
+...     return respond(start_response)
+>>> sub_router = Router()
+>>> sub_router.add_routes([
+...     ("sub", "GET", get_sub),
+... ])
+>>> router.add_sub_router("parent", sub_router)
 
 Argument Handling
 -----------------
