@@ -69,7 +69,7 @@ def bad_arguments_list(arguments: BadArgumentsDict) -> str:
         <span class="argument-name">{name}</span>:
         <span class="error-message">{error}</span>
     </li>
-""".format(name=name, error=error)
+""".format(name=html_escape(name), error=html_escape(error))
 
     items = [format_item(k, arguments[k]) for k in sorted(arguments)]
 

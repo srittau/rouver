@@ -152,3 +152,15 @@ class BadArgumentsListTest(TestCase):
     </li>
 </ul>
 """, html)
+
+    def test_escape_html(self) -> None:
+        html = bad_arguments_list({
+            "a<c": "d<f",
+        })
+        assert_equal("""<ul class="bad-arguments">
+    <li class="argument">
+        <span class="argument-name">a&lt;c</span>:
+        <span class="error-message">d&lt;f</span>
+    </li>
+</ul>
+""", html)
