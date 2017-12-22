@@ -1,12 +1,19 @@
 News in rouver 0.8.0
 ====================
 
+This release includes improvements against HTML injection attacks.
+
 API-Incompatible Changes
 ------------------------
 
 * ``rouver.html``: ``http_status_page()``: The ``message`` argument will now
   be HTML-escaped. Instead, an ``html_message`` argument was added.
   ``content`` was renamed to ``html_content``.
+
+Bug Fixes
+---------
+
+* ``rouver.html``: Harden all functions against malicious input.
 
 News in rouver 0.7.0
 ====================

@@ -38,18 +38,18 @@ def http_status_page(status: HTTPStatus, *,
 
 
 def created_at_page(url: str) -> str:
-    message = 'Created at <a href="{0}">{0}</a>.'.format(url)
+    message = 'Created at <a href="{0}">{0}</a>.'.format(html_escape(url))
     return http_status_page(HTTPStatus.CREATED, html_message=message)
 
 
 def temporary_redirect_page(url: str) -> str:
-    message = 'Please see <a href="{0}">{0}</a>.'.format(url)
+    message = 'Please see <a href="{0}">{0}</a>.'.format(html_escape(url))
     return http_status_page(
         HTTPStatus.TEMPORARY_REDIRECT, html_message=message)
 
 
 def see_other_page(url: str) -> str:
-    message = 'Please see <a href="{0}">{0}</a>.'.format(url)
+    message = 'Please see <a href="{0}">{0}</a>.'.format(html_escape(url))
     return http_status_page(HTTPStatus.SEE_OTHER, html_message=message)
 
 

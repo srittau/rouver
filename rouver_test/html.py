@@ -1,9 +1,10 @@
 from http import HTTPStatus
 from unittest import TestCase
 
-from asserts import assert_equal, assert_raises
+from asserts import assert_equal, assert_raises, assert_in
 
-from rouver.html import http_status_page, bad_arguments_list
+from rouver.html import http_status_page, bad_arguments_list, created_at_page, \
+    temporary_redirect_page, see_other_page
 
 
 class HTTPStatusPageTest(TestCase):
@@ -88,6 +89,30 @@ class HTTPStatusPageTest(TestCase):
     </body>
 </html>
 """, html)
+
+
+class CreatedAtPageTest(TestCase):
+
+    def test_encode_url(self) -> None:
+        page = created_at_page('/foo/"bar"')
+        assert_in(
+            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page)
+
+
+class TemporaryRedirectPageTest(TestCase):
+
+    def test_encode_url(self) -> None:
+        page = temporary_redirect_page('/foo/"bar"')
+        assert_in(
+            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page)
+
+
+class SeeOtherPageTest(TestCase):
+
+    def test_encode_url(self) -> None:
+        page = see_other_page('/foo/"bar"')
+        assert_in(
+            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page)
 
 
 class BadArgumentsListTest(TestCase):
