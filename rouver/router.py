@@ -333,7 +333,7 @@ def _respond_not_found(environment: WSGIEnvironment,
         -> Iterable[bytes]:
     path = cast(str, environment.get("PATH_INFO", ""))
     message = "Path '{}' not found.".format(path)
-    page = http_status_page(HTTPStatus.NOT_FOUND, message=message)
+    page = http_status_page(HTTPStatus.NOT_FOUND, html_message=message)
     return respond_with_html(
         start_response, page, status=HTTPStatus.NOT_FOUND)
 
@@ -345,7 +345,8 @@ def _respond_method_not_allowed(
     method_string = " or ".join(allowed_methods)
     message = "Method '{}' not allowed. Please try {}.".format(
         method, method_string)
-    html = http_status_page(HTTPStatus.METHOD_NOT_ALLOWED, message=message)
+    html = http_status_page(
+        HTTPStatus.METHOD_NOT_ALLOWED, html_message=message)
     return respond_with_html(
         start_response, html, status=HTTPStatus.METHOD_NOT_ALLOWED,
         extra_headers=[("Allow", ", ".join(allowed_methods))])
@@ -354,7 +355,7 @@ def _respond_method_not_allowed(
 def _respond_internal_server_error(start_response: StartResponse) \
         -> Iterable[bytes]:
     html = http_status_page(HTTPStatus.INTERNAL_SERVER_ERROR,
-                            message="Internal server error.")
+                            html_message="Internal server error.")
     return respond_with_html(start_response, html,
                              status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
@@ -362,7 +363,7 @@ def _respond_internal_server_error(start_response: StartResponse) \
 def _respond_http_exception(start_response: StartResponse,
                             exception: HTTPException) -> Iterable[bytes]:
     status = HTTPStatus(exception.code)
-    html = http_status_page(status, message=exception.description)
+    html = http_status_page(status, html_message=exception.description)
     return respond_with_html(start_response, html, status=status)
 
 

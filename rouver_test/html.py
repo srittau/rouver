@@ -23,7 +23,7 @@ class HTTPStatusPageTest(TestCase):
 
     def test_http_status_page_with_message(self) -> None:
         html = http_status_page(
-            HTTPStatus.NOT_ACCEPTABLE, message="Test message.")
+            HTTPStatus.NOT_ACCEPTABLE, html_message="Test message.")
         assert_equal("""<!DOCTYPE html>
 <html>
     <head>
@@ -38,7 +38,7 @@ class HTTPStatusPageTest(TestCase):
 
     def test_http_status_page_with_content(self) -> None:
         html = http_status_page(
-            HTTPStatus.NOT_ACCEPTABLE, content="<div>Test content.</div>")
+            HTTPStatus.NOT_ACCEPTABLE, html_content="<div>Test content.</div>")
         assert_equal("""<!DOCTYPE html>
 <html>
     <head>
@@ -53,8 +53,8 @@ class HTTPStatusPageTest(TestCase):
 
     def test_http_status_page_with_message_and_content(self) -> None:
         html = http_status_page(
-            HTTPStatus.NOT_ACCEPTABLE, message="Test message.",
-            content="<div>Test content.</div>")
+            HTTPStatus.NOT_ACCEPTABLE, html_message="Test message.",
+            html_content="<div>Test content.</div>")
         assert_equal("""<!DOCTYPE html>
 <html>
     <head>

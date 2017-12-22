@@ -1,5 +1,11 @@
-News in rouver 0.7.1
+News in rouver 0.8.0
 ====================
+
+API-Incompatible Changes
+------------------------
+
+* ``rouver.html``: ``http_status_page()``: Rename argument ``message`` to
+  ``html_message`` and ``content`` to ``html_content``.
 
 News in rouver 0.7.0
 ====================
