@@ -1,16 +1,27 @@
+from html import escape as html_escape
 from http import HTTPStatus
 
 from rouver.types import BadArgumentsDict
 
 
 def http_status_page(status: HTTPStatus, *,
+                     message: str = "",
                      html_message: str = "", html_content: str = "") -> str:
     """Create an HTML error page for a given status code.
 
-    WARNING: The arguments "html_message" and "html_content" are not safe!
+    A message and further content can optionally be provided.
+
+    WARNING: The arguments `html_message` and `html_content` are not safe!
     Their content will be pasted into the page as is. Do not use with
     unsanitized data!
     """
+
+    if message and html_message:
+        raise ValueError("'message' and 'html_message' are mutually exclusive")
+
+    if message:
+        html_message = html_escape(message)
+
     paragraph = \
         "\n        <p>{}</p>".format(html_message) if html_message else ""
     content = html_content + "\n" if html_content else ""

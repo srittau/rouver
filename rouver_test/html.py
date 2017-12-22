@@ -1,14 +1,14 @@
 from http import HTTPStatus
 from unittest import TestCase
 
-from asserts import assert_equal
+from asserts import assert_equal, assert_raises
 
 from rouver.html import http_status_page, bad_arguments_list
 
 
 class HTTPStatusPageTest(TestCase):
 
-    def test_http_status_page_default(self) -> None:
+    def test_default(self) -> None:
         html = http_status_page(HTTPStatus.NOT_ACCEPTABLE)
         assert_equal("""<!DOCTYPE html>
 <html>
@@ -21,9 +21,15 @@ class HTTPStatusPageTest(TestCase):
 </html>
 """, html)
 
-    def test_http_status_page_with_message(self) -> None:
+    def test_message_and_html_message(self) -> None:
+        with assert_raises(ValueError):
+            http_status_page(
+                HTTPStatus.NOT_ACCEPTABLE,
+                message="Test", html_message="HTML Test")
+
+    def test_message(self) -> None:
         html = http_status_page(
-            HTTPStatus.NOT_ACCEPTABLE, html_message="Test message.")
+            HTTPStatus.NOT_ACCEPTABLE, message="Test <em>message</em>.")
         assert_equal("""<!DOCTYPE html>
 <html>
     <head>
@@ -31,12 +37,27 @@ class HTTPStatusPageTest(TestCase):
     </head>
     <body>
         <h1>406 &mdash; Not Acceptable</h1>
-        <p>Test message.</p>
+        <p>Test &lt;em&gt;message&lt;/em&gt;.</p>
     </body>
 </html>
 """, html)
 
-    def test_http_status_page_with_content(self) -> None:
+    def test_html_message(self) -> None:
+        html = http_status_page(
+            HTTPStatus.NOT_ACCEPTABLE, html_message="Test <em>message</em>.")
+        assert_equal("""<!DOCTYPE html>
+<html>
+    <head>
+        <title>406 &mdash; Not Acceptable</title>
+    </head>
+    <body>
+        <h1>406 &mdash; Not Acceptable</h1>
+        <p>Test <em>message</em>.</p>
+    </body>
+</html>
+""", html)
+
+    def test_html_content(self) -> None:
         html = http_status_page(
             HTTPStatus.NOT_ACCEPTABLE, html_content="<div>Test content.</div>")
         assert_equal("""<!DOCTYPE html>
@@ -51,7 +72,7 @@ class HTTPStatusPageTest(TestCase):
 </html>
 """, html)
 
-    def test_http_status_page_with_message_and_content(self) -> None:
+    def test_html_message_and_html_content(self) -> None:
         html = http_status_page(
             HTTPStatus.NOT_ACCEPTABLE, html_message="Test message.",
             html_content="<div>Test content.</div>")

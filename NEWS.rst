@@ -4,8 +4,9 @@ News in rouver 0.8.0
 API-Incompatible Changes
 ------------------------
 
-* ``rouver.html``: ``http_status_page()``: Rename argument ``message`` to
-  ``html_message`` and ``content`` to ``html_content``.
+* ``rouver.html``: ``http_status_page()``: The ``message`` argument will now
+  be HTML-escaped. Instead, an ``html_message`` argument was added.
+  ``content`` was renamed to ``html_content``.
 
 News in rouver 0.7.0
 ====================
