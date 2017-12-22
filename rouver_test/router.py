@@ -4,7 +4,7 @@ from typing import Iterable, Any, Sequence
 from unittest import TestCase
 
 from asserts import assert_equal, assert_raises, assert_is_instance, \
-    assert_regex
+    assert_regex, assert_in
 
 from werkzeug.exceptions import Conflict
 from werkzeug.wrappers import Request
@@ -60,11 +60,8 @@ class RouterTest(TestCase):
         self.environment["PATH_INFO"] = path
         return self.router(self.environment, self.start_response)
 
-    def test_no_routes(self) -> None:
+    def test_not_found_response_page(self) -> None:
         response = self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
-        self.start_response.assert_header_equals(
-            "Content-Type", "text/html; charset=utf-8")
         html = b"".join(response).decode("utf-8")
         assert_equal("""<!DOCTYPE html>
 <html>
@@ -73,10 +70,21 @@ class RouterTest(TestCase):
     </head>
     <body>
         <h1>404 &mdash; Not Found</h1>
-        <p>Path '/foo/bar' not found.</p>
+        <p>Path &#x27;/foo/bar&#x27; not found.</p>
     </body>
 </html>
 """, html)
+
+    def test_not_found_escape_path(self) -> None:
+        response = self.handle_wsgi("GET", "/foo/<bar")
+        html = b"".join(response).decode("utf-8")
+        assert_in("<p>Path &#x27;/foo/&lt;bar&#x27; not found.</p>", html)
+
+    def test_no_routes(self) -> None:
+        self.handle_wsgi("GET", "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+        self.start_response.assert_header_equals(
+            "Content-Type", "text/html; charset=utf-8")
 
     def test_handler_request(self) -> None:
         def handle(environ: WSGIEnvironment, start_response: StartResponse) \
@@ -154,6 +162,35 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.NOT_FOUND)
 
     # Method Handling
+
+    def test_wrong_method_response_page(self) -> None:
+        self.router.add_routes([
+            ("foo", "GET", fail_if_called),
+            ("foo", "PUT", fail_if_called),
+        ])
+        response = self.handle_wsgi("POST", "/foo")
+        html = b"".join(response).decode("utf-8")
+        assert_equal("""<!DOCTYPE html>
+<html>
+    <head>
+        <title>405 &mdash; Method Not Allowed</title>
+    </head>
+    <body>
+        <h1>405 &mdash; Method Not Allowed</h1>
+        <p>Method &#x27;POST&#x27; not allowed. Please try GET or PUT.</p>
+    </body>
+</html>
+""", html)
+
+    def test_wrong_method_escape_method(self) -> None:
+        self.router.add_routes([
+            ("foo", "GET", fail_if_called),
+        ])
+        response = self.handle_wsgi("G<T", "/foo")
+        html = b"".join(response).decode("utf-8")
+        assert_in(
+            "<p>Method &#x27;G&lt;T&#x27; not allowed. Please try GET.</p>",
+            html)
 
     def test_wrong_method(self) -> None:
         self.router.add_routes([
@@ -533,6 +570,28 @@ class RouterTest(TestCase):
 
     # Error Handling
 
+    def test_internal_error_page(self) -> None:
+        def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
+            raise KeyError("Custom < error")
+
+        self.router.error_handling = True
+        self.router.add_routes([
+            ("foo", "GET", handle),
+        ])
+        response = self.handle_wsgi("GET", "/foo")
+        html = b"".join(response).decode("utf-8")
+        assert_equal("""<!DOCTYPE html>
+<html>
+    <head>
+        <title>500 &mdash; Internal Server Error</title>
+    </head>
+    <body>
+        <h1>500 &mdash; Internal Server Error</h1>
+        <p>Internal server error.</p>
+    </body>
+</html>
+""", html)
+
     def test_template_key_error_with_error_handling(self) -> None:
         def raise_key_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise KeyError()
@@ -581,7 +640,7 @@ class RouterTest(TestCase):
 
     def test_http_error(self) -> None:
         def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
-            raise Conflict()
+            raise Conflict("Foo < Bar")
 
         self.router.error_handling = False
         self.router.add_routes([
@@ -597,7 +656,7 @@ class RouterTest(TestCase):
     </head>
     <body>
         <h1>409 &mdash; Conflict</h1>
-        <p>A conflict happened while processing the request.  The resource might have been modified while the request was being processed.</p>
+        <p>Foo &lt; Bar</p>
     </body>
 </html>
 """, html)

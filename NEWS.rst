@@ -14,6 +14,7 @@ Bug Fixes
 ---------
 
 * ``rouver.html``: Harden all functions against malicious input.
+* ``rouver.router``: Correctly HTML-escape error messages.
 
 News in rouver 0.7.0
 ====================
