@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name="rouver",
-    version="0.8.1",
+    version="0.8.2",
     description="A microframework",
     long_description=read("README.rst"),
     author="Sebastian Rittau",
