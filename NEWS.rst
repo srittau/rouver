@@ -1,6 +1,11 @@
 News in rouver 0.8.1
 ====================
 
+Bug Fixes
+---------
+
+* Fix sub-routers with non-ASCII paths.
+
 News in rouver 0.8.0
 ====================
 

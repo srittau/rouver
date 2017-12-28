@@ -494,6 +494,19 @@ class RouterTest(TestCase):
         self.handle_wsgi("GET", "/foo/bar")
         self.start_response.assert_status(HTTPStatus.OK)
 
+    def test_sub_router__path_info_encoding(self) -> None:
+        expected_path = "/föo".encode("utf-8").decode("latin-1")
+
+        def app(env: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
+            assert_equal(expected_path, env["PATH_INFO"])
+            sr("200 OK", [])
+            return []
+
+        self.router.error_handling = False
+        self.router.add_sub_router("sub", app)
+        self.handle_wsgi("GET", "/sub/föo".encode("utf-8").decode("latin-1"))
+        self.start_response.assert_status(HTTPStatus.OK)
+
     def test_sub_router__template_in_super_router(self) -> None:
         def handle(environ: WSGIEnvironment, start_response: StartResponse) \
                 -> Iterable[bytes]:

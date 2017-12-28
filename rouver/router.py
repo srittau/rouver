@@ -218,7 +218,8 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
 
     def call_sub_router(matcher: _SubRouterMatcher) -> Iterable[bytes]:
         new_environ = environment.copy()
-        new_environ["PATH_INFO"] = matcher.remaining_path
+        new_environ["PATH_INFO"] = \
+            matcher.remaining_path.encode("utf-8").decode("latin-1")
         return matcher.call(new_environ, start_response)
 
     return find_route_and_call_handler()
