@@ -1,6 +1,12 @@
 News in rouver 0.8.2
 ====================
 
+Bug Fixes
+---------
+
+* ``rouver.args``: Raise ``BadRequest`` when a PATCH request has a wrong
+  content type.
+
 News in rouver 0.8.1
 ====================
 

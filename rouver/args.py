@@ -117,7 +117,7 @@ class ArgumentParser:
 
 def _has_wrong_content_type(environ: WSGIEnvironment) -> bool:
     method = environ.get("REQUEST_METHOD", "GET")
-    if method.upper() not in ["POST", "PUT"]:
+    if method.upper() not in ["POST", "PUT", "PATCH"]:
         return False
     content_type = environ.get("CONTENT_TYPE", "").split(";")[0]
     return content_type not in _FORM_TYPES

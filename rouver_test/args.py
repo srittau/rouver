@@ -183,6 +183,14 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"föo": "bär"}, args)
 
+    def test_urlencoded_patch_request(self) -> None:
+        self.env["REQUEST_METHOD"] = "PATCH"
+        self.setup_urlencoded_request("foo", "bar")
+        args = parse_args(self.env, [
+            ("foo", str, Multiplicity.OPTIONAL),
+        ])
+        assert_equal({"foo": "bar"}, args)
+
     def test_urlencoded_delete_request(self) -> None:
         self.env["REQUEST_METHOD"] = "DELETE"
         self.setup_urlencoded_request("foo", "bar")
@@ -334,6 +342,16 @@ class ParseArgsTest(TestCase):
         <https://bugs.python.org/issue32029>.
         """
         self.env["REQUEST_METHOD"] = "POST"
+        self.env["CONTENT_TYPE"] = "application/octet-stream"
+        self.env["CONTENT_LENGTH"] = "2"
+        self.env["wsgi.input"] = BytesIO(b"AB")
+        with assert_raises(BadRequest):
+            parse_args(self.env, [
+                ("foo", str, Multiplicity.OPTIONAL),
+            ])
+
+    def test_patch_wrong_content_type(self) -> None:
+        self.env["REQUEST_METHOD"] = "PATCH"
         self.env["CONTENT_TYPE"] = "application/octet-stream"
         self.env["CONTENT_LENGTH"] = "2"
         self.env["wsgi.input"] = BytesIO(b"AB")
