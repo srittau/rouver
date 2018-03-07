@@ -4,7 +4,6 @@ from rouver.types import BadArgumentsDict
 
 
 class ArgumentsError(BadRequest):
-
     """One or more CGI or JSON arguments were invalid.
 
     Requires a dictionary as argument, where keys are the argument names or

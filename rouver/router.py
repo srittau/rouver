@@ -34,7 +34,6 @@ def _split_path(s: str) -> List[str]:
 
 
 class Router:
-
     def __init__(self) -> None:
         self._handlers = []  # type: List[_RouteHandler]
         self._sub_routers = []  # type: List[_SubRouterHandler]
@@ -131,13 +130,12 @@ def _parse_path(path_string: str,
     else:
         wildcard = False
     templates = [
-        _parse_route_template_part(part, template_handlers)
-        for part in parts]
+        _parse_route_template_part(part, template_handlers) for part in parts
+    ]
     return templates, wildcard
 
 
 class _RouteHandler:
-
     def __init__(self, route: RouteDescription,
                  template_handlers: _TemplateHandlerDict) -> None:
         self.path, self.wildcard = \
@@ -147,7 +145,6 @@ class _RouteHandler:
 
 
 class _SubRouterHandler:
-
     def __init__(self, path: str, router: WSGIApplication,
                  template_handlers: _TemplateHandlerDict) -> None:
         self.path, _ = _parse_path(path, template_handlers)
@@ -172,14 +169,13 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
             except NotFound:
                 return _respond_not_found(environment, start_response)
         except MethodNotAllowed as exc:
-            return _respond_method_not_allowed(
-                start_response, request.method, exc.valid_methods)
+            return _respond_method_not_allowed(start_response, request.method,
+                                               exc.valid_methods)
         else:
             return call_handler(matcher)
 
     def find_route() -> _RouteMatcher:
-        matchers = [
-            _RouteMatcher(h, path, arguments) for h in handlers]
+        matchers = [_RouteMatcher(h, path, arguments) for h in handlers]
 
         matching_paths = [m for m in matchers if m.matches]
         if not matching_paths:
@@ -209,8 +205,9 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
         return call_sub_router(matcher)
 
     def find_sub_router() -> _SubRouterMatcher:
-        matchers = [_SubRouterMatcher(sub_r, path, arguments)
-                    for sub_r in sub_routers]
+        matchers = [
+            _SubRouterMatcher(sub_r, path, arguments) for sub_r in sub_routers
+        ]
         for m in matchers:
             if m.matches:
                 return m
@@ -226,7 +223,6 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
 
 
 class _RouteArguments:
-
     def __init__(self, request: Request,
                  template_handlers: _TemplateHandlerDict) -> None:
         self._request = request
@@ -243,10 +239,12 @@ class _RouteArguments:
 
 
 class _MatcherBase:
-
-    def __init__(self, match_path: Sequence[_RouteTemplatePart],
-                 request_path: Sequence[str], arguments: _RouteArguments,
-                 *, match_full_path: bool = False) -> None:
+    def __init__(self,
+                 match_path: Sequence[_RouteTemplatePart],
+                 request_path: Sequence[str],
+                 arguments: _RouteArguments,
+                 *,
+                 match_full_path: bool = False) -> None:
         if request_path and request_path[-1] == "":
             request_path = request_path[:-1]
             self._trailing_slash = True
@@ -302,11 +300,13 @@ class _MatcherBase:
 
 
 class _RouteMatcher(_MatcherBase):
-
     def __init__(self, handler: _RouteHandler, path: Sequence[str],
                  arguments: _RouteArguments) -> None:
-        super().__init__(handler.path, path, arguments,
-                         match_full_path=not handler.wildcard)
+        super().__init__(
+            handler.path,
+            path,
+            arguments,
+            match_full_path=not handler.wildcard)
         self.method = handler.method
         self._handler = handler.handler
 
@@ -318,7 +318,6 @@ class _RouteMatcher(_MatcherBase):
 
 
 class _SubRouterMatcher(_MatcherBase):
-
     def __init__(self, handler: _SubRouterHandler, path: Sequence[str],
                  arguments: _RouteArguments) -> None:
         super().__init__(handler.path, path, arguments)
@@ -335,8 +334,7 @@ def _respond_not_found(environment: WSGIEnvironment,
     path = cast(str, environment.get("PATH_INFO", ""))
     message = "Path '{}' not found.".format(path)
     page = http_status_page(HTTPStatus.NOT_FOUND, message=message)
-    return respond_with_html(
-        start_response, page, status=HTTPStatus.NOT_FOUND)
+    return respond_with_html(start_response, page, status=HTTPStatus.NOT_FOUND)
 
 
 def _respond_method_not_allowed(
@@ -346,19 +344,20 @@ def _respond_method_not_allowed(
     method_string = " or ".join(allowed_methods)
     message = "Method '{}' not allowed. Please try {}.".format(
         method, method_string)
-    html = http_status_page(
-        HTTPStatus.METHOD_NOT_ALLOWED, message=message)
+    html = http_status_page(HTTPStatus.METHOD_NOT_ALLOWED, message=message)
     return respond_with_html(
-        start_response, html, status=HTTPStatus.METHOD_NOT_ALLOWED,
+        start_response,
+        html,
+        status=HTTPStatus.METHOD_NOT_ALLOWED,
         extra_headers=[("Allow", ", ".join(allowed_methods))])
 
 
 def _respond_internal_server_error(start_response: StartResponse) \
         -> Iterable[bytes]:
-    html = http_status_page(HTTPStatus.INTERNAL_SERVER_ERROR,
-                            message="Internal server error.")
-    return respond_with_html(start_response, html,
-                             status=HTTPStatus.INTERNAL_SERVER_ERROR)
+    html = http_status_page(
+        HTTPStatus.INTERNAL_SERVER_ERROR, message="Internal server error.")
+    return respond_with_html(
+        start_response, html, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 def _respond_http_exception(start_response: StartResponse,

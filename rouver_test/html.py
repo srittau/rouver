@@ -8,7 +8,6 @@ from rouver.html import http_status_page, bad_arguments_list, created_at_page, \
 
 
 class HTTPStatusPageTest(TestCase):
-
     def test_default(self) -> None:
         html = http_status_page(HTTPStatus.NOT_ACCEPTABLE)
         assert_equal("""<!DOCTYPE html>
@@ -26,7 +25,8 @@ class HTTPStatusPageTest(TestCase):
         with assert_raises(ValueError):
             http_status_page(
                 HTTPStatus.NOT_ACCEPTABLE,
-                message="Test", html_message="HTML Test")
+                message="Test",
+                html_message="HTML Test")
 
     def test_message(self) -> None:
         html = http_status_page(
@@ -75,7 +75,8 @@ class HTTPStatusPageTest(TestCase):
 
     def test_html_message_and_html_content(self) -> None:
         html = http_status_page(
-            HTTPStatus.NOT_ACCEPTABLE, html_message="Test message.",
+            HTTPStatus.NOT_ACCEPTABLE,
+            html_message="Test message.",
             html_content="<div>Test content.</div>")
         assert_equal("""<!DOCTYPE html>
 <html>
@@ -92,31 +93,27 @@ class HTTPStatusPageTest(TestCase):
 
 
 class CreatedAtPageTest(TestCase):
-
     def test_encode_url(self) -> None:
         page = created_at_page('/foo/"bar"')
-        assert_in(
-            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page)
+        assert_in('<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>',
+                  page)
 
 
 class TemporaryRedirectPageTest(TestCase):
-
     def test_encode_url(self) -> None:
         page = temporary_redirect_page('/foo/"bar"')
-        assert_in(
-            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page)
+        assert_in('<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>',
+                  page)
 
 
 class SeeOtherPageTest(TestCase):
-
     def test_encode_url(self) -> None:
         page = see_other_page('/foo/"bar"')
-        assert_in(
-            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page)
+        assert_in('<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>',
+                  page)
 
 
 class BadArgumentsListTest(TestCase):
-
     def test_empty_dict(self) -> None:
         html = bad_arguments_list({})
         assert_equal("", html)

@@ -11,7 +11,6 @@ from rouver.exceptions import ArgumentsError
 
 from rouver_test.util import default_environment
 
-
 MULTIPART_BODY_TMPL = """--1234567890
 Content-Disposition: form-data; name="{}"
 
@@ -29,7 +28,6 @@ Content-Type: {type}
 
 
 class ParseArgsTest(TestCase):
-
     def setUp(self) -> None:
         self.env = default_environment()
 
@@ -55,13 +53,15 @@ class ParseArgsTest(TestCase):
         self.env["CONTENT_LENGTH"] = str(len(body))
         self.env["wsgi.input"] = BytesIO(body)
 
-    def setup_multipart_file_request(
-            self, name: str, filename: str, file_content: str,
-            content_type: str) -> None:
+    def setup_multipart_file_request(self, name: str, filename: str,
+                                     file_content: str,
+                                     content_type: str) -> None:
         self.env["CONTENT_TYPE"] = \
             "multipart/form-data; boundary=1234567890"
         body = MULTIPART_FILE_BODY_TMPL.format(
-            name=name, filename=filename, content=file_content,
+            name=name,
+            filename=filename,
+            content=file_content,
             type=content_type).encode("utf-8")
         self.env["CONTENT_LENGTH"] = str(len(body))
         self.env["wsgi.input"] = BytesIO(body)
@@ -266,8 +266,8 @@ class ParseArgsTest(TestCase):
 
     def test_multipart_post_request_with_file(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
-        self.setup_multipart_file_request(
-            "my-file", "my-file.txt", "content", "text/plain")
+        self.setup_multipart_file_request("my-file", "my-file.txt", "content",
+                                          "text/plain")
         args = parse_args(self.env, [
             ("my-file", "file", Multiplicity.REQUIRED),
         ])
@@ -279,8 +279,8 @@ class ParseArgsTest(TestCase):
 
     def test_multipart_post_request_with_file_and_umlauts(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
-        self.setup_multipart_file_request(
-            "föo", "my-filé.txt", "cöntent", "text/plain; charset=utf-8")
+        self.setup_multipart_file_request("föo", "my-filé.txt", "cöntent",
+                                          "text/plain; charset=utf-8")
         args = parse_args(self.env, [
             ("föo", "file", Multiplicity.REQUIRED),
         ])
@@ -292,8 +292,8 @@ class ParseArgsTest(TestCase):
 
     def test_multipart_put_request_with_file(self) -> None:
         self.env["REQUEST_METHOD"] = "PUT"
-        self.setup_multipart_file_request(
-            "my-file", "my-file.txt", "content", "text/plain")
+        self.setup_multipart_file_request("my-file", "my-file.txt", "content",
+                                          "text/plain")
         args = parse_args(self.env, [
             ("my-file", "file", Multiplicity.REQUIRED),
         ])
@@ -305,8 +305,8 @@ class ParseArgsTest(TestCase):
 
     def test_read_file_as_value(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
-        self.setup_multipart_file_request(
-            "foo", "my-file.txt", "123", "text/plain")
+        self.setup_multipart_file_request("foo", "my-file.txt", "123",
+                                          "text/plain")
         args = parse_args(self.env, [
             ("foo", int, Multiplicity.REQUIRED),
         ])
@@ -362,7 +362,6 @@ class ParseArgsTest(TestCase):
 
 
 class ArgumentParserTest(TestCase):
-
     def test_parse_args__post_twice(self) -> None:
         environ = {
             "wsgi.input": BytesIO(b"foo=bar&abc=def"),

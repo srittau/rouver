@@ -6,7 +6,6 @@ from rouver.exceptions import ArgumentsError
 
 
 class ArgumentsErrorTest(TestCase):
-
     def test_message(self) -> None:
         error = ArgumentsError({"foo": "bar"})
         assert_equal("400 Bad Request: invalid arguments", str(error))

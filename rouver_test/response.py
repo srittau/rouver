@@ -14,7 +14,6 @@ from rouver_test.util import TestingStartResponse, default_environment
 
 
 class RespondTest(TestCase):
-
     def test_default_status(self) -> None:
         sr = TestingStartResponse()
         respond(sr)
@@ -27,9 +26,10 @@ class RespondTest(TestCase):
 
     def test_extra_headers(self) -> None:
         sr = TestingStartResponse()
-        respond(sr, extra_headers=[
-            ("X-Custom-Header", "Foobar"),
-        ])
+        respond(
+            sr, extra_headers=[
+                ("X-Custom-Header", "Foobar"),
+            ])
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     def test_response(self) -> None:
@@ -39,7 +39,6 @@ class RespondTest(TestCase):
 
 
 class RespondWithContentTest(TestCase):
-
     def test_default_status(self) -> None:
         sr = TestingStartResponse()
         respond_with_content(sr, b"")
@@ -67,9 +66,10 @@ class RespondWithContentTest(TestCase):
 
     def test_extra_headers(self) -> None:
         sr = TestingStartResponse()
-        respond_with_content(sr, b"", extra_headers=[
-            ("X-Custom-Header", "Foobar"),
-        ])
+        respond_with_content(
+            sr, b"", extra_headers=[
+                ("X-Custom-Header", "Foobar"),
+            ])
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     def test_return_value(self) -> None:
@@ -79,7 +79,6 @@ class RespondWithContentTest(TestCase):
 
 
 class RespondWithJSONTest(TestCase):
-
     def test_default_status(self) -> None:
         sr = TestingStartResponse()
         respond_with_json(sr, {})
@@ -93,20 +92,20 @@ class RespondWithJSONTest(TestCase):
     def test_content_type(self) -> None:
         sr = TestingStartResponse()
         respond_with_json(sr, {})
-        sr.assert_header_equals(
-            "Content-Type", "application/json; charset=utf-8")
+        sr.assert_header_equals("Content-Type",
+                                "application/json; charset=utf-8")
 
     def test_content_length(self) -> None:
         sr = TestingStartResponse()
         respond_with_json(sr, {"foo": 33})
-        sr.assert_header_equals(
-            "Content-Length", "11")
+        sr.assert_header_equals("Content-Length", "11")
 
     def test_extra_headers(self) -> None:
         sr = TestingStartResponse()
-        respond_with_json(sr, {}, extra_headers=[
-            ("X-Custom-Header", "Foobar"),
-        ])
+        respond_with_json(
+            sr, {}, extra_headers=[
+                ("X-Custom-Header", "Foobar"),
+            ])
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     def test_json_as_bytes(self) -> None:
@@ -126,7 +125,6 @@ class RespondWithJSONTest(TestCase):
 
 
 class RespondWithHTMLTest(TestCase):
-
     def test_default_status(self) -> None:
         sr = TestingStartResponse()
         respond_with_html(sr, "<div>Test</div>")
@@ -150,9 +148,12 @@ class RespondWithHTMLTest(TestCase):
 
     def test_extra_headers(self) -> None:
         sr = TestingStartResponse()
-        respond_with_html(sr, "<div>Täst</div>", extra_headers=[
-            ("X-Custom-Header", "Foobar"),
-        ])
+        respond_with_html(
+            sr,
+            "<div>Täst</div>",
+            extra_headers=[
+                ("X-Custom-Header", "Foobar"),
+            ])
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     def test_return_value(self) -> None:
@@ -167,7 +168,6 @@ class RespondWithHTMLTest(TestCase):
 
 
 class CreatedAtTest(TestCase):
-
     def setUp(self) -> None:
         self.environment = default_environment()
         self.start_request = TestingStartResponse()
@@ -177,8 +177,8 @@ class CreatedAtTest(TestCase):
         request = Request(self.environment)
         created_at(request, self.start_request, "/foo/bar")
         self.start_request.assert_status(HTTPStatus.CREATED)
-        self.start_request.assert_header_equals(
-            "Content-Type", "text/html; charset=utf-8")
+        self.start_request.assert_header_equals("Content-Type",
+                                                "text/html; charset=utf-8")
         self.start_request.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
@@ -203,7 +203,6 @@ class CreatedAtTest(TestCase):
 
 
 class CreatedAsJSONTest(TestCase):
-
     def setUp(self) -> None:
         self.environment = default_environment()
         self.start_request = TestingStartResponse()
@@ -241,7 +240,6 @@ class CreatedAsJSONTest(TestCase):
 
 
 class TemporaryRedirectTest(TestCase):
-
     def setUp(self) -> None:
         self.environment = default_environment()
         self.start_request = TestingStartResponse()
@@ -251,8 +249,8 @@ class TemporaryRedirectTest(TestCase):
         request = Request(self.environment)
         temporary_redirect(request, self.start_request, "/foo/bar")
         self.start_request.assert_status(HTTPStatus.TEMPORARY_REDIRECT)
-        self.start_request.assert_header_equals(
-            "Content-Type", "text/html; charset=utf-8")
+        self.start_request.assert_header_equals("Content-Type",
+                                                "text/html; charset=utf-8")
         self.start_request.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
@@ -286,7 +284,6 @@ class TemporaryRedirectTest(TestCase):
 
 
 class SeeOtherTest(TestCase):
-
     def setUp(self) -> None:
         self.environment = default_environment()
         self.start_request = TestingStartResponse()
@@ -296,8 +293,8 @@ class SeeOtherTest(TestCase):
         request = Request(self.environment)
         see_other(request, self.start_request, "/foo/bar")
         self.start_request.assert_status(HTTPStatus.SEE_OTHER)
-        self.start_request.assert_header_equals(
-            "Content-Type", "text/html; charset=utf-8")
+        self.start_request.assert_header_equals("Content-Type",
+                                                "text/html; charset=utf-8")
         self.start_request.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 

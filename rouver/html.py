@@ -4,9 +4,11 @@ from http import HTTPStatus
 from rouver.types import BadArgumentsDict
 
 
-def http_status_page(status: HTTPStatus, *,
+def http_status_page(status: HTTPStatus,
+                     *,
                      message: str = "",
-                     html_message: str = "", html_content: str = "") -> str:
+                     html_message: str = "",
+                     html_content: str = "") -> str:
     """Create an HTML error page for a given status code.
 
     A message and further content can optionally be provided.
@@ -56,7 +58,8 @@ def see_other_page(url: str) -> str:
 def bad_arguments_page(arguments: BadArgumentsDict) -> str:
     content = bad_arguments_list(arguments)
     return http_status_page(
-        HTTPStatus.BAD_REQUEST, html_message="Invalid arguments:",
+        HTTPStatus.BAD_REQUEST,
+        html_message="Invalid arguments:",
         html_content=content)
 
 

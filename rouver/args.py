@@ -22,7 +22,6 @@ ArgumentValueType = Union[ArgumentValueParser, str]
 ArgumentTemplate = Tuple[str, ArgumentValueType, Multiplicity]
 ArgumentDict = Dict[str, Any]
 
-
 _FORM_TYPES = ["application/x-www-form-urlencoded", "multipart/form-data"]
 
 
@@ -32,7 +31,6 @@ class _ArgumentError(Exception):
 
 
 class FileArgument:
-
     """File argument result.
 
     This is a file-like object, containing a byte stream. It has additional
@@ -60,7 +58,6 @@ class FileArgument:
 
 
 class CGIFileArgument(FileArgument):
-
     def __init__(self, value: cgi.FieldStorage) -> None:
         content_type = value.headers.get(
             "content-type", "application/octet-stream").split(";")[0]
@@ -73,7 +70,6 @@ class CGIFileArgument(FileArgument):
 
 
 class ArgumentParser:
-
     """Parse CGI/WSGI arguments.
 
     As opposed to parse_args(), ArgumentParser.parse_args() can be called
@@ -88,8 +84,7 @@ class ArgumentParser:
                 " or ".join(_FORM_TYPES)))
 
         self._fields = cgi.FieldStorage(
-            environ["wsgi.input"], environ=environ,
-            keep_blank_values=True)
+            environ["wsgi.input"], environ=environ, keep_blank_values=True)
 
     def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \
             -> ArgumentDict:
@@ -125,7 +120,6 @@ def _has_wrong_content_type(environ: WSGIEnvironment) -> bool:
 
 def parse_args(environ: WSGIEnvironment,
                argument_template: Sequence[ArgumentTemplate]) -> ArgumentDict:
-
     """Parse CGI/WSGI arguments and return an argument dict.
 
     argument_template is a list of (argname, value_parser, multiplicity)
@@ -190,7 +184,6 @@ def parse_args(environ: WSGIEnvironment,
 
 
 class _ValueParserWrapper:
-
     def parse_from_string(self, s: str) -> Any:
         raise NotImplementedError()
 
@@ -199,7 +192,6 @@ class _ValueParserWrapper:
 
 
 class _FunctionValueParser(_ValueParserWrapper):
-
     def __init__(self, value_parser: ArgumentValueParser) -> None:
         super().__init__()
         self.value_parser = value_parser
@@ -219,7 +211,6 @@ class _FunctionValueParser(_ValueParserWrapper):
 
 
 class _FileArgumentValueParser(_ValueParserWrapper):
-
     def parse_from_string(self, value: str) -> FileArgument:
         stream = BytesIO(value.encode("utf-8"))
         return FileArgument(stream, "", "application/octet-stream")
@@ -239,7 +230,6 @@ def _create_argument_value_parser(value_parser: ArgumentValueType) \
 
 
 class _ArgumentParser:
-
     def __init__(self, args: cgi.FieldStorage, name: str,
                  value_parser: ArgumentValueType) -> None:
         self.args = args
@@ -254,7 +244,6 @@ class _ArgumentParser:
 
 
 class _SingleArgumentParser(_ArgumentParser):
-
     def parse(self) -> Any:
         raise NotImplementedError()
 
@@ -280,7 +269,6 @@ class _SingleArgumentParser(_ArgumentParser):
 
 
 class _RequiredArgumentParser(_SingleArgumentParser):
-
     def parse(self) -> Any:
         if not self.arg_supplied:
             raise _ArgumentError("mandatory argument missing")
@@ -288,7 +276,6 @@ class _RequiredArgumentParser(_SingleArgumentParser):
 
 
 class _OptionalArgumentParser(_SingleArgumentParser):
-
     def should_parse(self) -> bool:
         return self.arg_supplied
 
@@ -298,7 +285,6 @@ class _OptionalArgumentParser(_SingleArgumentParser):
 
 
 class _MultiArgumentParser(_ArgumentParser):
-
     def parse(self) -> List[Any]:
         try:
             values = self.args.getlist(self.name)
@@ -308,7 +294,6 @@ class _MultiArgumentParser(_ArgumentParser):
 
 
 class _AtLeastOneArgumentParser(_MultiArgumentParser):
-
     def parse(self) -> List[Any]:
         values = super().parse()
         if not values:

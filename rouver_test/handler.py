@@ -24,7 +24,6 @@ class TestingHandler(RouteHandlerBase):
 
 
 class RouteHandlerBaseTest(TestCase):
-
     def setUp(self) -> None:
         self.environ = default_environment()
         self.start_response = TestingStartResponse()

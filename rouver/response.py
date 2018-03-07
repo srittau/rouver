@@ -21,10 +21,10 @@ def _location_header(request: Request, url_part: str) -> Header:
     return "Location", _absolute_url(request, url_part)
 
 
-def respond(start_response: StartResponse, *,
+def respond(start_response: StartResponse,
+            *,
             status: HTTPStatus = HTTPStatus.OK,
             extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
-
     """Prepare an empty WSGI response.
 
     >>> def handler(start_response, request):
@@ -44,11 +44,12 @@ def respond(start_response: StartResponse, *,
 
 
 def respond_with_content(
-        start_response: StartResponse, content: bytes, *,
+        start_response: StartResponse,
+        content: bytes,
+        *,
         status: HTTPStatus = HTTPStatus.OK,
         content_type: str = "application/octet-stream",
         extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
-
     """Prepare an WSGI response.
 
     >>> def handler(start_response, request):
@@ -72,7 +73,6 @@ def respond_with_json(start_response: StartResponse,
                       status: HTTPStatus = HTTPStatus.OK,
                       extra_headers: Sequence[Header] = []) \
         -> Iterable[bytes]:
-
     """Prepare a JSON WSGI response.
 
     >>> def handler(start_response, request):
@@ -93,7 +93,9 @@ def respond_with_json(start_response: StartResponse,
         encoded = dumps_json(json).encode("utf-8")
 
     return respond_with_content(
-        start_response, encoded, status=status,
+        start_response,
+        encoded,
+        status=status,
         content_type="application/json; charset=utf-8",
         extra_headers=extra_headers)
 
@@ -102,7 +104,6 @@ def respond_with_html(start_response: StartResponse, html: str, *,
                       status: HTTPStatus = HTTPStatus.OK,
                       extra_headers: Sequence[Header] = []) \
         -> Iterable[bytes]:
-
     """Prepare an HTML WSGI response.
 
     >>> def handler(start_response, request):
@@ -114,13 +115,15 @@ def respond_with_html(start_response: StartResponse, html: str, *,
 
     encoded = html.encode("utf-8")
     return respond_with_content(
-        start_response, encoded, status=status,
-        content_type="text/html; charset=utf-8", extra_headers=extra_headers)
+        start_response,
+        encoded,
+        status=status,
+        content_type="text/html; charset=utf-8",
+        extra_headers=extra_headers)
 
 
 def created_at(request: Request, start_response: StartResponse,
                url_part: str) -> Iterable[bytes]:
-
     """Prepare a 201 Created WSGI response with a Location header.
 
     The default content-type is "text/html" and the return value generates
@@ -130,7 +133,9 @@ def created_at(request: Request, start_response: StartResponse,
     url = _absolute_url(request, url_part)
     html = created_at_page(url)
     return respond_with_html(
-        start_response, html, status=HTTPStatus.CREATED,
+        start_response,
+        html,
+        status=HTTPStatus.CREATED,
         extra_headers=[_location_header(request, url_part)])
 
 
@@ -141,7 +146,10 @@ def created_as_json(request: Request, start_response: StartResponse,
     """
 
     return respond_with_json(
-        start_response, json, status=HTTPStatus.CREATED, extra_headers=[
+        start_response,
+        json,
+        status=HTTPStatus.CREATED,
+        extra_headers=[
             _location_header(request, url_part),
         ])
 
@@ -151,7 +159,9 @@ def temporary_redirect(request: Request, start_response: StartResponse,
     url = _absolute_url(request, url_part)
     html = temporary_redirect_page(url)
     return respond_with_html(
-        start_response, html, status=HTTPStatus.TEMPORARY_REDIRECT,
+        start_response,
+        html,
+        status=HTTPStatus.TEMPORARY_REDIRECT,
         extra_headers=[
             _location_header(request, url_part),
         ])
@@ -162,5 +172,7 @@ def see_other(request: Request, start_response: StartResponse,
     url = _absolute_url(request, url_part)
     html = see_other_page(url)
     return respond_with_html(
-        start_response, html, status=HTTPStatus.SEE_OTHER,
+        start_response,
+        html,
+        status=HTTPStatus.SEE_OTHER,
         extra_headers=[_location_header(request, url_part)])

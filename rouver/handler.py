@@ -16,7 +16,6 @@ from rouver.types import StartResponse, Header, WSGIEnvironment
 
 
 class RouteHandlerBase(collections.Iterable):
-
     """Base class for rouver route handlers.
 
     Sub-classes of RouteHandlerBase can act as route handlers. They provide
@@ -94,11 +93,13 @@ class RouteHandlerBase(collections.Iterable):
                 status: HTTPStatus = HTTPStatus.OK,
                 extra_headers: Sequence[Header] = []) \
             -> Iterable[bytes]:
-        return respond(self.start_response, status=status,
-                       extra_headers=extra_headers)
+        return respond(
+            self.start_response, status=status, extra_headers=extra_headers)
 
     def respond_with_content(
-            self, content: bytes, *,
+            self,
+            content: bytes,
+            *,
             status: HTTPStatus = HTTPStatus.OK,
             content_type: str = "application/octet-stream",
             extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
@@ -110,33 +111,41 @@ class RouteHandlerBase(collections.Iterable):
         The response will include a Content-Type and a Content-Length header.
         """
         return respond_with_content(
-            self.start_response, content,
-            status=status, content_type=content_type,
+            self.start_response,
+            content,
+            status=status,
+            content_type=content_type,
             extra_headers=extra_headers)
 
     def respond_with_json(
-            self, json: Union[str, bytes, Any], *,
+            self,
+            json: Union[str, bytes, Any],
+            *,
             status: HTTPStatus = HTTPStatus.OK,
             extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
         return respond_with_json(
-            self.start_response, json,
-            status=status, extra_headers=extra_headers)
+            self.start_response,
+            json,
+            status=status,
+            extra_headers=extra_headers)
 
     def respond_with_html(
             self, html: str, *, status: HTTPStatus = HTTPStatus.OK,
             extra_headers: Sequence[Header] = []) \
             -> Iterable[bytes]:
         return respond_with_html(
-            self.start_response, html,
-            status=status, extra_headers=extra_headers)
+            self.start_response,
+            html,
+            status=status,
+            extra_headers=extra_headers)
 
     def created_at(self, url_part: str) -> Iterable[bytes]:
         return created_at(self.request, self.start_response, url_part)
 
     def created_as_json(self, url_part: str, json: Union[str, bytes, Any]) \
             -> Iterable[bytes]:
-        return created_as_json(
-            self.request, self.start_response, url_part, json)
+        return created_as_json(self.request, self.start_response, url_part,
+                               json)
 
     def temporary_redirect(self, url_part: str) -> Iterable[bytes]:
         return temporary_redirect(self.request, self.start_response, url_part)

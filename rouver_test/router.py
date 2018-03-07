@@ -35,7 +35,6 @@ def fail_if_called(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
 
 
 class RouterTest(TestCase):
-
     def setUp(self) -> None:
         self.router = Router()
         self.router.error_handling = False
@@ -52,6 +51,7 @@ class RouterTest(TestCase):
             assert_equal(expected_path, environ["PATH_INFO"])
             sr("200 OK", [])
             return []
+
         return handle
 
     def handle_wsgi(self, method: str = "GET", path: str = "/") \
@@ -83,8 +83,8 @@ class RouterTest(TestCase):
     def test_no_routes(self) -> None:
         self.handle_wsgi("GET", "/foo/bar")
         self.start_response.assert_status(HTTPStatus.NOT_FOUND)
-        self.start_response.assert_header_equals(
-            "Content-Type", "text/html; charset=utf-8")
+        self.start_response.assert_header_equals("Content-Type",
+                                                 "text/html; charset=utf-8")
 
     def test_handler_request(self) -> None:
         def handle(environ: WSGIEnvironment, start_response: StartResponse) \
@@ -252,6 +252,7 @@ class RouterTest(TestCase):
             assert_is_instance(request, Request)
             assert_equal([], paths)
             return path * 2
+
         self.router.add_template_handler("handler", handle_path)
 
         self.router.add_routes([
@@ -270,6 +271,7 @@ class RouterTest(TestCase):
         def handle_path(_: Request, paths: Sequence[Any], __: str) -> int:
             assert_equal(["xyz"], paths)
             return 123
+
         self.router.add_template_handler("handler1", lambda _, __, ___: "xyz")
         self.router.add_template_handler("handler2", handle_path)
 
@@ -282,6 +284,7 @@ class RouterTest(TestCase):
     def test_template_value_error(self) -> None:
         def raise_value_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise ValueError()
+
         self.router.add_template_handler("handler", raise_value_error)
 
         self.router.add_routes([
@@ -293,6 +296,7 @@ class RouterTest(TestCase):
     def test_template_multiple_matches(self) -> None:
         def raise_value_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise ValueError()
+
         self.router.add_template_handler("handler1", raise_value_error)
         self.router.add_template_handler("handler2", lambda _, __, ___: None)
 
@@ -320,6 +324,7 @@ class RouterTest(TestCase):
         def increase_count(_: Request, __: Sequence[str], ___: str) -> None:
             nonlocal calls
             calls += 1
+
         self.router.add_template_handler("handler", increase_count)
 
         self.router.add_routes([
@@ -335,6 +340,7 @@ class RouterTest(TestCase):
         def increase_count(_: Request, __: Sequence[str], ___: str) -> None:
             nonlocal calls
             calls += 1
+
         self.router.add_template_handler("handler", increase_count)
 
         self.router.add_routes([
@@ -608,6 +614,7 @@ class RouterTest(TestCase):
     def test_template_key_error_with_error_handling(self) -> None:
         def raise_key_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise KeyError()
+
         self.router.add_template_handler("handler", raise_key_error)
 
         self.router.add_routes([
@@ -620,6 +627,7 @@ class RouterTest(TestCase):
     def test_template_key_error_without_error_handling(self) -> None:
         def raise_key_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise KeyError()
+
         self.router.add_template_handler("handler", raise_key_error)
 
         self.router.add_routes([
@@ -686,6 +694,6 @@ class RouterTest(TestCase):
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
         assert_regex(html, r'<li class="argument">\s*'
-                           r'<span class="argument-name">foo</span>:\s*'
-                           r'<span class="error-message">bar</span>\s*'
-                           r'</li>')
+                     r'<span class="argument-name">foo</span>:\s*'
+                     r'<span class="error-message">bar</span>\s*'
+                     r'</li>')
