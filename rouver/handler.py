@@ -2,7 +2,7 @@ import collections
 from http import HTTPStatus
 from json import loads as json_loads, JSONDecodeError
 from typing import Optional
-from typing import cast, Any, Union, Iterator, Sequence, Dict, Iterable, List
+from typing import cast, Any, Union, Iterator, Sequence, Iterable, List
 from urllib.parse import unquote
 
 from werkzeug.exceptions import UnsupportedMediaType
@@ -71,7 +71,7 @@ class RouteHandlerBase(collections.Iterable):
     def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \
             -> ArgumentDict:
         if self._argument_parser is None:
-            environ = cast(Dict[ str, Any], self.request.environ)
+            environ = self.request.environ
             self._argument_parser = ArgumentParser(environ)
         return self._argument_parser.parse_args(argument_template)
 
@@ -85,7 +85,7 @@ class RouteHandlerBase(collections.Iterable):
         if self.request.mimetype != "application/json":
             raise UnsupportedMediaType()
         try:
-            j = cast(bytes, self.request.data).decode(self._charset)
+            j = self.request.data.decode(self._charset)
             return json_loads(j)
         except (LookupError, JSONDecodeError) as exc:
             raise UnsupportedMediaType(str(exc)) from exc
