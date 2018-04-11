@@ -1,6 +1,6 @@
 from http import HTTPStatus
 from json import dumps as dumps_json
-from typing import Union, Any, Iterable, Sequence
+from typing import Union, Any, Iterable, Sequence, Optional
 
 from werkzeug.wrappers import Request
 
@@ -24,6 +24,7 @@ def _location_header(request: Request, url_part: str) -> Header:
 def respond(start_response: StartResponse,
             *,
             status: HTTPStatus = HTTPStatus.OK,
+            content_type: Optional[str] = None,
             extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
     """Prepare an empty WSGI response.
 
@@ -33,13 +34,17 @@ def respond(start_response: StartResponse,
     The return value can be ignored to return an arbitrary response body.
 
     >>> def handler(start_response, request):
-    ...     respond(start_response,
-    ...             extra_headers=[("Content-Type", "text/plain")])
+    ...     respond(start_response, content_type="text/plain")
     ...     return [b"My Response"]
     """
 
     sl = status_line(status)
-    start_response(sl, extra_headers)
+    all_headers = list(extra_headers)
+    if content_type is not None:
+        if any(h.lower() == "content-type" for (h, _) in extra_headers):
+            raise ValueError("duplicate Content-Type header")
+        all_headers += [("Content-Type", content_type)]
+    start_response(sl, all_headers)
     return []
 
 

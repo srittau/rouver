@@ -1,6 +1,11 @@
 News in rouver 0.8.2
 ====================
 
+API Additions
+-------------
+
+* ``rouver.response``: Add ``content_type`` argument to ``respond()``.
+
 Bug Fixes
 ---------
 

@@ -32,6 +32,31 @@ class RespondTest(TestCase):
             ])
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
+    def test_no_content_type(self) -> None:
+        sr = TestingStartResponse()
+        respond(sr)
+        sr.assert_header_missing("Content-Type")
+
+    def test_content_type(self) -> None:
+        sr = TestingStartResponse()
+        respond(sr, content_type="image/png")
+        sr.assert_header_equals("Content-Type", "image/png")
+
+    def test_content_type_in_extra_headers(self) -> None:
+        sr = TestingStartResponse()
+        respond(sr, extra_headers=[("Content-Type", "image/png")])
+        sr.assert_header_equals("Content-Type", "image/png")
+
+    def test_error_if_content_type_also_in_extra_headers(self) -> None:
+        sr = TestingStartResponse()
+        with assert_raises(ValueError):
+            respond(
+                sr,
+                content_type="image/png",
+                extra_headers=[
+                    ("Content-Type", "image/jpeg"),
+                ])
+
     def test_response(self) -> None:
         sr = TestingStartResponse()
         response = respond(sr)

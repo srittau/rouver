@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from io import BytesIO, StringIO
 import re
-from typing import List, Sequence
+from typing import List, Sequence, Optional
 
 from asserts import assert_false, assert_regex, assert_equal, assert_true
 
@@ -37,17 +37,30 @@ class TestingStartResponse:
     def assert_status(self, status: HTTPStatus) -> None:
         assert_equal(status.value, self.status_code)
 
+    def assert_header_missing(self, name: str) -> None:
+        value = self._find_header(name)
+        if value is not None:
+            raise AssertionError("header {} unexpectedly found".format(name))
+
     def assert_header_equals(self, name: str, value: str) -> None:
         header_value = self._find_header(name)
+        if header_value is None:
+            raise AssertionError("missing header '{}'".format(name))
         assert_equal(value, header_value, "'{}': '{}' != '{}".format(
             name, value, header_value))
 
-    def _find_header(self, name: str) -> str:
+    def _find_header(self, name: str) -> Optional[str]:
         self.assert_was_called()
+        found = None
         for (header_name, header_value) in self.headers:
             if header_name.lower() == name.lower():
-                return header_value
-        raise AssertionError("missing header '{}'".format(name))
+                if not isinstance(header_value, str):
+                    raise AssertionError("invalue header value")
+                if found is not None:
+                    raise AssertionError(
+                        "duplicate header '{}'".format(header_name))
+                found = header_value
+        return found
 
 
 def default_environment() -> WSGIEnvironment:
