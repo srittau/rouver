@@ -1,3 +1,12 @@
+News in rouver 0.8.3
+====================
+
+API Additions
+-------------
+
+* ``rouver.handler``: Add ``content_type`` argument to
+  ``RouteHandlerBase.respond()``.
+
 News in rouver 0.8.2
 ====================
 

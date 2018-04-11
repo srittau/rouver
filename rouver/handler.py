@@ -91,10 +91,14 @@ class RouteHandlerBase(collections.Iterable):
 
     def respond(self, *,
                 status: HTTPStatus = HTTPStatus.OK,
+                content_type: Optional[str] = None,
                 extra_headers: Sequence[Header] = []) \
             -> Iterable[bytes]:
         return respond(
-            self.start_response, status=status, extra_headers=extra_headers)
+            self.start_response,
+            status=status,
+            content_type=content_type,
+            extra_headers=extra_headers)
 
     def respond_with_content(
             self,
