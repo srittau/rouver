@@ -1,3 +1,8 @@
+News in rouver 0.8.4
+====================
+
+Add ``py.typed`` file to package ``rouver`` to enable type checking.
+
 News in rouver 0.8.3
 ====================
 

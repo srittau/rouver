@@ -11,13 +11,14 @@ def read(fname):
 
 setup(
     name="rouver",
-    version="0.8.3",
+    version="0.8.4",
     description="A microframework",
     long_description=read("README.rst"),
     author="Sebastian Rittau",
     author_email="srittau@rittau.biz",
     url="https://github.com/srittau/rouver",
     packages=["rouver", "rouver_test"],
+    package_data={"rouver": ["py.typed"]},
     install_requires=["werkzeug >= 0.12.0"],
     tests_require=["asserts >= 0.7.0, < 0.9"],
     license="MIT",
