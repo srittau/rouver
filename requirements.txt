@@ -1,4 +1,4 @@
-asserts==0.8.1
-mypy==0.590
+asserts==0.8.2
+mypy==0.600
 werkzeug==0.14.1
-wheel==0.31.0
+wheel==0.31.1
