@@ -1,6 +1,13 @@
 News in rouver 0.9.0
 ====================
 
+API-Incompatible Changes
+------------------------
+
+* ``rouver.response``: ``created_at()``, ``created_as_json()``,
+  ``temporary_redirect()``, and ``see_other()`` now treat URLs without a
+  leading slash as relative to the request path.
+
 Improvements
 ------------
 

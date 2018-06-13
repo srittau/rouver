@@ -14,12 +14,17 @@ _url_scheme_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9.+-]*:")
 
 
 def _absolute_url(request: Request, url: str) -> str:
+    url.encode("ascii")
     if _url_scheme_re.match(url):
         return url
     if url.startswith("/"):
-        url = url[1:]
-    url.encode("ascii")
-    return request.host_url + url
+        base_url = request.host_url[:-1]
+    else:
+        if request.base_url.endswith("/"):
+            base_url = request.base_url
+        else:
+            base_url = request.base_url.rsplit("/", 1)[0] + "/"
+    return base_url + url
 
 
 def _location_header(request: Request, url: str) -> Header:

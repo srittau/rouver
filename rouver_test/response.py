@@ -351,10 +351,19 @@ class SeeOtherTest(TestCase):
 
     def test_url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
+        self.environment["PATH_INFO"] = "/abc/def/"
         request = Request(self.environment)
         see_other(request, self.start_request, "foo/bar")
         self.start_request.assert_header_equals(
-            "Location", "http://www.example.com/foo/bar")
+            "Location", "http://www.example.com/abc/def/foo/bar")
+
+    def test_url_path_without_trailing_slash(self) -> None:
+        self.environment["SERVER_NAME"] = "www.example.com"
+        self.environment["PATH_INFO"] = "/abc/def"
+        request = Request(self.environment)
+        see_other(request, self.start_request, "foo/bar")
+        self.start_request.assert_header_equals(
+            "Location", "http://www.example.com/abc/foo/bar")
 
     def test_non_utf8_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
