@@ -1,3 +1,4 @@
+import re
 from http import HTTPStatus
 from json import dumps as dumps_json
 from typing import Union, Any, Iterable, Sequence, Optional
@@ -9,16 +10,20 @@ from rouver.html import created_at_page, see_other_page, \
 from rouver.status import status_line
 from rouver.types import StartResponse, Header
 
-
-def _absolute_url(request: Request, url_part: str) -> str:
-    url_part.encode("ascii")
-    if url_part.startswith("/"):
-        url_part = url_part[1:]
-    return request.host_url + url_part
+_url_scheme_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9.+-]*:")
 
 
-def _location_header(request: Request, url_part: str) -> Header:
-    return "Location", _absolute_url(request, url_part)
+def _absolute_url(request: Request, url: str) -> str:
+    if _url_scheme_re.match(url):
+        return url
+    if url.startswith("/"):
+        url = url[1:]
+    url.encode("ascii")
+    return request.host_url + url
+
+
+def _location_header(request: Request, url: str) -> Header:
+    return "Location", _absolute_url(request, url)
 
 
 def respond(start_response: StartResponse,

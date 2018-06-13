@@ -207,6 +207,12 @@ class CreatedAtTest(TestCase):
         self.start_request.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
+    def test_absolute_url(self) -> None:
+        request = Request(self.environment)
+        created_at(request, self.start_request, "http://example.com/foo")
+        self.start_request.assert_header_equals("Location",
+                                                "http://example.com/foo")
+
     def test_url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
@@ -241,6 +247,13 @@ class CreatedAsJSONTest(TestCase):
             "Content-Type", "application/json; charset=utf-8")
         self.start_request.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
+
+    def test_absolute_url(self) -> None:
+        request = Request(self.environment)
+        created_as_json(request, self.start_request, "http://example.com/foo",
+                        {})
+        self.start_request.assert_header_equals("Location",
+                                                "http://example.com/foo")
 
     def test_url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
@@ -278,6 +291,13 @@ class TemporaryRedirectTest(TestCase):
                                                 "text/html; charset=utf-8")
         self.start_request.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
+
+    def test_absolute_url(self) -> None:
+        request = Request(self.environment)
+        temporary_redirect(request, self.start_request,
+                           "http://example.com/foo")
+        self.start_request.assert_header_equals("Location",
+                                                "http://example.com/foo")
 
     def test_url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
@@ -322,6 +342,12 @@ class SeeOtherTest(TestCase):
                                                 "text/html; charset=utf-8")
         self.start_request.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
+
+    def test_absolute_url(self) -> None:
+        request = Request(self.environment)
+        see_other(request, self.start_request, "http://example.com/foo")
+        self.start_request.assert_header_equals("Location",
+                                                "http://example.com/foo")
 
     def test_url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"

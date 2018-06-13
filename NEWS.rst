@@ -1,6 +1,12 @@
 News in rouver 0.8.5
 ====================
 
+Improvements
+------------
+
+* ``rouver.response``: ``created_at()``, ``created_as_json()``,
+  ``temporary_redirect()``, and ``see_other()`` now support absolute URLs.
+
 News in rouver 0.8.4
 ====================
 
