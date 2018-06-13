@@ -1,4 +1,4 @@
-News in rouver 0.8.5
+News in rouver 0.9.0
 ====================
 
 Improvements
