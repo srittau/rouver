@@ -63,13 +63,14 @@ class RouterTest(TestCase):
     def test_not_found_response_page(self) -> None:
         response = self.handle_wsgi("GET", "/foo/bar")
         html = b"".join(response).decode("utf-8")
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>404 &mdash; Not Found</title>
+        <title>404 &#x2014; Not Found</title>
     </head>
     <body>
-        <h1>404 &mdash; Not Found</h1>
+        <h1>404 &#x2014; Not Found</h1>
         <p>Path &#x27;/foo/bar&#x27; not found.</p>
     </body>
 </html>
@@ -170,13 +171,14 @@ class RouterTest(TestCase):
         ])
         response = self.handle_wsgi("POST", "/foo")
         html = b"".join(response).decode("utf-8")
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>405 &mdash; Method Not Allowed</title>
+        <title>405 &#x2014; Method Not Allowed</title>
     </head>
     <body>
-        <h1>405 &mdash; Method Not Allowed</h1>
+        <h1>405 &#x2014; Method Not Allowed</h1>
         <p>Method &#x27;POST&#x27; not allowed. Please try GET or PUT.</p>
     </body>
 </html>
@@ -599,13 +601,14 @@ class RouterTest(TestCase):
         ])
         response = self.handle_wsgi("GET", "/foo")
         html = b"".join(response).decode("utf-8")
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>500 &mdash; Internal Server Error</title>
+        <title>500 &#x2014; Internal Server Error</title>
     </head>
     <body>
-        <h1>500 &mdash; Internal Server Error</h1>
+        <h1>500 &#x2014; Internal Server Error</h1>
         <p>Internal server error.</p>
     </body>
 </html>
@@ -670,13 +673,14 @@ class RouterTest(TestCase):
         response = self.handle_wsgi("GET", "/foo")
         self.start_response.assert_status(HTTPStatus.CONFLICT)
         html = b"".join(response).decode("utf-8")
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>409 &mdash; Conflict</title>
+        <title>409 &#x2014; Conflict</title>
     </head>
     <body>
-        <h1>409 &mdash; Conflict</h1>
+        <h1>409 &#x2014; Conflict</h1>
         <p>Foo &lt; Bar</p>
     </body>
 </html>
@@ -693,7 +697,8 @@ class RouterTest(TestCase):
         self.start_response.assert_status(HTTPStatus.BAD_REQUEST)
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
-        assert_regex(html, r'<li class="argument">\s*'
-                     r'<span class="argument-name">foo</span>:\s*'
-                     r'<span class="error-message">bar</span>\s*'
-                     r'</li>')
+        assert_regex(
+            html, r'<li class="argument">\s*'
+            r'<span class="argument-name">foo</span>:\s*'
+            r'<span class="error-message">bar</span>\s*'
+            r'</li>')

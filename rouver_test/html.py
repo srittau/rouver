@@ -3,20 +3,22 @@ from unittest import TestCase
 
 from asserts import assert_equal, assert_raises, assert_in
 
-from rouver.html import http_status_page, bad_arguments_list, created_at_page, \
+from rouver.html import \
+    http_status_page, bad_arguments_list, created_at_page, \
     temporary_redirect_page, see_other_page
 
 
 class HTTPStatusPageTest(TestCase):
     def test_default(self) -> None:
         html = http_status_page(HTTPStatus.NOT_ACCEPTABLE)
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>406 &mdash; Not Acceptable</title>
+        <title>406 &#x2014; Not Acceptable</title>
     </head>
     <body>
-        <h1>406 &mdash; Not Acceptable</h1>
+        <h1>406 &#x2014; Not Acceptable</h1>
     </body>
 </html>
 """, html)
@@ -31,13 +33,14 @@ class HTTPStatusPageTest(TestCase):
     def test_message(self) -> None:
         html = http_status_page(
             HTTPStatus.NOT_ACCEPTABLE, message="Test <em>message</em>.")
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>406 &mdash; Not Acceptable</title>
+        <title>406 &#x2014; Not Acceptable</title>
     </head>
     <body>
-        <h1>406 &mdash; Not Acceptable</h1>
+        <h1>406 &#x2014; Not Acceptable</h1>
         <p>Test &lt;em&gt;message&lt;/em&gt;.</p>
     </body>
 </html>
@@ -46,13 +49,14 @@ class HTTPStatusPageTest(TestCase):
     def test_html_message(self) -> None:
         html = http_status_page(
             HTTPStatus.NOT_ACCEPTABLE, html_message="Test <em>message</em>.")
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>406 &mdash; Not Acceptable</title>
+        <title>406 &#x2014; Not Acceptable</title>
     </head>
     <body>
-        <h1>406 &mdash; Not Acceptable</h1>
+        <h1>406 &#x2014; Not Acceptable</h1>
         <p>Test <em>message</em>.</p>
     </body>
 </html>
@@ -61,13 +65,14 @@ class HTTPStatusPageTest(TestCase):
     def test_html_content(self) -> None:
         html = http_status_page(
             HTTPStatus.NOT_ACCEPTABLE, html_content="<div>Test content.</div>")
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>406 &mdash; Not Acceptable</title>
+        <title>406 &#x2014; Not Acceptable</title>
     </head>
     <body>
-        <h1>406 &mdash; Not Acceptable</h1>
+        <h1>406 &#x2014; Not Acceptable</h1>
 <div>Test content.</div>
     </body>
 </html>
@@ -78,13 +83,14 @@ class HTTPStatusPageTest(TestCase):
             HTTPStatus.NOT_ACCEPTABLE,
             html_message="Test message.",
             html_content="<div>Test content.</div>")
-        assert_equal("""<!DOCTYPE html>
+        assert_equal(
+            """<!DOCTYPE html>
 <html>
     <head>
-        <title>406 &mdash; Not Acceptable</title>
+        <title>406 &#x2014; Not Acceptable</title>
     </head>
     <body>
-        <h1>406 &mdash; Not Acceptable</h1>
+        <h1>406 &#x2014; Not Acceptable</h1>
         <p>Test message.</p>
 <div>Test content.</div>
     </body>
@@ -120,7 +126,8 @@ class BadArgumentsListTest(TestCase):
 
     def test_one_item(self) -> None:
         html = bad_arguments_list({"foo": "bar"})
-        assert_equal("""<ul class="bad-arguments">
+        assert_equal(
+            """<ul class="bad-arguments">
     <li class="argument">
         <span class="argument-name">foo</span>:
         <span class="error-message">bar</span>
@@ -134,7 +141,8 @@ class BadArgumentsListTest(TestCase):
             "abc": "error 2",
             "ghi": "error 3",
         })
-        assert_equal("""<ul class="bad-arguments">
+        assert_equal(
+            """<ul class="bad-arguments">
     <li class="argument">
         <span class="argument-name">abc</span>:
         <span class="error-message">error 2</span>
@@ -154,7 +162,8 @@ class BadArgumentsListTest(TestCase):
         html = bad_arguments_list({
             "a<c": "d<f",
         })
-        assert_equal("""<ul class="bad-arguments">
+        assert_equal(
+            """<ul class="bad-arguments">
     <li class="argument">
         <span class="argument-name">a&lt;c</span>:
         <span class="error-message">d&lt;f</span>

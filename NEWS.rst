@@ -11,6 +11,8 @@ API-Incompatible Changes
 Improvements
 ------------
 
+* ``rouver.html``: Replace ``&mdash;`` with ``&#x2014;`` for improved
+  compatibility with XML parsers.
 * ``rouver.response``: ``created_at()``, ``created_as_json()``,
   ``temporary_redirect()``, and ``see_other()`` now support absolute URLs.
 

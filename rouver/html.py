@@ -30,10 +30,10 @@ def http_status_page(status: HTTPStatus,
     return """<!DOCTYPE html>
 <html>
     <head>
-        <title>{0.value} &mdash; {0.phrase}</title>
+        <title>{0.value} &#x2014; {0.phrase}</title>
     </head>
     <body>
-        <h1>{0.value} &mdash; {0.phrase}</h1>{1}
+        <h1>{0.value} &#x2014; {0.phrase}</h1>{1}
 {2}    </body>
 </html>
 """.format(status, paragraph, content)
