@@ -1,4 +1,7 @@
-from typing import Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping
+from types import TracebackType
+from typing import \
+    Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping, Optional, Type, \
+    Union, List
 
 from werkzeug.wrappers import Request
 
@@ -7,11 +10,18 @@ Header = Tuple[str, str]
 
 WSGIEnvironment = Dict[str, Any]
 
+_exc_info = Tuple[Optional[Type[BaseException]],
+                  Optional[BaseException],
+                  Optional[TracebackType]]
+
 # (body) -> None
 StartResponseReturnType = Callable[[bytes], None]
 
 # (status, headers) -> response
-StartResponse = Callable[[str, Sequence[Header]], StartResponseReturnType]
+StartResponse = Union[
+    Callable[[str, List[Header]], StartResponseReturnType],
+    Callable[[str, List[Header], _exc_info], StartResponseReturnType],
+]
 
 WSGIResponse = Iterable[bytes]
 
