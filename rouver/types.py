@@ -1,6 +1,7 @@
 from types import TracebackType
 from typing import \
-    Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping, Optional, Type
+    Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping, Optional, Type, \
+    Protocol, List
 
 from werkzeug.wrappers import Request
 
@@ -16,8 +17,10 @@ _exc_info = Tuple[Optional[Type[BaseException]],
 # (body) -> None
 StartResponseReturnType = Callable[[bytes], None]
 
-# (status: str, headers: List[Headers], exc_info) -> response
-StartResponse = Callable[..., StartResponseReturnType]
+class StartResponse(Protocol):
+    def __call__(self, status: str, headers: List[Header],
+                 exc_info: Optional[_exc_info] = None) \
+            -> StartResponseReturnType: ...
 
 WSGIResponse = Iterable[bytes]
 
