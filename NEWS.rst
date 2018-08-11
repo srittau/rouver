@@ -4,11 +4,9 @@ News in rouver 0.9.1
 Improvements
 ------------
 
-* ``rouver.types``: Bring more in line with PEP 3333 and typeshed's
-  ``wsgiref.types``:
-
-  * Second argument to ``StartResponse`` is now a list, not a sequence.
-  * Add three argument version of ``StartResponse``.
+* ``rouver.types``: Replace ``StartResponse``'s argument types with ``...``
+  ``start_response()`` takes either two or three arguments. This can not
+  be modelled using type hints.
 
 News in rouver 0.9.0
 ====================
