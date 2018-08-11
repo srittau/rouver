@@ -1,6 +1,5 @@
-from types import TracebackType
 from typing import \
-    Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping, Optional, Type
+    Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping
 
 from werkzeug.wrappers import Request
 
@@ -8,10 +7,6 @@ from werkzeug.wrappers import Request
 Header = Tuple[str, str]
 
 WSGIEnvironment = Dict[str, Any]
-
-_exc_info = Tuple[Optional[Type[BaseException]],
-                  Optional[BaseException],
-                  Optional[TracebackType]]
 
 # (body) -> None
 StartResponseReturnType = Callable[[bytes], None]
