@@ -4,8 +4,9 @@ News in rouver 0.9.1
 Improvements
 ------------
 
-* ``rouver.types``: Replace ``StartResponse`` with a protocol to allow it
-  to have an optional third argument.
+* ``rouver.types``: Replace ``StartResponse``'s argument types with ``...``
+  ``start_response()`` takes either two or three arguments. This can not
+  be modelled using type hints.
 
 News in rouver 0.9.0
 ====================
