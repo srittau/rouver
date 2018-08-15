@@ -1,8 +1,9 @@
-from unittest import TestCase
+from io import BytesIO
 from urllib.parse import quote_plus
 
 from asserts import assert_equal, fail, assert_raises, assert_in, assert_not_in
-from io import BytesIO
+
+from dectest import TestCase, test, before
 
 from werkzeug.exceptions import BadRequest
 
@@ -28,7 +29,8 @@ Content-Type: {type}
 
 
 class ParseArgsTest(TestCase):
-    def setUp(self) -> None:
+    @before
+    def setup_environment(self) -> None:
         self.env = default_environment()
 
     def add_path_argument(self, name: str, value: str) -> None:
@@ -66,38 +68,44 @@ class ParseArgsTest(TestCase):
         self.env["CONTENT_LENGTH"] = str(len(body))
         self.env["wsgi.input"] = BytesIO(body)
 
-    def test_parse_nothing(self) -> None:
+    @test
+    def parse_nothing(self) -> None:
         args = parse_args(self.env, [])
         assert_equal({}, args)
 
-    def test_invalid_value_parser(self) -> None:
+    @test
+    def invalid_value_parser(self) -> None:
         with assert_raises(TypeError):
             parse_args(self.env, [
                 ("foo", "INVALID", Multiplicity.OPTIONAL),
             ])
 
-    def test_parse_str_arg(self) -> None:
+    @test
+    def parse_str_arg(self) -> None:
         self.add_path_argument("foo", "bar")
         args = parse_args(self.env, [
             ("foo", str, Multiplicity.REQUIRED),
         ])
         assert_equal({"foo": "bar"}, args)
 
-    def test_parse_unicode_arg(self) -> None:
+    @test
+    def parse_unicode_arg(self) -> None:
         self.add_path_argument("föo", "bär")
         args = parse_args(self.env, [
             ("föo", str, Multiplicity.REQUIRED),
         ])
         assert_equal({"föo": "bär"}, args)
 
-    def test_parse_int_arg(self) -> None:
+    @test
+    def parse_int_arg(self) -> None:
         self.add_path_argument("foo", "123")
         args = parse_args(self.env, [
             ("foo", int, Multiplicity.REQUIRED),
         ])
         assert_equal({"foo": 123}, args)
 
-    def test_parse_invalid_int_arg(self) -> None:
+    @test
+    def parse_invalid_int_arg(self) -> None:
         self.add_path_argument("foo", "bar")
         try:
             parse_args(self.env, [
@@ -110,7 +118,8 @@ class ParseArgsTest(TestCase):
         else:
             fail("ArgumentsError not raised")
 
-    def test_required_argument_missing(self) -> None:
+    @test
+    def required_argument_missing(self) -> None:
         try:
             parse_args(self.env, [
                 ("foo", str, Multiplicity.REQUIRED),
@@ -120,26 +129,30 @@ class ParseArgsTest(TestCase):
         else:
             fail("ArgumentsError not raised")
 
-    def test_optional_argument(self) -> None:
+    @test
+    def optional_argument(self) -> None:
         self.add_path_argument("foo", "bar")
         args = parse_args(self.env, [
             ("foo", str, Multiplicity.OPTIONAL),
         ])
         assert_equal({"foo": "bar"}, args)
 
-    def test_optional_argument_missing(self) -> None:
+    @test
+    def optional_argument_missing(self) -> None:
         args = parse_args(self.env, [
             ("foo", str, Multiplicity.OPTIONAL),
         ])
         assert_equal({}, args)
 
-    def test_any_argument_empty(self) -> None:
+    @test
+    def any_argument_empty(self) -> None:
         args = parse_args(self.env, [
             ("foo", int, Multiplicity.ANY),
         ])
         assert_equal({"foo": []}, args)
 
-    def test_any_argument(self) -> None:
+    @test
+    def any_argument(self) -> None:
         self.add_path_argument("foo", "123")
         self.add_path_argument("foo", "456")
         self.add_path_argument("foo", "789")
@@ -148,7 +161,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"foo": [123, 456, 789]}, args)
 
-    def test_required_any_argument(self) -> None:
+    @test
+    def required_any_argument(self) -> None:
         self.add_path_argument("foo", "123")
         self.add_path_argument("foo", "456")
         self.add_path_argument("foo", "789")
@@ -157,7 +171,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"foo": [123, 456, 789]}, args)
 
-    def test_required_any_argument_missing(self) -> None:
+    @test
+    def required_any_argument_missing(self) -> None:
         try:
             parse_args(self.env, [
                 ("foo", int, Multiplicity.REQUIRED_ANY),
@@ -167,7 +182,8 @@ class ParseArgsTest(TestCase):
         else:
             fail("ArgumentsError not raised")
 
-    def test_urlencoded_post_request(self) -> None:
+    @test
+    def urlencoded_post_request(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_urlencoded_request("foo", "bar")
         args = parse_args(self.env, [
@@ -175,7 +191,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"foo": "bar"}, args)
 
-    def test_urlencoded_post_request_with_umlauts(self) -> None:
+    @test
+    def urlencoded_post_request_with_umlauts(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_urlencoded_request("föo", "bär")
         args = parse_args(self.env, [
@@ -183,7 +200,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"föo": "bär"}, args)
 
-    def test_urlencoded_patch_request(self) -> None:
+    @test
+    def urlencoded_patch_request(self) -> None:
         self.env["REQUEST_METHOD"] = "PATCH"
         self.setup_urlencoded_request("foo", "bar")
         args = parse_args(self.env, [
@@ -191,7 +209,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"foo": "bar"}, args)
 
-    def test_urlencoded_delete_request(self) -> None:
+    @test
+    def urlencoded_delete_request(self) -> None:
         self.env["REQUEST_METHOD"] = "DELETE"
         self.setup_urlencoded_request("foo", "bar")
         args = parse_args(self.env, [
@@ -199,7 +218,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"foo": "bar"}, args)
 
-    def test_empty_delete__optional(self) -> None:
+    @test
+    def empty_delete__optional(self) -> None:
         self.env["REQUEST_METHOD"] = "DELETE"
         args = parse_args(self.env, [
             ("opt", str, Multiplicity.OPTIONAL),
@@ -208,7 +228,8 @@ class ParseArgsTest(TestCase):
         assert_not_in("opt", args)
         assert_equal([], args["any"])
 
-    def test_empty_delete__required_not_supplied(self) -> None:
+    @test
+    def empty_delete__required_not_supplied(self) -> None:
         self.env["REQUEST_METHOD"] = "DELETE"
         with assert_raises(ArgumentsError):
             parse_args(self.env, [
@@ -216,7 +237,8 @@ class ParseArgsTest(TestCase):
                 ("once", str, Multiplicity.REQUIRED_ANY),
             ])
 
-    def test_urlencoded_put_request(self) -> None:
+    @test
+    def urlencoded_put_request(self) -> None:
         self.env["REQUEST_METHOD"] = "PUT"
         self.setup_urlencoded_request("foo", "bar")
         args = parse_args(self.env, [
@@ -224,7 +246,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"foo": "bar"}, args)
 
-    def test_urlencoded_put_request_with_umlauts(self) -> None:
+    @test
+    def urlencoded_put_request_with_umlauts(self) -> None:
         self.env["REQUEST_METHOD"] = "PUT"
         self.setup_urlencoded_request("föo", "bär")
         args = parse_args(self.env, [
@@ -232,7 +255,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"föo": "bär"}, args)
 
-    def test_multipart_post_request(self) -> None:
+    @test
+    def multipart_post_request(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_request("foo", "bar")
         args = parse_args(self.env, [
@@ -240,7 +264,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"foo": "bar"}, args)
 
-    def test_multipart_post_request_with_umlauts(self) -> None:
+    @test
+    def multipart_post_request_with_umlauts(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_request("föo", "bär")
         args = parse_args(self.env, [
@@ -248,7 +273,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"föo": "bär"}, args)
 
-    def test_multipart_put_request(self) -> None:
+    @test
+    def multipart_put_request(self) -> None:
         self.env["REQUEST_METHOD"] = "PUT"
         self.setup_multipart_request("foo", "bar")
         args = parse_args(self.env, [
@@ -256,7 +282,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"foo": "bar"}, args)
 
-    def test_multipart_put_request_with_umlauts(self) -> None:
+    @test
+    def multipart_put_request_with_umlauts(self) -> None:
         self.env["REQUEST_METHOD"] = "PUT"
         self.setup_multipart_request("föo", "bär")
         args = parse_args(self.env, [
@@ -264,7 +291,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal({"föo": "bär"}, args)
 
-    def test_multipart_post_request_with_file(self) -> None:
+    @test
+    def multipart_post_request_with_file(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request("my-file", "my-file.txt", "content",
                                           "text/plain")
@@ -277,7 +305,8 @@ class ParseArgsTest(TestCase):
         assert_equal("text/plain", f.content_type)
         assert_equal(b"content", f.read())
 
-    def test_multipart_post_request_with_file_and_umlauts(self) -> None:
+    @test
+    def multipart_post_request_with_file_and_umlauts(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request("föo", "my-filé.txt", "cöntent",
                                           "text/plain; charset=utf-8")
@@ -290,7 +319,8 @@ class ParseArgsTest(TestCase):
         assert_equal("text/plain", f.content_type)
         assert_equal("cöntent".encode("utf-8"), f.read())
 
-    def test_multipart_put_request_with_file(self) -> None:
+    @test
+    def multipart_put_request_with_file(self) -> None:
         self.env["REQUEST_METHOD"] = "PUT"
         self.setup_multipart_file_request("my-file", "my-file.txt", "content",
                                           "text/plain")
@@ -303,7 +333,8 @@ class ParseArgsTest(TestCase):
         assert_equal("text/plain", f.content_type)
         assert_equal(b"content", f.read())
 
-    def test_read_file_as_value(self) -> None:
+    @test
+    def read_file_as_value(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request("foo", "my-file.txt", "123",
                                           "text/plain")
@@ -312,7 +343,8 @@ class ParseArgsTest(TestCase):
         ])
         assert_equal(123, args["foo"])
 
-    def test_read_value_as_file(self) -> None:
+    @test
+    def read_value_as_file(self) -> None:
         self.env["REQUEST_METHOD"] = "GET"
         self.add_path_argument("foo", "bar")
         args = parse_args(self.env, [
@@ -324,7 +356,8 @@ class ParseArgsTest(TestCase):
         assert_equal("application/octet-stream", f.content_type)
         assert_equal(b"bar", f.read())
 
-    def test_read_value_as_file_with_umlauts(self) -> None:
+    @test
+    def read_value_as_file_with_umlauts(self) -> None:
         self.env["REQUEST_METHOD"] = "GET"
         self.add_path_argument("foo", "bär")
         args = parse_args(self.env, [
@@ -336,7 +369,8 @@ class ParseArgsTest(TestCase):
         assert_equal("application/octet-stream", f.content_type)
         assert_equal("bär".encode("utf-8"), f.read())
 
-    def test_post_wrong_content_type(self) -> None:
+    @test
+    def post_wrong_content_type(self) -> None:
         """This exposes a bug in Python's cgi module that will raise a
         TypeError when no request string was provided. See
         <https://bugs.python.org/issue32029>.
@@ -350,7 +384,8 @@ class ParseArgsTest(TestCase):
                 ("foo", str, Multiplicity.OPTIONAL),
             ])
 
-    def test_patch_wrong_content_type(self) -> None:
+    @test
+    def patch_wrong_content_type(self) -> None:
         self.env["REQUEST_METHOD"] = "PATCH"
         self.env["CONTENT_TYPE"] = "application/octet-stream"
         self.env["CONTENT_LENGTH"] = "2"
@@ -362,7 +397,8 @@ class ParseArgsTest(TestCase):
 
 
 class ArgumentParserTest(TestCase):
-    def test_parse_args__post_twice(self) -> None:
+    @test
+    def parse_args__post_twice(self) -> None:
         environ = {
             "wsgi.input": BytesIO(b"foo=bar&abc=def"),
             "REQUEST_METHOD": "POST",

@@ -20,7 +20,7 @@ setup(
     packages=["rouver", "rouver_test"],
     package_data={"rouver": ["py.typed"]},
     install_requires=["werkzeug >= 0.12.0"],
-    tests_require=["asserts >= 0.7.0, < 0.9"],
+    tests_require=["asserts >= 0.7.0, < 0.9", "dectest >= 0.1.2, < 0.2"],
     python_requires=">= 3.5",
     license="MIT",
     classifiers=[

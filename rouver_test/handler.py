@@ -1,9 +1,10 @@
 from http import HTTPStatus
+from io import BytesIO
 from typing import Type, Iterable
-from unittest import TestCase
 
 from asserts import assert_is, assert_equal, assert_is_instance, assert_raises
-from io import BytesIO
+
+from dectest import TestCase, test, before
 
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
@@ -15,7 +16,6 @@ from rouver_test.util import default_environment, TestingStartResponse
 
 
 class TestingHandler(RouteHandlerBase):
-
     response = []  # type: Iterable[bytes]
 
     def prepare_response(self) -> Iterable[bytes]:
@@ -24,7 +24,8 @@ class TestingHandler(RouteHandlerBase):
 
 
 class RouteHandlerBaseTest(TestCase):
-    def setUp(self) -> None:
+    @before
+    def setup_environment(self) -> None:
         self.environ = default_environment()
         self.start_response = TestingStartResponse()
 
@@ -32,51 +33,61 @@ class RouteHandlerBaseTest(TestCase):
         handler = handler_class(self.environ, self.start_response)
         return b"".join(handler)
 
-    def test_attributes(self) -> None:
+    @test
+    def attributes(self) -> None:
         handler = TestingHandler(self.environ, self.start_response)
         assert_is(self.environ, handler.request.environ)
         assert_is_instance(handler.request, Request)
         assert_is(self.start_response, handler.start_response)
 
-    def test_path_args__from_environment(self) -> None:
+    @test
+    def path_args__from_environment(self) -> None:
         self.environ["rouver.path_args"] = ["foo"]
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal(["foo"], handler.path_args)
 
-    def test_path_args__default(self) -> None:
+    @test
+    def path_args__default(self) -> None:
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal([], handler.path_args)
 
-    def test_path_args__not_a_list(self) -> None:
+    @test
+    def path_args__not_a_list(self) -> None:
         self.environ["rouver.path_args"] = "not-a-list"
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal([], handler.path_args)
 
-    def test_wildcard_path__from_environment(self) -> None:
+    @test
+    def wildcard_path__from_environment(self) -> None:
         self.environ["rouver.wildcard_path"] = "/foo/bar"
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal("/foo/bar", handler.wildcard_path)
 
-    def test_wildcard_path__decode(self) -> None:
+    @test
+    def wildcard_path__decode(self) -> None:
         self.environ["rouver.wildcard_path"] = "/foo%2Fb%C3%A4r"
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal("/foo/bär", handler.wildcard_path)
 
-    def test_wildcard_path__decode_errors(self) -> None:
+    @test
+    def wildcard_path__decode_errors(self) -> None:
         self.environ["rouver.wildcard_path"] = "/foo%2Fb%C3r"
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal("/foo/b�r", handler.wildcard_path)
 
-    def test_wildcard_path__default(self) -> None:
+    @test
+    def wildcard_path__default(self) -> None:
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal("", handler.wildcard_path)
 
-    def test_wildcard_path__not_a_string(self) -> None:
+    @test
+    def wildcard_path__not_a_string(self) -> None:
         self.environ["rouver.wildcard_path"] = b"not-a-str"
         handler = TestingHandler(self.environ, self.start_response)
         assert_equal("", handler.wildcard_path)
 
-    def test_parse_args__post_twice(self) -> None:
+    @test
+    def parse_args__post_twice(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b"foo=bar&abc=def")
         self.environ["REQUEST_METHOD"] = "POST"
         self.environ["CONTENT_LENGTH"] = "15"
@@ -92,7 +103,8 @@ class RouteHandlerBaseTest(TestCase):
         ])
         assert_equal({"foo": "bar", "abc": "def"}, args2)
 
-    def test_parse_args__works_in_response_handler(self) -> None:
+    @test
+    def parse_args__works_in_response_handler(self) -> None:
         class MyHandler(RouteHandlerBase):
             def prepare_response(self) -> Iterable[bytes]:
                 self.parse_args([])
@@ -105,7 +117,8 @@ class RouteHandlerBaseTest(TestCase):
         handler = MyHandler(self.environ, self.start_response)
         iter(handler)
 
-    def test_parse_json_request__default_encoding(self) -> None:
+    @test
+    def parse_json_request__default_encoding(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'{ "f\xc3\xb6o": 42 }')
         self.environ["CONTENT_LENGTH"] = "14"
         self.environ["CONTENT_TYPE"] = "application/json"
@@ -113,7 +126,8 @@ class RouteHandlerBaseTest(TestCase):
         j = handler.parse_json_request()
         assert_equal({"föo": 42}, j)
 
-    def test_parse_json_request__explicit_encoding(self) -> None:
+    @test
+    def parse_json_request__explicit_encoding(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'{ "f\xf6o": 42 }')
         self.environ["CONTENT_LENGTH"] = "13"
         self.environ["CONTENT_TYPE"] = "application/json; charset=iso-8859-1"
@@ -121,7 +135,8 @@ class RouteHandlerBaseTest(TestCase):
         j = handler.parse_json_request()
         assert_equal({"föo": 42}, j)
 
-    def test_parse_json_request__unknown_encoding(self) -> None:
+    @test
+    def parse_json_request__unknown_encoding(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'{}')
         self.environ["CONTENT_LENGTH"] = "2"
         self.environ["CONTENT_TYPE"] = "application/json; charset=unknown"
@@ -129,14 +144,16 @@ class RouteHandlerBaseTest(TestCase):
         with assert_raises(UnsupportedMediaType):
             handler.parse_json_request()
 
-    def test_parse_json_request__no_content_type(self) -> None:
+    @test
+    def parse_json_request__no_content_type(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'{}')
         self.environ["CONTENT_LENGTH"] = "2"
         handler = TestingHandler(self.environ, self.start_response)
         with assert_raises(UnsupportedMediaType):
             handler.parse_json_request()
 
-    def test_parse_json_request__wrong_content_type(self) -> None:
+    @test
+    def parse_json_request__wrong_content_type(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'{}')
         self.environ["CONTENT_LENGTH"] = "2"
         self.environ["CONTENT_TYPE"] = "application/octet-stream"
@@ -144,7 +161,8 @@ class RouteHandlerBaseTest(TestCase):
         with assert_raises(UnsupportedMediaType):
             handler.parse_json_request()
 
-    def test_parse_json_request__invalid_data(self) -> None:
+    @test
+    def parse_json_request__invalid_data(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'INVALID')
         self.environ["CONTENT_LENGTH"] = "7"
         self.environ["CONTENT_TYPE"] = "application/json"
@@ -152,7 +170,8 @@ class RouteHandlerBaseTest(TestCase):
         with assert_raises(UnsupportedMediaType):
             handler.parse_json_request()
 
-    def test_respond(self) -> None:
+    @test
+    def respond(self) -> None:
         TestingHandler.response = [b"foo", b"bar"]
         response = self.call_handler(TestingHandler)
         self.start_response.assert_status(HTTPStatus.OK)
