@@ -227,32 +227,32 @@ class CreatedAtTest(TestCase):
     @before
     def setup_environment(self) -> None:
         self.environment = default_environment()
-        self.start_request = TestingStartResponse()
+        self.start_response = TestingStartResponse()
 
     @test
     def headers(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        created_at(request, self.start_request, "/foo/bar")
-        self.start_request.assert_status(HTTPStatus.CREATED)
-        self.start_request.assert_header_equals("Content-Type",
-                                                "text/html; charset=utf-8")
-        self.start_request.assert_header_equals(
+        created_at(request, self.start_response, "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.CREATED)
+        self.start_response.assert_header_equals("Content-Type",
+                                                 "text/html; charset=utf-8")
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
     @test
     def absolute_url(self) -> None:
         request = Request(self.environment)
-        created_at(request, self.start_request, "http://example.com/foo")
-        self.start_request.assert_header_equals("Location",
-                                                "http://example.com/foo")
+        created_at(request, self.start_response, "http://example.com/foo")
+        self.start_response.assert_header_equals("Location",
+                                                 "http://example.com/foo")
 
     @test
     def url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        created_at(request, self.start_request, "foo/bar")
-        self.start_request.assert_header_equals(
+        created_at(request, self.start_response, "foo/bar")
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
     @test
@@ -260,12 +260,22 @@ class CreatedAtTest(TestCase):
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
         with assert_raises(ValueError):
-            created_at(request, self.start_request, "foo/bär")
+            created_at(request, self.start_response, "foo/bär")
+
+    @test
+    def extra_headers(self) -> None:
+        request = Request(self.environment)
+        created_at(
+            request,
+            self.start_response,
+            "foo",
+            extra_headers=[("X-Foo", "Bar")])
+        self.start_response.assert_header_equals("X-Foo", "Bar")
 
     @test
     def html(self) -> None:
         request = Request(self.environment)
-        response = created_at(request, self.start_request, "foo/bar")
+        response = created_at(request, self.start_response, "foo/bar")
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
 
@@ -274,33 +284,33 @@ class CreatedAsJSONTest(TestCase):
     @before
     def setup_environment(self) -> None:
         self.environment = default_environment()
-        self.start_request = TestingStartResponse()
+        self.start_response = TestingStartResponse()
 
     @test
     def headers(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        created_as_json(request, self.start_request, "/foo/bar", {})
-        self.start_request.assert_status(HTTPStatus.CREATED)
-        self.start_request.assert_header_equals(
+        created_as_json(request, self.start_response, "/foo/bar", {})
+        self.start_response.assert_status(HTTPStatus.CREATED)
+        self.start_response.assert_header_equals(
             "Content-Type", "application/json; charset=utf-8")
-        self.start_request.assert_header_equals(
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
     @test
     def absolute_url(self) -> None:
         request = Request(self.environment)
-        created_as_json(request, self.start_request, "http://example.com/foo",
+        created_as_json(request, self.start_response, "http://example.com/foo",
                         {})
-        self.start_request.assert_header_equals("Location",
-                                                "http://example.com/foo")
+        self.start_response.assert_header_equals("Location",
+                                                 "http://example.com/foo")
 
     @test
     def url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        created_as_json(request, self.start_request, "foo/bar", {})
-        self.start_request.assert_header_equals(
+        created_as_json(request, self.start_response, "foo/bar", {})
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
     @test
@@ -308,12 +318,22 @@ class CreatedAsJSONTest(TestCase):
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
         with assert_raises(ValueError):
-            created_as_json(request, self.start_request, "foo/bär", {})
+            created_as_json(request, self.start_response, "foo/bär", {})
+
+    @test
+    def extra_headers(self) -> None:
+        request = Request(self.environment)
+        created_as_json(
+            request,
+            self.start_response,
+            "foo", {},
+            extra_headers=[("X-Foo", "Bar")])
+        self.start_response.assert_header_equals("X-Foo", "Bar")
 
     @test
     def json(self) -> None:
         request = Request(self.environment)
-        response = created_as_json(request, self.start_request, "foo/bar", {
+        response = created_as_json(request, self.start_response, "foo/bar", {
             "foo": 3,
         })
         json = json_decode(b"".join(response).decode("utf-8"))
@@ -324,33 +344,33 @@ class TemporaryRedirectTest(TestCase):
     @before
     def setup_environment(self) -> None:
         self.environment = default_environment()
-        self.start_request = TestingStartResponse()
+        self.start_response = TestingStartResponse()
 
     @test
     def headers(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        temporary_redirect(request, self.start_request, "/foo/bar")
-        self.start_request.assert_status(HTTPStatus.TEMPORARY_REDIRECT)
-        self.start_request.assert_header_equals("Content-Type",
-                                                "text/html; charset=utf-8")
-        self.start_request.assert_header_equals(
+        temporary_redirect(request, self.start_response, "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.TEMPORARY_REDIRECT)
+        self.start_response.assert_header_equals("Content-Type",
+                                                 "text/html; charset=utf-8")
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
     @test
     def absolute_url(self) -> None:
         request = Request(self.environment)
-        temporary_redirect(request, self.start_request,
+        temporary_redirect(request, self.start_response,
                            "http://example.com/foo")
-        self.start_request.assert_header_equals("Location",
-                                                "http://example.com/foo")
+        self.start_response.assert_header_equals("Location",
+                                                 "http://example.com/foo")
 
     @test
     def url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        temporary_redirect(request, self.start_request, "foo/bar")
-        self.start_request.assert_header_equals(
+        temporary_redirect(request, self.start_response, "foo/bar")
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
     @test
@@ -358,21 +378,33 @@ class TemporaryRedirectTest(TestCase):
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
         with assert_raises(ValueError):
-            temporary_redirect(request, self.start_request, "foo/bär")
+            temporary_redirect(request, self.start_response, "foo/bär")
 
     @test
     def do_not_encode_cgi_arguments(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        temporary_redirect(request, self.start_request,
+        temporary_redirect(request, self.start_response,
                            "foo?bar=baz&abc=%6A;+,@:$")
-        self.start_request.assert_header_equals(
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/foo?bar=baz&abc=%6A;+,@:$")
+
+    @test
+    def extra_headers(self) -> None:
+        request = Request(self.environment)
+        temporary_redirect(
+            request,
+            self.start_response,
+            "foo",
+            extra_headers=[
+                ("X-Foo", "Bar"),
+            ])
+        self.start_response.assert_header_equals("X-Foo", "Bar")
 
     @test
     def html(self) -> None:
         request = Request(self.environment)
-        response = temporary_redirect(request, self.start_request, "foo/bar")
+        response = temporary_redirect(request, self.start_response, "foo/bar")
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
         assert_in("http://www.example.com/foo/bar", html)
@@ -382,33 +414,33 @@ class SeeOtherTest(TestCase):
     @before
     def setup_environment(self) -> None:
         self.environment = default_environment()
-        self.start_request = TestingStartResponse()
+        self.start_response = TestingStartResponse()
 
     @test
     def headers(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        see_other(request, self.start_request, "/foo/bar")
-        self.start_request.assert_status(HTTPStatus.SEE_OTHER)
-        self.start_request.assert_header_equals("Content-Type",
-                                                "text/html; charset=utf-8")
-        self.start_request.assert_header_equals(
+        see_other(request, self.start_response, "/foo/bar")
+        self.start_response.assert_status(HTTPStatus.SEE_OTHER)
+        self.start_response.assert_header_equals("Content-Type",
+                                                 "text/html; charset=utf-8")
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/foo/bar")
 
     @test
     def absolute_url(self) -> None:
         request = Request(self.environment)
-        see_other(request, self.start_request, "http://example.com/foo")
-        self.start_request.assert_header_equals("Location",
-                                                "http://example.com/foo")
+        see_other(request, self.start_response, "http://example.com/foo")
+        self.start_response.assert_header_equals("Location",
+                                                 "http://example.com/foo")
 
     @test
     def url_without_leading_slash(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         self.environment["PATH_INFO"] = "/abc/def/"
         request = Request(self.environment)
-        see_other(request, self.start_request, "foo/bar")
-        self.start_request.assert_header_equals(
+        see_other(request, self.start_response, "foo/bar")
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/abc/def/foo/bar")
 
     @test
@@ -416,8 +448,8 @@ class SeeOtherTest(TestCase):
         self.environment["SERVER_NAME"] = "www.example.com"
         self.environment["PATH_INFO"] = "/abc/def"
         request = Request(self.environment)
-        see_other(request, self.start_request, "foo/bar")
-        self.start_request.assert_header_equals(
+        see_other(request, self.start_response, "foo/bar")
+        self.start_response.assert_header_equals(
             "Location", "http://www.example.com/abc/foo/bar")
 
     @test
@@ -425,12 +457,24 @@ class SeeOtherTest(TestCase):
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
         with assert_raises(ValueError):
-            see_other(request, self.start_request, "foo/bär")
+            see_other(request, self.start_response, "foo/bär")
+
+    @test
+    def extra_headers(self) -> None:
+        request = Request(self.environment)
+        see_other(
+            request,
+            self.start_response,
+            "foo",
+            extra_headers=[
+                ("X-Foo", "Bar"),
+            ])
+        self.start_response.assert_header_equals("X-Foo", "Bar")
 
     @test
     def html(self) -> None:
         request = Request(self.environment)
-        response = see_other(request, self.start_request, "foo/bar")
+        response = see_other(request, self.start_response, "foo/bar")
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
         assert_in("http://www.example.com/foo/bar", html)

@@ -1,6 +1,13 @@
 News in rouver 0.9.1
 ====================
 
+API Additions
+-------------
+
+* ``rouver.response``: ``created_at()``, ``created_as_json()``,
+  ``temporary_redirect()``, and ``see_also()`` now take an optional
+  ``extra_headers`` argument.
+
 Improvements
 ------------
 

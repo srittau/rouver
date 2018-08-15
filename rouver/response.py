@@ -138,7 +138,8 @@ def respond_with_html(start_response: StartResponse, html: str, *,
 
 
 def created_at(request: Request, start_response: StartResponse,
-               url_part: str) -> Iterable[bytes]:
+               url_part: str, *, extra_headers: Sequence[Header] = []) \
+        -> Iterable[bytes]:
     """Prepare a 201 Created WSGI response with a Location header.
 
     The default content-type is "text/html" and the return value generates
@@ -147,47 +148,60 @@ def created_at(request: Request, start_response: StartResponse,
 
     url = _absolute_url(request, url_part)
     html = created_at_page(url)
+    all_headers = [_location_header(request, url_part)] + list(extra_headers)
     return respond_with_html(
         start_response,
         html,
         status=HTTPStatus.CREATED,
-        extra_headers=[_location_header(request, url_part)])
+        extra_headers=all_headers,
+    )
 
 
 def created_as_json(request: Request, start_response: StartResponse,
-                    url_part: str, json: Union[str, bytes, Any]) \
+                    url_part: str, json: Union[str, bytes, Any], *,
+                    extra_headers: Sequence[Header] = []) \
         -> Iterable[bytes]:
     """Prepare a 201 Created WSGI response with a Location header and JSON body.
     """
 
+    all_headers = [_location_header(request, url_part)] + list(extra_headers)
     return respond_with_json(
         start_response,
         json,
         status=HTTPStatus.CREATED,
-        extra_headers=[
-            _location_header(request, url_part),
-        ])
+        extra_headers=all_headers,
+    )
 
 
-def temporary_redirect(request: Request, start_response: StartResponse,
-                       url_part: str) -> Iterable[bytes]:
+def temporary_redirect(request: Request,
+                       start_response: StartResponse,
+                       url_part: str,
+                       *,
+                       extra_headers: Sequence[Header] = []) \
+        -> Iterable[bytes]:
     url = _absolute_url(request, url_part)
     html = temporary_redirect_page(url)
+    all_headers = [_location_header(request, url_part)] + list(extra_headers)
     return respond_with_html(
         start_response,
         html,
         status=HTTPStatus.TEMPORARY_REDIRECT,
-        extra_headers=[
-            _location_header(request, url_part),
-        ])
+        extra_headers=all_headers,
+    )
 
 
-def see_other(request: Request, start_response: StartResponse,
-              url_part: str) -> Iterable[bytes]:
+def see_other(request: Request,
+              start_response: StartResponse,
+              url_part: str,
+              *,
+              extra_headers: Sequence[Header] = []) \
+        -> Iterable[bytes]:
     url = _absolute_url(request, url_part)
     html = see_other_page(url)
+    all_headers = [_location_header(request, url_part)] + list(extra_headers)
     return respond_with_html(
         start_response,
         html,
         status=HTTPStatus.SEE_OTHER,
-        extra_headers=[_location_header(request, url_part)])
+        extra_headers=all_headers,
+    )
