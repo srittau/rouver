@@ -9,6 +9,7 @@ from urllib.parse import quote_plus, urlparse
 from asserts import fail, assert_equal
 
 from dectest import TestCase, before
+from werkzeug.http import parse_options_header
 
 from rouver.args import Multiplicity
 from rouver.router import Router
@@ -111,6 +112,27 @@ class TestResponse:
             real_location = self.get_header_value("Location")
             parsed = urlparse(real_location)
             assert_equal(expected_location, parsed.path)
+
+    def assert_content_type(self, content_type: str, *,
+                            charset: Optional[str] = None) -> None:
+        """Assert the response's Content-Type header.
+
+        If the optional charset argument is given, compare the charset
+        as well.
+
+        """
+        try:
+            value = self.get_header_value("Content-Type")
+        except ValueError:
+            fail("missing header 'Content-Type'")
+        type_, options = parse_options_header(value)
+        assert_equal(content_type, type_, "unexpected content type: {msg}")
+        if charset is not None:
+            msg = "unexpected content type charset: {msg}"
+            try:
+                assert_equal(charset, options["charset"], msg)
+            except KeyError:
+                fail("no charset in Content-Type header")
 
 
 def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:

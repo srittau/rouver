@@ -6,7 +6,7 @@ from typing import Iterable, Optional, Tuple, Any, Sequence
 from asserts import \
     assert_equal, assert_is_instance, assert_has_attr, assert_is_none, \
     assert_dict_superset, assert_not_in, assert_raises, assert_succeeds, \
-    assert_true, assert_is_not_none, assert_false
+    assert_true, assert_false
 
 from dectest import TestCase, test
 
@@ -225,6 +225,52 @@ class TestResponseTest(TestCase):
             "201 Created", [("Location", "http://example.com/foo/bar")])
         with assert_succeeds(AssertionError):
             response.assert_created_at("/foo/bar")
+
+    @test
+    def assert_content_type__no_such_header(self) -> None:
+        response = TestResponse("200 OK", [])
+        with assert_raises(AssertionError):
+            response.assert_content_type("image/png")
+
+    @test
+    def assert_content_type__equal(self) -> None:
+        response = TestResponse("200 OK", [("Content-Type", "image/png")])
+        with assert_succeeds(AssertionError):
+            response.assert_content_type("image/png")
+
+    @test
+    def assert_content_type__different(self) -> None:
+        response = TestResponse("200 OK", [("Content-Type", "image/png")])
+        with assert_raises(AssertionError):
+            response.assert_content_type("image/jpeg")
+
+    @test
+    def assert_content_type__charset_matches(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Content-Type", "text/html; charset=us-ascii")])
+        with assert_succeeds(AssertionError):
+            response.assert_content_type("text/html", charset="us-ascii")
+
+    @test
+    def assert_content_type__charset_not_checked(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Content-Type", "text/html; charset=utf-8")])
+        with assert_succeeds(AssertionError):
+            response.assert_content_type("text/html")
+
+    @test
+    def assert_content_type__no_charset_in_response(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Content-Type", "text/html")])
+        with assert_raises(AssertionError):
+            response.assert_content_type("text/html", charset="us-ascii")
+
+    @test
+    def assert_content_type__wrong_charset(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Content-Type", "text/html; charset=utf-8")])
+        with assert_raises(AssertionError):
+            response.assert_content_type("text/html", charset="us-ascii")
 
 
 class TestWSGIAppTest(TestCase):

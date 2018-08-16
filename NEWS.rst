@@ -1,6 +1,11 @@
 News in rouver 0.10.1
 =====================
 
+API Additions
+-------------
+
+* ``rouver.test``: Add ``TestResponse.assert_content_type()``.
+
 News in rouver 0.10.0
 =====================
 
