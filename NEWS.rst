@@ -1,5 +1,5 @@
-News in rouver 0.9.1
-====================
+News in rouver 0.10.0
+=====================
 
 API Additions
 -------------
