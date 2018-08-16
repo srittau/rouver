@@ -26,7 +26,18 @@ class TestRequest:
         self.path = path
         self.error_stream = BytesIO()
         self.content_type = None  # type: Optional[str]
+        self._extra_environ = {}  # type: WSGIEnvironment
+        self._extra_headers = []  # type: List[Tuple[str, str]]
         self._arguments = []  # type: List[Tuple[str, str]]
+
+    def set_env_var(self, name: str, value: Any) -> None:
+        self._extra_environ[name] = value
+
+    def set_header(self, name: str, value: str) -> None:
+        if name.lower() == "content-type":
+            self.content_type = value
+        else:
+            self._extra_headers.append((name, value))
 
     def add_argument(self, name: str, value: Union[str, Sequence[str]]) \
             -> None:
@@ -54,6 +65,8 @@ class TestRequest:
             "wsgi.multiprocess": False,
             "wsgi.run_once": True,
         }
+        for header, value in self._extra_headers:
+            env["HTTP_" + header.upper().replace("-", "_")] = value
         if self._arguments:
             if self.method == "GET":
                 env["QUERY_STRING"] = self._build_query_string()
@@ -62,6 +75,7 @@ class TestRequest:
                     BytesIO(self._build_query_string().encode("ascii"))
         if self.content_type is not None:
             env["CONTENT_TYPE"] = self.content_type
+        env.update(self._extra_environ)
         return env
 
     def _build_query_string(self) -> str:

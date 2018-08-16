@@ -60,6 +60,43 @@ class TestRequestTest(TestCase):
         assert_not_in("QUERY_STRING", environ)
 
     @test
+    def set_env_var(self) -> None:
+        request = create_request("GET", "/foo/bar")
+        request.set_env_var("foo.bar", "baz")
+        environ = request.to_environment()
+        assert_dict_superset({"foo.bar": "baz"}, environ)
+
+    @test
+    def set_env_var__priority(self) -> None:
+        request = create_request("GET", "/foo/bar")
+        request.set_env_var("SERVER_PORT", "8888")
+        request.set_env_var("HTTP_X_FOO", "Set by env var")
+        request.set_header("X-Foo", "Set by header")
+        environ = request.to_environment()
+        assert_dict_superset({
+            "SERVER_PORT": "8888",
+            "HTTP_X_FOO": "Set by env var",
+        }, environ)
+
+    @test
+    def set_header(self) -> None:
+        request = create_request("GET", "/foo/bar")
+        request.set_header("X-Foobar", "Baz")
+        environ = request.to_environment()
+        assert_dict_superset({ "HTTP_X_FOOBAR": "Baz" }, environ)
+
+    @test
+    def set_header__content_type(self) -> None:
+        request = create_request("GET", "/foo/bar")
+        request.set_header("Content-Type", "text/html")
+        assert_equal("text/html", request.content_type)
+        environ = request.to_environment()
+        assert_dict_superset({
+            "CONTENT_TYPE": "text/html",
+        }, environ)
+        assert_not_in("HTTP_CONTENT_TYPE", environ)
+
+    @test
     def add_argument__content_type(self) -> None:
         request = create_request("POST", "/foo/bar")
         assert_is_none(request.content_type)
