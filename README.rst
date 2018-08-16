@@ -68,3 +68,11 @@ Argument Handling
 ...         ("count", int, Multiplicity.REQUIRED),
 ...     ])
 ...     return respond_with_json({"count": args["count"]})
+
+WSGI Testing
+------------
+
+>>> from rouver.test import create_request, test_wsgi_app
+>>> request = create_request("GET", "/my/path")
+>>> response = test_wsgi_app(app, request)
+>>> response.assert_status(HTTPStatus.OK)
