@@ -237,7 +237,7 @@ class TestResponseTest(TestCase):
             response.assert_created_at("http://example.com/")
 
     @test
-    def assert_created_at__not_created(self) -> None:
+    def assert_created_at__wrong_status(self) -> None:
         response = TestResponse(
             "200 OK", [("Location", "http://example.com/")])
         with assert_raises(AssertionError):
@@ -262,6 +262,76 @@ class TestResponseTest(TestCase):
             "201 Created", [("Location", "http://example.com/foo/bar")])
         with assert_succeeds(AssertionError):
             response.assert_created_at("/foo/bar")
+
+    @test
+    def assert_see_other__ok(self) -> None:
+        response = TestResponse(
+            "303 See Other", [("Location", "http://example.com/")])
+        with assert_succeeds(AssertionError):
+            response.assert_see_other("http://example.com/")
+
+    @test
+    def assert_see_other__wrong_status(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Location", "http://example.com/")])
+        with assert_raises(AssertionError):
+            response.assert_see_other("http://example.com/")
+
+    @test
+    def assert_see_other__no_location_header(self) -> None:
+        response = TestResponse("303 See Other", [])
+        with assert_raises(AssertionError):
+            response.assert_see_other("http://example.org/")
+
+    @test
+    def assert_see_other__wrong_location(self) -> None:
+        response = TestResponse(
+            "303 See Other", [("Location", "http://example.com/")])
+        with assert_raises(AssertionError):
+            response.assert_see_other("http://example.org/")
+
+    @test
+    def assert_see_other__relative_location(self) -> None:
+        response = TestResponse(
+            "303 See Other",
+            [("Location", "http://example.com/foo/bar")])
+        with assert_succeeds(AssertionError):
+            response.assert_see_other("/foo/bar")
+
+    @test
+    def assert_temporary_redirect__ok(self) -> None:
+        response = TestResponse(
+            "307 Temporary Redirect", [("Location", "http://example.com/")])
+        with assert_succeeds(AssertionError):
+            response.assert_temporary_redirect("http://example.com/")
+
+    @test
+    def assert_temporary_redirect__wrong_status(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Location", "http://example.com/")])
+        with assert_raises(AssertionError):
+            response.assert_temporary_redirect("http://example.com/")
+
+    @test
+    def assert_temporary_redirect__no_location_header(self) -> None:
+        response = TestResponse("307 Temporary Redirect", [])
+        with assert_raises(AssertionError):
+            response.assert_temporary_redirect("http://example.org/")
+
+    @test
+    def assert_temporary_redirect__wrong_location(self) -> None:
+        response = TestResponse(
+            "307 Temporary Redirect", [("Location", "http://example.com/")])
+        with assert_raises(AssertionError):
+            response.assert_temporary_redirect("http://example.org/")
+
+    @test
+    def assert_temporary_redirect__relative_location(self) -> None:
+        response = TestResponse(
+            "307 Temporary Redirect",
+            [("Location", "http://example.com/foo/bar")])
+        with assert_succeeds(AssertionError):
+            response.assert_temporary_redirect("/foo/bar")
 
     @test
     def assert_content_type__no_such_header(self) -> None:

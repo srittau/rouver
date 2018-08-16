@@ -6,7 +6,8 @@ API Additions
 
 * ``rouver.test``: Add ``TestRequest.set_env_var()`` and
   ``TestRequest.set_header()``.
-* ``rouver.test``: Add ``TestResponse.assert_content_type()``.
+* ``rouver.test``: Add ``TestResponse.assert_content_type()``,
+  ``assert_see_other()``, and ``assert_temporary_redirect()``.
 
 News in rouver 0.10.0
 =====================

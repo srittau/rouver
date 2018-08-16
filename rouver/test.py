@@ -118,14 +118,40 @@ class TestResponse:
         msg = "header value of {} differs: {{msg}}".format(name)
         assert_equal(expected_value, real_value, msg_fmt=msg)
 
-    def assert_created_at(self, expected_location: str) -> None:
-        self.assert_status(HTTPStatus.CREATED)
+    def _assert_location_response(self, expected_status: HTTPStatus,
+                                  expected_location: str) -> None:
+        self.assert_status(expected_status)
         if ":" in expected_location:
             self.assert_header_equal("Location", expected_location)
         else:
             real_location = self.get_header_value("Location")
             parsed = urlparse(real_location)
             assert_equal(expected_location, parsed.path)
+
+    def assert_created_at(self, expected_location: str) -> None:
+        """Assert a correct 201 Created response.
+
+        The expected location can either be an absolute URL, or just the
+        path portion.
+        """
+        self._assert_location_response(HTTPStatus.CREATED, expected_location)
+
+    def assert_see_other(self, expected_location: str) -> None:
+        """Assert a correct 303 See Other response.
+
+        The expected location can either be an absolute URL, or just the
+        path portion.
+        """
+        self._assert_location_response(HTTPStatus.SEE_OTHER, expected_location)
+
+    def assert_temporary_redirect(self, expected_location: str) -> None:
+        """Assert a correct 307 Temporary Redirect response.
+
+        The expected location can either be an absolute URL, or just the
+        path portion.
+        """
+        self._assert_location_response(HTTPStatus.TEMPORARY_REDIRECT,
+                                       expected_location)
 
     def assert_content_type(self, content_type: str, *,
                             charset: Optional[str] = None) -> None:
