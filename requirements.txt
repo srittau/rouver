@@ -1,4 +1,4 @@
-asserts==0.8.5
+asserts==0.8.6
 dectest==1.0.0
 mypy==0.620
 werkzeug==0.14.1
