@@ -110,6 +110,11 @@ class TestResponse:
         assert_equal(status, self.status,
                      msg_fmt="unexpected HTTP status: {msg}")
 
+    def assert_header_not_set(self, name: str) -> None:
+        for n, v in self._headers:
+            if n.lower() == name.lower():
+                fail("header '{}' unexpectedly set".format(name))
+
     def assert_header_equal(self, name: str, expected_value: str) -> None:
         try:
             real_value = self.get_header_value(name)

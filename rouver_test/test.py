@@ -212,6 +212,18 @@ class TestResponseTest(TestCase):
             response.assert_status(HTTPStatus.OK)
 
     @test
+    def assert_header_not_set__is_set(self) -> None:
+        response = TestResponse("200 OK", [("X-Foo", "value")])
+        with assert_raises(AssertionError):
+            response.assert_header_not_set("x-FOO")
+
+    @test
+    def assert_header_not_set__not_set(self) -> None:
+        response = TestResponse("200 OK", [])
+        with assert_succeeds(AssertionError):
+            response.assert_header_not_set("X-Foo")
+
+    @test
     def assert_header_equal__no_such_header(self) -> None:
         response = TestResponse("200 OK", [("X-Other", "value")])
         with assert_raises(AssertionError):
