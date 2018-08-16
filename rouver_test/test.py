@@ -276,6 +276,15 @@ class TestResponseTest(TestCase):
             response.assert_created_at("/foo/bar")
 
     @test
+    def assert_created_at__keep_query_string(self) -> None:
+        response = TestResponse(
+            "201 Created", [
+                ("Location", "http://example.com/foo?abc=def#frag"),
+            ])
+        with assert_succeeds(AssertionError):
+            response.assert_created_at("/foo?abc=def#frag")
+
+    @test
     def assert_see_other__ok(self) -> None:
         response = TestResponse(
             "303 See Other", [("Location", "http://example.com/")])
@@ -311,6 +320,15 @@ class TestResponseTest(TestCase):
             response.assert_see_other("/foo/bar")
 
     @test
+    def assert_see_other__keep_query_string(self) -> None:
+        response = TestResponse(
+            "303 See Other", [
+                ("Location", "http://example.com/foo?abc=def#frag"),
+            ])
+        with assert_succeeds(AssertionError):
+            response.assert_see_other("/foo?abc=def#frag")
+
+    @test
     def assert_temporary_redirect__ok(self) -> None:
         response = TestResponse(
             "307 Temporary Redirect", [("Location", "http://example.com/")])
@@ -344,6 +362,15 @@ class TestResponseTest(TestCase):
             [("Location", "http://example.com/foo/bar")])
         with assert_succeeds(AssertionError):
             response.assert_temporary_redirect("/foo/bar")
+
+    @test
+    def assert_temporary_redirect__keep_query_string(self) -> None:
+        response = TestResponse(
+            "307 Temporary Redirect", [
+                ("Location", "http://example.com/foo?abc=def#frag"),
+            ])
+        with assert_succeeds(AssertionError):
+            response.assert_temporary_redirect("/foo?abc=def#frag")
 
     @test
     def assert_content_type__no_such_header(self) -> None:

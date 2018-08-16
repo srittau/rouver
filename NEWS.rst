@@ -1,3 +1,12 @@
+News in rouver 0.10.2
+=====================
+
+Bug Fixes
+---------
+
+* ``rouver.test``: ``assert_temporary_redirect()`` et al. now work
+  correctly with query strings and fragments.
+
 News in rouver 0.10.1
 =====================
 

@@ -131,7 +131,12 @@ class TestResponse:
         else:
             real_location = self.get_header_value("Location")
             parsed = urlparse(real_location)
-            assert_equal(expected_location, parsed.path)
+            real_location = parsed.path
+            if parsed.query:
+                real_location += "?" + parsed.query
+            if parsed.fragment:
+                real_location += "#" + parsed.fragment
+            assert_equal(expected_location, real_location)
 
     def assert_created_at(self, expected_location: str) -> None:
         """Assert a correct 201 Created response.
