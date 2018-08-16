@@ -1,7 +1,7 @@
 import sys
 from http import HTTPStatus
 from io import BytesIO
-from typing import Iterable, Optional, Tuple, Any
+from typing import Iterable, Optional, Tuple, Any, Sequence
 
 from asserts import \
     assert_equal, assert_is_instance, assert_has_attr, assert_is_none, \
@@ -10,8 +10,11 @@ from asserts import \
 
 from dectest import TestCase, test
 
-from rouver.test import create_request, TestResponse, test_wsgi_app
-from rouver.types import WSGIEnvironment, StartResponse
+from rouver.args import Multiplicity, parse_args, ArgumentTemplate
+from rouver.exceptions import ArgumentsError
+from rouver.test import create_request, TestResponse, test_wsgi_app, \
+    test_wsgi_arguments, ArgumentToTest
+from rouver.types import WSGIEnvironment, StartResponse, WSGIApplication
 
 
 def assert_wsgi_input_stream(stream: object) -> None:
@@ -341,5 +344,117 @@ class TestWSGIAppTest(TestCase):
 def _get_exc_info() -> Tuple[Any, Any, Any]:
     try:
         raise ValueError()
-    except:
+    except:  # noqa
         return sys.exc_info()
+
+
+class TestWSGIArgumentsTest(TestCase):
+    def _create_app(self, argument_template: Sequence[ArgumentTemplate]) \
+            -> WSGIApplication:
+        def app(env: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
+            try:
+                parse_args(env, argument_template)
+            except ArgumentsError:
+                sr("400 Bad Request", [])
+            else:
+                sr("200 OK", [])
+            return []
+        return app
+
+    def _successful_arg_test(self,
+                             app_args: Sequence[ArgumentTemplate],
+                             expected_args: Iterable[ArgumentToTest]) -> None:
+        app = self._create_app(app_args)
+        request = create_request("GET", "/")
+        with assert_succeeds(AssertionError):
+            test_wsgi_arguments(app, request, expected_args)
+
+    def _failing_arg_test(self,
+                          app_args: Sequence[ArgumentTemplate],
+                          expected_args: Iterable[ArgumentToTest]) -> None:
+        app = self._create_app(app_args)
+        request = create_request("GET", "/")
+        with assert_raises(AssertionError):
+            test_wsgi_arguments(app, request, expected_args)
+
+    @test
+    def no_expected_args(self) -> None:
+        self._successful_arg_test([], [])
+
+    @test
+    def required_argument_present(self) -> None:
+        self._successful_arg_test([
+            ("arg", int, Multiplicity.REQUIRED),
+        ], [
+            ("arg", Multiplicity.REQUIRED, "42"),
+        ])
+
+    @test
+    def required_argument_not_in_app(self) -> None:
+        self._failing_arg_test([
+            ("arg", int, Multiplicity.OPTIONAL),
+        ], [
+            ("arg", Multiplicity.REQUIRED, "42"),
+        ])
+
+    @test
+    def required_argument_not_in_test(self) -> None:
+        self._failing_arg_test([
+            ("arg", int, Multiplicity.REQUIRED),
+        ], [])
+
+    @test
+    def required_argument_optional_in_test(self) -> None:
+        self._failing_arg_test([
+            ("arg", int, Multiplicity.REQUIRED),
+        ], [
+            ("arg", Multiplicity.OPTIONAL, "42"),
+        ])
+
+    @test
+    def optional_argument_not_in_app(self) -> None:
+        self._successful_arg_test([
+        ], [
+            ("arg", Multiplicity.OPTIONAL, "foo"),
+        ])
+
+    @test
+    def optional_argument_not_in_test(self) -> None:
+        self._successful_arg_test([
+            ("arg", int, Multiplicity.OPTIONAL),
+        ], [])
+
+    @test
+    def correct_value_not_accepted(self) -> None:
+        self._failing_arg_test([
+            ("arg", int, Multiplicity.OPTIONAL),
+        ], [
+            ("arg", Multiplicity.OPTIONAL, "not-a-number"),
+        ])
+
+    @test
+    def invalid_value_accepted(self) -> None:
+        self._failing_arg_test([
+            ("arg", str, Multiplicity.OPTIONAL),
+        ], [
+            ("arg", Multiplicity.OPTIONAL, "42", "not-a-number"),
+        ])
+
+    @test
+    def handle_other_errors(self) -> None:
+        def app(_: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
+            sr("500 Internal Server Error", [])
+            return []
+
+        request = create_request("POST", "/")
+        with assert_raises(AssertionError):
+            test_wsgi_arguments(app, request, [])
+
+    @test
+    def post_request__no_args(self) -> None:
+        app = self._create_app([
+            ("arg", int, Multiplicity.OPTIONAL),
+        ])
+        request = create_request("POST", "/")
+        with assert_succeeds(AssertionError):
+            test_wsgi_arguments(app, request, [])
