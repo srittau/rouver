@@ -1,10 +1,13 @@
-News in rouver 0.10.2
+News in rouver 0.10.3
 =====================
 
 API Additions
 -------------
 
 * ``rouver.test``: Add ``TestResponse.assert_set_cookie()``.
+
+News in rouver 0.10.2
+=====================
 
 Bug Fixes
 ---------
