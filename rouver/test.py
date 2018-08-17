@@ -184,6 +184,57 @@ class TestResponse:
             except KeyError:
                 fail("no charset in Content-Type header")
 
+    def assert_set_cookie(self,
+                          expected_name: str,
+                          expected_value: str,
+                          *,
+                          secure: Optional[bool] = None,
+                          http_only: Optional[bool] = None,
+                          max_age: Optional[int] = None) -> None:
+        def assert_flag(flag: Optional[bool], name: str) -> None:
+            if flag:
+                if find_arg(name) is None:
+                    fail("Set-Cookie does not contain the {} "
+                         "flag".format(name))
+            elif flag is not None and not flag:
+                if find_arg(name) is not None:
+                    fail("Set-Cookie contains the {} flag "
+                         "unexpectedly".format(name))
+
+        def find_arg(arg_name: str) -> Optional[str]:
+            for a in args:
+                if a[0].lower() == arg_name.lower():
+                    return a[1] if len(a) >= 2 else ""
+            return None
+
+        def expect_arg(arg_name: str) -> str:
+            arg_value = find_arg(arg_name)
+            if arg_value is None:
+                raise AssertionError(
+                    "Set-Cookie does not contain the '{}' argument".format(
+                        name))
+            return arg_value
+
+        try:
+            header_value = self.get_header_value("Set-Cookie")
+        except ValueError:
+            fail("missing header 'Set-Cookie'")
+        args = [s.strip().split("=", 1) for s in header_value.split(";")]
+        if len(args[0]) < 2:
+            raise AssertionError("invalid Set-Cookie header")
+        name, value = args[0]
+        assert_equal(expected_name, name, "wrong cookie name, {msg}")
+        assert_equal(expected_value, value, "wrong cookie value, {msg}")
+        assert_flag(secure, "Secure")
+        assert_flag(http_only, "HttpOnly")
+        if max_age is not None:
+            age = expect_arg("Max-Age")
+            try:
+                int_age = int(age)
+            except ValueError:
+                fail("Set-Cookie max-age is not numeric")
+            assert_equal(max_age, int_age)
+
 
 def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
     def write(b: bytes) -> None:

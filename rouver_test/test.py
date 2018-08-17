@@ -418,6 +418,108 @@ class TestResponseTest(TestCase):
         with assert_raises(AssertionError):
             response.assert_content_type("text/html", charset="us-ascii")
 
+    @test
+    def assert_set_cookie__simple_match(self) -> None:
+        response = TestResponse("200 OK", [
+            ("Set-Cookie", "Foo=Bar; Secure; Max-Age=1234"),
+        ])
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+
+    @test
+    def assert_set_cookie__no_cookie_header(self) -> None:
+        response = TestResponse("200 OK", [])
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+
+    @test
+    def assert_set_cookie__no_cookie_value(self) -> None:
+        response = TestResponse("200 OK", [("Set-Cookie", "Foo")])
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+
+    @test
+    def assert_set_cookie__wrong_name(self) -> None:
+        response = TestResponse("200 OK", [("Set-Cookie", "Wrong=Bar")])
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+
+    @test
+    def assert_set_cookie__wrong_value(self) -> None:
+        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Wrong")])
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+
+    @test
+    def assert_set_cookie__has_secure(self) -> None:
+        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Bar; Secure")])
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", secure=True)
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", secure=False)
+
+    @test
+    def assert_set_cookie__no_secure(self) -> None:
+        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", secure=True)
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", secure=False)
+
+    @test
+    def assert_set_cookie__has_http_only(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Set-Cookie", "Foo=Bar; HttpOnly")])
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", http_only=True)
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", http_only=False)
+
+    @test
+    def assert_set_cookie__no_http_only(self) -> None:
+        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", http_only=True)
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", http_only=False)
+
+    @test
+    def assert_set_cookie__has_max_age(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Set-Cookie", "Foo=Bar; Max-Age=1234")])
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", max_age=1234)
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", max_age=9999)
+
+    @test
+    def assert_set_cookie__invalid_max_age(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Set-Cookie", "Foo=Bar; Max-Age=INVALID")])
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", max_age=1234)
+
+    @test
+    def assert_set_cookie__no_max_age(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Set-Cookie", "Foo=Bar")])
+        with assert_succeeds(AssertionError):
+            response.assert_set_cookie("Foo", "Bar")
+        with assert_raises(AssertionError):
+            response.assert_set_cookie("Foo", "Bar", max_age=1234)
+
 
 class TestWSGIAppTest(TestCase):
     @test
