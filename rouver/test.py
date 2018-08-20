@@ -1,6 +1,8 @@
+import json
 import re
 from http import HTTPStatus
 from io import BytesIO
+from json import JSONDecodeError
 from types import TracebackType
 from typing import \
     Optional, Union, Sequence, List, Tuple, Callable, Any, Type, Iterable
@@ -91,7 +93,6 @@ def create_request(method: str, path: str) -> TestRequest:
 
 class TestResponse:
     def __init__(self, status_line: str, headers: List[Header]) -> None:
-        pass
         m = _STATUS_RE.match(status_line)
         if not m:
             raise ValueError("invalid status line")
@@ -105,6 +106,19 @@ class TestResponse:
             if n.lower() == name.lower():
                 return v
         raise ValueError("header '{}' not in response".format(name))
+
+    def parse_json_body(self) -> Any:
+        """Return the response body as a JSON value.
+
+        Raise an AssertionError if the response headers are incorrect or
+        the JSON response is invalid.
+        """
+        self.assert_content_type("application/json",
+                                 charset=[None, "us-ascii", "utf-8"])
+        try:
+            return json.loads(self.body.decode("utf-8"))
+        except (UnicodeDecodeError, JSONDecodeError) as exc:
+            raise AssertionError(str(exc)) from exc
 
     def assert_status(self, status: HTTPStatus) -> None:
         assert_equal(status, self.status,

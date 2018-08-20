@@ -200,6 +200,51 @@ class TestResponseTest(TestCase):
             response.get_header_value("X-Unknown")
 
     @test
+    def parse_json_body(self) -> None:
+        response = TestResponse("200 OK", [
+            ("Content-Type", "application/json"),
+        ])
+        response.body = b'{"foo": 5}'
+        json = response.parse_json_body()
+        assert_equal({"foo": 5}, json)
+
+    @test
+    def parse_json_body__wrong_content_type(self) -> None:
+        response = TestResponse("200 OK", [
+            ("Content-Type", "text/plain"),
+        ])
+        response.body = b"{}"
+        with assert_raises(AssertionError):
+            response.parse_json_body()
+
+    @test
+    def parse_json_body__wrong_content_encoding(self) -> None:
+        response = TestResponse("200 OK", [
+            ("Content-Type", "application/json; charset=latin1"),
+        ])
+        response.body = b"{}"
+        with assert_raises(AssertionError):
+            response.parse_json_body()
+
+    @test
+    def parse_json_body__invalid_json(self) -> None:
+        response = TestResponse("200 OK", [
+            ("Content-Type", "application/json"),
+        ])
+        response.body = b'{"foo":'
+        with assert_raises(AssertionError):
+            response.parse_json_body()
+
+    @test
+    def parse_json_body__invalid_encoding(self) -> None:
+        response = TestResponse("200 OK", [
+            ("Content-Type", "application/json; charset=utf-8"),
+        ])
+        response.body = '{"föo": 5}'.encode("iso-8859-1")
+        with assert_raises(AssertionError):
+            response.parse_json_body()
+
+    @test
     def assert_status__ok(self) -> None:
         response = TestResponse("404 Not Found", [])
         with assert_succeeds(AssertionError):

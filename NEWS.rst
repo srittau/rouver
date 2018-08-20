@@ -4,6 +4,7 @@ News in rouver 0.10.4
 API Additions
 -------------
 
+* ``rouver.test``: Add ``TestResponse.parse_json_body()``.
 * ``rouver.test``: ``TestResponse.assert_content_type()`` now accepts a
   list of character sets.
 
