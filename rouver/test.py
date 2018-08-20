@@ -6,7 +6,7 @@ from typing import \
     Optional, Union, Sequence, List, Tuple, Callable, Any, Type, Iterable
 from urllib.parse import quote_plus, urlparse
 
-from asserts import fail, assert_equal
+from asserts import fail, assert_equal, assert_in
 
 from dectest import TestCase, before
 from werkzeug.http import parse_options_header
@@ -163,12 +163,15 @@ class TestResponse:
         self._assert_location_response(HTTPStatus.TEMPORARY_REDIRECT,
                                        expected_location)
 
-    def assert_content_type(self, content_type: str, *,
-                            charset: Optional[str] = None) -> None:
+    def assert_content_type(
+            self, content_type: str, *,
+            charset: Optional[Union[str, Sequence[Optional[str]]]] = None) \
+            -> None:
         """Assert the response's Content-Type header.
 
         If the optional charset argument is given, compare the charset
-        as well.
+        as well. This can be either a string or a sequence of strings. If
+        the list includes the value None, the charset is optional.
 
         """
         try:
@@ -178,11 +181,15 @@ class TestResponse:
         type_, options = parse_options_header(value)
         assert_equal(content_type, type_, "unexpected content type: {msg}")
         if charset is not None:
-            msg = "unexpected content type charset: {msg}"
+            cs_list = [charset] if isinstance(charset, str) else charset
             try:
-                assert_equal(charset, options["charset"], msg)
+                got_charset = options["charset"]
             except KeyError:
+                if None in cs_list:
+                    return
                 fail("no charset in Content-Type header")
+            msg = "unexpected content type charset: {msg}"
+            assert_in(got_charset, cs_list, msg)
 
     def assert_set_cookie(self,
                           expected_name: str,
@@ -191,15 +198,15 @@ class TestResponse:
                           secure: Optional[bool] = None,
                           http_only: Optional[bool] = None,
                           max_age: Optional[int] = None) -> None:
-        def assert_flag(flag: Optional[bool], name: str) -> None:
+        def assert_flag(flag: Optional[bool], name_: str) -> None:
             if flag:
-                if find_arg(name) is None:
+                if find_arg(name_) is None:
                     fail("Set-Cookie does not contain the {} "
-                         "flag".format(name))
+                         "flag".format(name_))
             elif flag is not None and not flag:
-                if find_arg(name) is not None:
+                if find_arg(name_) is not None:
                     fail("Set-Cookie contains the {} flag "
-                         "unexpectedly".format(name))
+                         "unexpectedly".format(name_))
 
         def find_arg(arg_name: str) -> Optional[str]:
             for a in args:

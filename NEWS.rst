@@ -1,3 +1,12 @@
+News in rouver 0.10.4
+=====================
+
+API Additions
+-------------
+
+* ``rouver.test``: ``TestResponse.assert_content_type()`` now accepts a
+  list of character sets.
+
 News in rouver 0.10.3
 =====================
 

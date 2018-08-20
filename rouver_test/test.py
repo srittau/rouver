@@ -398,6 +398,22 @@ class TestResponseTest(TestCase):
             response.assert_content_type("text/html", charset="us-ascii")
 
     @test
+    def assert_content_type__charset_list_matches(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Content-Type", "text/html; charset=us-ascii")])
+        with assert_succeeds(AssertionError):
+            response.assert_content_type(
+                "text/html", charset=["us-ascii", "utf-8", None])
+
+    @test
+    def assert_content_type__charset_list_matches__none(self) -> None:
+        response = TestResponse(
+            "200 OK", [("Content-Type", "text/html")])
+        with assert_succeeds(AssertionError):
+            response.assert_content_type(
+                "text/html", charset=["us-ascii", "utf-8", None])
+
+    @test
     def assert_content_type__charset_not_checked(self) -> None:
         response = TestResponse(
             "200 OK", [("Content-Type", "text/html; charset=utf-8")])
