@@ -13,7 +13,7 @@ from dectest import TestCase, test
 from rouver.args import Multiplicity, parse_args, ArgumentTemplate
 from rouver.exceptions import ArgumentsError
 from rouver.test import create_request, TestResponse, test_wsgi_app, \
-    test_wsgi_arguments, ArgumentToTest
+    test_wsgi_arguments, ArgumentToTest, TestRequest
 from rouver.types import WSGIEnvironment, StartResponse, WSGIApplication
 
 
@@ -200,6 +200,43 @@ class TestRequestTest(TestCase):
             request.body = b""
         with assert_raises(ValueError):
             request.body = b"Body"
+
+    def _assert_json_request(self, request: TestRequest,
+                             expected_body: bytes) -> None:
+        assert_equal(expected_body, request.body)
+        env = request.to_environment()
+        assert_equal("application/json; charset=utf-8", env["CONTENT_TYPE"])
+        assert_equal(expected_body, env["wsgi.input"].read())
+
+    @test
+    def set_json_request__get_request(self) -> None:
+        request = create_request("GET", "/")
+        with assert_raises(ValueError):
+            request.set_json_request(b"{}")
+
+    @test
+    def set_json_request__bytes(self) -> None:
+        request = create_request("POST", "/")
+        request.set_json_request(b"{}")
+        self._assert_json_request(request, b"{}")
+
+    @test
+    def set_json_request__str(self) -> None:
+        request = create_request("POST", "/")
+        request.set_json_request('{"foo": "bär"}')
+        self._assert_json_request(request, '{"foo": "bär"}'.encode("utf-8"))
+
+    @test
+    def set_json_request__dict(self) -> None:
+        request = create_request("POST", "/")
+        request.set_json_request({"foo": "bär"})
+        self._assert_json_request(request, b'{"foo": "b\\u00e4r"}')
+
+    @test
+    def set_json_request__list(self) -> None:
+        request = create_request("POST", "/")
+        request.set_json_request(["foo", "bär"])
+        self._assert_json_request(request, b'["foo", "b\\u00e4r"]')
 
 
 class TestResponseTest(TestCase):

@@ -5,6 +5,7 @@ API Additions
 -------------
 
 * ``rouver.test``: Add ``TestRequest.body``.
+* ``rouver.test``: Add ``TestRequest.set_json_body()``.
 
 News in rouver 0.10.4
 =====================

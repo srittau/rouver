@@ -48,6 +48,27 @@ class TestRequest:
                 "setting arguments and a body is mutually exclusive")
         self._body = body
 
+    def set_json_request(self, body: Union[str, bytes, dict, list]) -> None:
+        """Send JSON data.
+
+        body must either be UTF-8-encoded bytes, a string, or a dict or
+        list containing values that can be encoded as JSON.
+
+        The Content-Type header of the request will be set to
+        "application/json; charset=utf-8".
+
+        Sending JSON data will not work with GET requests.
+        """
+        self.content_type = "application/json; charset=utf-8"
+        if isinstance(body, str):
+            self.body = body.encode("utf-8")
+        elif isinstance(body, bytes):
+            self.body = body
+        elif isinstance(body, (dict, list)):
+            self.body = json.dumps(body).encode("ascii")
+        else:
+            raise TypeError("body must be one of str, bytes, list, or dict")
+
     def set_env_var(self, name: str, value: Any) -> None:
         self._extra_environ[name] = value
 
