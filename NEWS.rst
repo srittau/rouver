@@ -1,3 +1,11 @@
+News in rouver 0.10.5
+=====================
+
+API Additions
+-------------
+
+* ``rouver.test``: Add ``TestRequest.body``.
+
 News in rouver 0.10.4
 =====================
 

@@ -26,11 +26,27 @@ class TestRequest:
     def __init__(self, method: str, path: str) -> None:
         self.method = method.upper()
         self.path = path
+        self._body = b""
         self.error_stream = BytesIO()
         self.content_type = None  # type: Optional[str]
         self._extra_environ = {}  # type: WSGIEnvironment
         self._extra_headers = []  # type: List[Tuple[str, str]]
         self._arguments = []  # type: List[Tuple[str, str]]
+
+    @property
+    def body(self) -> bytes:
+        return self._body
+
+    @body.setter
+    def body(self, body: bytes) -> None:
+        if not isinstance(body, bytes):
+            raise TypeError("body must be bytes")
+        if body != b"" and self.method == "GET":
+            raise ValueError("GET requests can not have a body")
+        if self._arguments:
+            raise ValueError(
+                "setting arguments and a body is mutually exclusive")
+        self._body = body
 
     def set_env_var(self, name: str, value: Any) -> None:
         self._extra_environ[name] = value
@@ -43,6 +59,9 @@ class TestRequest:
 
     def add_argument(self, name: str, value: Union[str, Sequence[str]]) \
             -> None:
+        if self.body != b"":
+            raise ValueError(
+                "setting arguments and a body is mutually exclusive")
         values = [value] if isinstance(value, str) else list(value)
         for v in values:
             self._arguments.append((name, v))
@@ -61,7 +80,7 @@ class TestRequest:
             "SERVER_PROTOCOL": "HTTP/1.1",
             "wsgi.version": (1, 0),
             "wsgi.url_scheme": "http",
-            "wsgi.input": BytesIO(b""),
+            "wsgi.input": BytesIO(self._body),
             "wsgi.errors": self.error_stream,
             "wsgi.multithread": False,
             "wsgi.multiprocess": False,
@@ -73,6 +92,7 @@ class TestRequest:
             if self.method == "GET":
                 env["QUERY_STRING"] = self._build_query_string()
             else:
+                assert self._body == b""
                 env["wsgi.input"] = \
                     BytesIO(self._build_query_string().encode("ascii"))
         if self.content_type is not None:

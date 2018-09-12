@@ -114,6 +114,13 @@ class TestRequestTest(TestCase):
         assert_is_none(request.content_type)
 
     @test
+    def add_argument__body_set(self) -> None:
+        put_request = create_request("PUT", "/foo")
+        put_request.body = b"Body"
+        with assert_raises(ValueError):
+            put_request.add_argument("foo", "bar")
+
+    @test
     def to_environment__content_type(self) -> None:
         request = create_request("GET", "/foo/bar")
         request.content_type = "image/png"
@@ -167,6 +174,32 @@ class TestRequestTest(TestCase):
         environ = request.to_environment()
         content = environ["wsgi.input"].read()
         assert_equal(b"", content)
+
+    @test
+    def body(self) -> None:
+        request = create_request("POST", "/")
+        assert_equal(b"", request.body)
+        request.body = b"Test Body"
+        assert_equal(b"Test Body", request.body)
+        environ = request.to_environment()
+        assert_equal(b"Test Body", environ["wsgi.input"].read())
+
+    @test
+    def set_body_in_get_request(self) -> None:
+        request = create_request("GET", "/")
+        with assert_succeeds(ValueError):
+            request.body = b""
+        with assert_raises(ValueError):
+            request.body = b"Test Body"
+
+    @test
+    def set_body_when_argument_is_set(self) -> None:
+        request = create_request("POST", "/")
+        request.add_argument("foo", "bar")
+        with assert_raises(ValueError):
+            request.body = b""
+        with assert_raises(ValueError):
+            request.body = b"Body"
 
 
 class TestResponseTest(TestCase):
