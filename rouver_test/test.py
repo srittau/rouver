@@ -56,7 +56,32 @@ class TestRequestTest(TestCase):
             "wsgi.errors": request.error_stream,
         }, environ)
         assert_wsgi_input_stream(environ["wsgi.input"])
+        assert_equal(b"", environ["wsgi.input"].read())
         assert_not_in("CONTENT_TYPE", environ)
+        assert_not_in("CONTENT_LENGTH", environ)
+        assert_not_in("QUERY_STRING", environ)
+
+    @test
+    def to_environment__post(self) -> None:
+        request = create_request("POST", "/foo/bar")
+        environ = request.to_environment()
+        assert_dict_superset({
+            "REQUEST_METHOD": "POST",
+            "PATH_INFO": "/foo/bar",
+            "SERVER_NAME": "www.example.com",
+            "SERVER_PORT": "80",
+            "SERVER_PROTOCOL": "HTTP/1.1",
+            "wsgi.version": (1, 0),
+            "wsgi.url_scheme": "http",
+            "wsgi.multithread": False,
+            "wsgi.multiprocess": False,
+            "wsgi.run_once": True,
+            "wsgi.errors": request.error_stream,
+        }, environ)
+        assert_wsgi_input_stream(environ["wsgi.input"])
+        assert_equal(b"", environ["wsgi.input"].read())
+        assert_not_in("CONTENT_TYPE", environ)
+        assert_not_in("CONTENT_LENGTH", environ)
         assert_not_in("QUERY_STRING", environ)
 
     @test
@@ -182,6 +207,7 @@ class TestRequestTest(TestCase):
         request.body = b"Test Body"
         assert_equal(b"Test Body", request.body)
         environ = request.to_environment()
+        assert_equal("9", environ.get("CONTENT_LENGTH"))
         assert_equal(b"Test Body", environ["wsgi.input"].read())
 
     @test
@@ -205,6 +231,7 @@ class TestRequestTest(TestCase):
                              expected_body: bytes) -> None:
         assert_equal(expected_body, request.body)
         env = request.to_environment()
+        assert_equal(str(len(expected_body)), env["CONTENT_LENGTH"])
         assert_equal("application/json; charset=utf-8", env["CONTENT_TYPE"])
         assert_equal(expected_body, env["wsgi.input"].read())
 

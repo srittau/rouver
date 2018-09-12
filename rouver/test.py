@@ -116,6 +116,8 @@ class TestRequest:
                 assert self._body == b""
                 env["wsgi.input"] = \
                     BytesIO(self._build_query_string().encode("ascii"))
+        if self._body != b"":
+            env["CONTENT_LENGTH"] = str(len(self._body))
         if self.content_type is not None:
             env["CONTENT_TYPE"] = self.content_type
         env.update(self._extra_environ)

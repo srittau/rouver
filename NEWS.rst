@@ -1,3 +1,12 @@
+News in rouver 0.10.6
+=====================
+
+Improvements
+------------
+
+* ``rouver.test``: Include ``CONTENT_LENGTH`` in WSGI environment if body
+  is set.
+
 News in rouver 0.10.5
 =====================
 
