@@ -122,6 +122,30 @@ class TestRequestTest(TestCase):
         assert_not_in("HTTP_CONTENT_TYPE", environ)
 
     @test
+    def prepare_for_arguments__content_type(self) -> None:
+        request = create_request("POST", "/foo/bar")
+        assert_is_none(request.content_type)
+
+        request.prepare_for_arguments()
+        assert_equal("application/x-www-form-urlencoded", request.content_type)
+
+        request.content_type = "image/png"
+        request.prepare_for_arguments()
+        assert_equal("image/png", request.content_type)
+
+        request = create_request("GET", "/foo/bar")
+        assert_is_none(request.content_type)
+        request.prepare_for_arguments()
+        assert_is_none(request.content_type)
+
+    @test
+    def prepare_for_arguments__body_set(self) -> None:
+        put_request = create_request("PUT", "/foo")
+        put_request.body = b"Body"
+        with assert_raises(ValueError):
+            put_request.prepare_for_arguments()
+
+    @test
     def add_argument__content_type(self) -> None:
         request = create_request("POST", "/foo/bar")
         assert_is_none(request.content_type)

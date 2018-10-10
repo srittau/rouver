@@ -1,3 +1,11 @@
+News in rouver 0.10.7
+=====================
+
+API Additions
+-------------
+
+* ``rouver.test``: Add ``TestRequest.prepare_for_arguments()``.
+
 News in rouver 0.10.6
 =====================
 
