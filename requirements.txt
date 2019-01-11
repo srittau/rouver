@@ -1,5 +1,5 @@
 asserts==0.9.0
 dectest==1.0.0
-mypy==0.630
+mypy==0.650
 werkzeug==0.14.1
-wheel==0.32.1
+wheel==0.32.3
