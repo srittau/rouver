@@ -3,7 +3,7 @@ import logging
 from typing import Iterable, Any, Sequence
 
 from asserts import assert_equal, assert_raises, assert_is_instance, \
-    assert_regex, assert_in
+    assert_regex, assert_in, fail
 
 from dectest import TestCase, test, before
 
@@ -175,6 +175,22 @@ class RouterTest(TestCase):
         self.handle_wsgi("GET", "/foo/bar")
         self.start_response.assert_status(HTTPStatus.NOT_FOUND)
 
+    @test
+    def decode_path(self) -> None:
+        self.router.add_routes([
+            ("foo/bär", "GET", handle_success),
+        ])
+        self.handle_wsgi("GET", "/foo/b%c3%a4r")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    @test
+    def invalid_path_encoding(self) -> None:
+        self.router.add_routes([
+            ("foo/bar", "GET", handle_success),
+        ])
+        self.handle_wsgi("GET", "/foo/b%c3r")
+        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+
     # Method Handling
 
     @test
@@ -304,6 +320,32 @@ class RouterTest(TestCase):
         ])
         self.handle_wsgi("GET", "/foo/xyz/bar/abc")
         self.start_response.assert_status(HTTPStatus.OK)
+
+    @test
+    def template_handler_is_passed_decoded_value(self) -> None:
+        def handle_path(_: Request, __: Any, v: str) -> None:
+            assert_equal("foo/bar", v)
+
+        self.router.add_template_handler("handler", handle_path)
+
+        self.router.add_routes([
+            ("foo/{handler}", "GET", handle_success),
+        ])
+        self.handle_wsgi("GET", "/foo/foo%2Fbar")
+        self.start_response.assert_status(HTTPStatus.OK)
+
+    @test
+    def template_handler_is_not_passed_an_invalid_value(self) -> None:
+        def handle_path(_: Request, __: Any, v: str) -> None:
+            fail("template handler should not have been called")
+
+        self.router.add_template_handler("handler", handle_path)
+
+        self.router.add_routes([
+            ("foo/{handler}", "GET", handle_success),
+        ])
+        self.handle_wsgi("GET", "/foo/foo%C3bar")
+        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
 
     @test
     def template_value_error(self) -> None:
@@ -635,6 +677,17 @@ class RouterTest(TestCase):
         self.router.add_sub_router("foo/bar", sub)
         self.handle_wsgi("GET", "/foo/bar/sub")
         self.start_response.assert_status(HTTPStatus.NO_CONTENT)
+
+    @test
+    def sub_router__escaped_path(self) -> None:
+        sub = Router()
+        sub.error_handling = False
+        sub.add_routes([
+            ("sub", "GET", self._create_path_checker("/s%75b")),
+        ])
+        self.router.add_sub_router("foo/bar", sub)
+        self.handle_wsgi("GET", "/foo/b%61r/s%75b")
+        self.start_response.assert_status(HTTPStatus.OK)
 
     # Error Handling
 

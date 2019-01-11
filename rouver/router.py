@@ -3,6 +3,7 @@ from http import HTTPStatus
 import logging
 import re
 from typing import cast, Iterable, List, Dict, Any, Tuple, Iterator, Sequence
+from urllib.parse import unquote
 
 from werkzeug.exceptions import NotFound, MethodNotAllowed, HTTPException
 from werkzeug.wrappers import Request
@@ -271,14 +272,18 @@ class _MatcherBase:
     def _parse(self) -> Tuple[bool, List[Any]]:
         path_args = []  # type: List[Any]
         for tmpl_part, path_part in self._path_compare_iter():
+            try:
+                decoded = unquote(path_part, errors="strict")
+            except UnicodeDecodeError:
+                return False, []
             tmpl_type, text = tmpl_part
             if tmpl_type == _TemplatePartType.STATIC:
-                if text != path_part:
+                if text != decoded:
                     return False, []
             elif tmpl_type == _TemplatePartType.PATTERN:
                 try:
                     arg = self._arguments.parse_argument(
-                        path_args, text, path_part)
+                        path_args, text, decoded)
                 except ValueError:
                     return False, []
                 path_args.append(arg)
