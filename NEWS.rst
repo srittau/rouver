@@ -1,4 +1,4 @@
-News in rouver 0.10.7
+News in rouver 0.10.8
 =====================
 
 Bug Fixes
