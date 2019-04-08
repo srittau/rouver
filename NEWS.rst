@@ -1,3 +1,12 @@
+News in rouver 0.10.9
+=====================
+
+Bug Fixes
+---------
+
+* Import ABCs from `collections.abc` instead of `collections`. Fixes
+  a `DeprecationWarning`.
+
 News in rouver 0.10.8
 =====================
 
