@@ -108,7 +108,7 @@ class TestRequestTest(TestCase):
         request = create_request("GET", "/foo/bar")
         request.set_header("X-Foobar", "Baz")
         environ = request.to_environment()
-        assert_dict_superset({ "HTTP_X_FOOBAR": "Baz" }, environ)
+        assert_dict_superset({"HTTP_X_FOOBAR": "Baz"}, environ)
 
     @test
     def set_header__content_type(self) -> None:
