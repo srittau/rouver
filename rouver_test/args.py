@@ -1,4 +1,5 @@
 from io import BytesIO
+from typing import Union, Iterable
 from urllib.parse import quote_plus
 
 from asserts import assert_equal, fail, assert_raises, assert_in, assert_not_in
@@ -12,11 +13,10 @@ from rouver.exceptions import ArgumentsError
 
 from rouver_test.util import default_environment
 
-MULTIPART_BODY_TMPL = """--1234567890
-Content-Disposition: form-data; name="{}"
+MULTIPART_PART_TMPL = """--1234567890
+Content-Disposition: form-data; name="{name}"
 
-{}
---1234567890--
+{value}
 """
 
 MULTIPART_FILE_BODY_TMPL = """--1234567890
@@ -42,17 +42,29 @@ class ParseArgsTest(TestCase):
             quote_plus(name), quote_plus(value)
         )
 
-    def setup_urlencoded_request(self, name: str, value: str) -> None:
-        body = "{}={}".format(name, value).encode("utf-8")
+    def setup_empty_urlencoded_request(self) -> None:
         self.env[
             "CONTENT_TYPE"
         ] = "application/x-www-form-urlencoded; charset=utf-8"
+
+    def setup_urlencoded_request(self, name: str, value: str) -> None:
+        self.setup_empty_urlencoded_request()
+        body = "{}={}".format(name, value).encode("utf-8")
         self.env["CONTENT_LENGTH"] = str(len(body))
         self.env["wsgi.input"] = BytesIO(body)
 
-    def setup_multipart_request(self, name: str, value: str) -> None:
+    def setup_multipart_request(
+        self, name: str, value: Union[str, Iterable[str]]
+    ) -> None:
         self.env["CONTENT_TYPE"] = "multipart/form-data; boundary=1234567890"
-        body = MULTIPART_BODY_TMPL.format(name, value).encode("utf-8")
+        if isinstance(value, str):
+            value = [value]
+        body = (
+            "".join(
+                MULTIPART_PART_TMPL.format(name=name, value=v) for v in value
+            )
+            + "--1234567890--"
+        ).encode("utf-8")
         self.env["CONTENT_LENGTH"] = str(len(body))
         self.env["wsgi.input"] = BytesIO(body)
 
@@ -191,6 +203,7 @@ class ParseArgsTest(TestCase):
     @test
     def empty_delete__optional(self) -> None:
         self.env["REQUEST_METHOD"] = "DELETE"
+        self.setup_empty_urlencoded_request()
         args = parse_args(
             self.env,
             [
@@ -204,6 +217,7 @@ class ParseArgsTest(TestCase):
     @test
     def empty_delete__required_not_supplied(self) -> None:
         self.env["REQUEST_METHOD"] = "DELETE"
+        self.setup_empty_urlencoded_request()
         with assert_raises(ArgumentsError):
             parse_args(
                 self.env,
@@ -256,10 +270,17 @@ class ParseArgsTest(TestCase):
         assert_equal({"föo": "bär"}, args)
 
     @test
+    def multipart_multiple_arguments(self) -> None:
+        self.env["REQUEST_METHOD"] = "PUT"
+        self.setup_multipart_request("foo", ["bar", "baz"])
+        args = parse_args(self.env, [("foo", str, Multiplicity.ANY)])
+        assert_equal({"foo": ["bar", "baz"]}, args)
+
+    @test
     def multipart_post_request_with_file(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request(
-            "my-file", "my-file.txt", "content", "text/plain"
+            "my-file", "my-file.txt", "content", "text/plain; charset=us-ascii"
         )
         args = parse_args(
             self.env, [("my-file", "file", Multiplicity.REQUIRED)]
@@ -350,6 +371,12 @@ class ParseArgsTest(TestCase):
         self.env["wsgi.input"] = BytesIO(b"AB")
         with assert_raises(BadRequest):
             parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+
+    @test
+    def unsupported_method(self) -> None:
+        self.env["REQUEST_METHOD"] = "UNKNOWN"
+        with assert_raises(ValueError):
+            parse_args(self.env, [])
 
 
 class ArgumentParserTest(TestCase):

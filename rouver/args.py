@@ -1,16 +1,17 @@
-import cgi
 from enum import Enum
 from io import BytesIO
-from typing import Callable, Any, Tuple, Dict, List, Union, IO, Sequence
+from typing import Callable, Any, Tuple, Dict, List, Union, IO, Sequence, cast
+from urllib.parse import parse_qs
 
+from werkzeug.datastructures import FileStorage, MultiDict
 from werkzeug.exceptions import BadRequest
+from werkzeug.formparser import parse_form_data
 
 from rouver.exceptions import ArgumentsError
 from rouver.types import WSGIEnvironment
 
 
 class Multiplicity(Enum):
-
     ANY = "0+"
     REQUIRED_ANY = "1+"
     REQUIRED = "1"
@@ -22,11 +23,12 @@ ArgumentValueType = Union[ArgumentValueParser, str]
 ArgumentTemplate = Tuple[str, ArgumentValueType, Multiplicity]
 ArgumentDict = Dict[str, Any]
 
+_GET_METHODS = ["GET", "HEAD"]
+_FORM_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 _FORM_TYPES = ["application/x-www-form-urlencoded", "multipart/form-data"]
 
 
 class _ArgumentError(Exception):
-
     pass
 
 
@@ -58,19 +60,6 @@ class FileArgument:
         return getattr(self._stream, name)
 
 
-class CGIFileArgument(FileArgument):
-    def __init__(self, value: cgi.FieldStorage) -> None:
-        content_type = value.headers.get(
-            "content-type", "application/octet-stream"
-        ).split(";")[0]
-        assert value.file is not None
-        assert value.filename is not None
-        super().__init__(value.file, value.filename, content_type)
-        # We keep a reference to the FieldStorage around, otherwise the
-        # file will get closed in FieldStorage.__del__().
-        self._value = value
-
-
 class ArgumentParser:
     """Parse CGI/WSGI arguments.
 
@@ -88,9 +77,16 @@ class ArgumentParser:
                 )
             )
 
-        self._fields = cgi.FieldStorage(
-            environ["wsgi.input"], environ=environ, keep_blank_values=True
-        )
+        method = environ.get("REQUEST_METHOD", "GET")
+        if method in _GET_METHODS:
+            qs = cast(str, environ.get("QUERY_STRING", ""))
+            args = MultiDict(parse_qs(qs))
+            files = MultiDict()
+        elif method in _FORM_METHODS:
+            _, args, files = parse_form_data(environ)
+        else:
+            raise ValueError("unsupported method: '{}'".format(method))
+        self._arguments = _create_arg_dict(args, files)
 
     def parse_args(
         self, argument_template: Sequence[ArgumentTemplate]
@@ -105,7 +101,7 @@ class ArgumentParser:
             multiplicity: Multiplicity,
         ) -> None:
             cls = _VALUE_PARSER_CLASSES[multiplicity]
-            argument_parser = cls(self._fields, name, value_parser)
+            argument_parser = cls(self._arguments, name, value_parser)
             if argument_parser.should_parse():
                 try:
                     parsed_arguments[name] = argument_parser.parse()
@@ -120,9 +116,44 @@ class ArgumentParser:
         return parsed_arguments
 
 
+class _Argument:
+    def __init__(
+        self, value: Union[List[str], FileStorage], *, is_file: bool = False
+    ) -> None:
+        self._value = value
+        self.is_file = is_file
+
+    def as_string(self) -> str:
+        if not isinstance(self._value, list) or len(self._value) == 0:
+            raise TypeError("value is not a string")
+        return self._value[0]
+
+    def as_list(self) -> List[str]:
+        if not isinstance(self._value, list):
+            raise TypeError("value is not a list of strings")
+        return self._value
+
+    def as_file(self) -> Tuple[IO[bytes], str, str]:
+        if not isinstance(self._value, FileStorage):
+            raise TypeError("value is not a file")
+        content_type = self._value.mimetype or "application/octet-stream"
+        return self._value.stream, self._value.filename or "", content_type
+
+
+def _create_arg_dict(
+    args: MultiDict, files: MultiDict
+) -> Dict[str, _Argument]:
+    _all_args = {}  # type: Dict[str, _Argument]
+    for name, v in args.lists():
+        _all_args[name] = _Argument(v)
+    for name, v in files.items():
+        _all_args[name] = _Argument(v, is_file=True)
+    return _all_args
+
+
 def _has_wrong_content_type(environ: WSGIEnvironment) -> bool:
     method = environ.get("REQUEST_METHOD", "GET")
-    if method.upper() not in ["POST", "PUT", "PATCH"]:
+    if method.upper() not in _FORM_METHODS:
         return False
     content_type = environ.get("CONTENT_TYPE", "").split(";")[0]
     return content_type not in _FORM_TYPES
@@ -156,6 +187,10 @@ def parse_args(
     the value is a list of parsed arguments values. Each ANY argument has an
     entry in the dict, even if the argument was not supplied. In this case the
     value is the empty list.
+
+    Arguments of HEAD and GET requests will be parsed from the query string,
+    while arguments of POST, PUT, PATCH, and DELETE requests are parsed from
+    the request body. Other methods are not supported.
 
     If there is any error while parsing the arguments, an ArgumentsError
     will be raised.
@@ -198,7 +233,9 @@ class _ValueParserWrapper:
     def parse_from_string(self, s: str) -> Any:
         raise NotImplementedError()
 
-    def parse_from_file(self, value: cgi.FieldStorage) -> Any:
+    def parse_from_file(
+        self, stream: IO[bytes], filename: str, content_type: str
+    ) -> Any:
         raise NotImplementedError()
 
 
@@ -213,13 +250,10 @@ class _FunctionValueParser(_ValueParserWrapper):
         except ValueError as exc:
             raise _ArgumentError(str(exc)) from exc
 
-    def parse_from_file(self, value: cgi.FieldStorage) -> Any:
-        assert value.file is not None
-        content = value.file.read()
-        decoded = (
-            content.decode("utf-8") if isinstance(content, bytes) else content
-        )
-        return self.parse_from_string(decoded)
+    def parse_from_file(
+        self, stream: IO[bytes], filename: str, content_type: str
+    ) -> Any:
+        return self.parse_from_string(stream.read().decode("utf-8"))
 
 
 class _FileArgumentValueParser(_ValueParserWrapper):
@@ -227,8 +261,10 @@ class _FileArgumentValueParser(_ValueParserWrapper):
         stream = BytesIO(value.encode("utf-8"))
         return FileArgument(stream, "", "application/octet-stream")
 
-    def parse_from_file(self, value: cgi.FieldStorage) -> CGIFileArgument:
-        return CGIFileArgument(value)
+    def parse_from_file(
+        self, stream: IO[bytes], filename: str, content_type: str
+    ) -> FileArgument:
+        return FileArgument(stream, filename, content_type)
 
 
 def _create_argument_value_parser(
@@ -245,7 +281,7 @@ def _create_argument_value_parser(
 class _ArgumentParser:
     def __init__(
         self,
-        args: cgi.FieldStorage,
+        args: Dict[str, _Argument],
         name: str,
         value_parser: ArgumentValueType,
     ) -> None:
@@ -265,11 +301,14 @@ class _SingleArgumentParser(_ArgumentParser):
         raise NotImplementedError()
 
     def parse_single_arg(self) -> Any:
-        if self.is_argument_a_file:
-            file = self.args[self.name]
-            return self.value_parser.parse_from_file(file)
+        arg = self.args[self.name]
+        if arg.is_file:
+            stream, filename, content_type = arg.as_file()
+            return self.value_parser.parse_from_file(
+                stream, filename, content_type
+            )
         else:
-            value = self.args.getfirst(self.name)
+            value = arg.as_string()
             return self.value_parser.parse_from_string(value)
 
     @property
@@ -278,11 +317,6 @@ class _SingleArgumentParser(_ArgumentParser):
             return self.name in self.args
         except TypeError:
             return False
-
-    @property
-    def is_argument_a_file(self) -> bool:
-        argv = self.args[self.name]
-        return hasattr(argv, "file") and argv.file is not None
 
 
 class _RequiredArgumentParser(_SingleArgumentParser):
@@ -304,9 +338,10 @@ class _OptionalArgumentParser(_SingleArgumentParser):
 class _MultiArgumentParser(_ArgumentParser):
     def parse(self) -> List[Any]:
         try:
-            values = self.args.getlist(self.name)
-        except TypeError:
-            return []
+            arg = self.args[self.name]
+            values = arg.as_list()
+        except KeyError:
+            values = []
         return [self.value_parser.parse_from_string(v) for v in values]
 
 

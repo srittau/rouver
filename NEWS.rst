@@ -1,3 +1,14 @@
+News in rouver 0.99.0
+=====================
+
+Incompatible Changes
+--------------------
+
+* `parse_args()` is now implemented using werkzeug. While this does not
+  change rouver's API, it may have incompatible side-effects or change the
+  way CGI arguments are parsed slightly.
+* Remove `CGIFileArgument`.
+
 News in rouver 0.10.9
 =====================
 
