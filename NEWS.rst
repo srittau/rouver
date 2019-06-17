@@ -9,6 +9,12 @@ Incompatible Changes
   way CGI arguments are parsed slightly.
 * Remove `CGIFileArgument`.
 
+API Additions
+-------------
+
+* `rouver.args`: Add `exhaustive` keyword-only argument to `parse_args()`,
+  `ArgumentParser.parse_args()`, and `RouteHandlerBase.parse_args()`.
+
 News in rouver 0.10.9
 =====================
 

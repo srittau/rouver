@@ -2,7 +2,14 @@ from io import BytesIO
 from typing import Union, Iterable
 from urllib.parse import quote_plus
 
-from asserts import assert_equal, fail, assert_raises, assert_in, assert_not_in
+from asserts import (
+    assert_equal,
+    fail,
+    assert_raises,
+    assert_in,
+    assert_not_in,
+    assert_succeeds,
+)
 
 from dectest import TestCase, test, before
 
@@ -373,6 +380,38 @@ class ParseArgsTest(TestCase):
             parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
 
     @test
+    def no_exhaustive_check(self) -> None:
+        self.add_path_argument("foo", "v")
+        self.add_path_argument("unknown", "v")
+        with assert_succeeds(ArgumentsError):
+            parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+
+    @test
+    def exhaustive_check__succeeds(self) -> None:
+        self.add_path_argument("foo", "v")
+        with assert_succeeds(ArgumentsError):
+            parse_args(
+                self.env,
+                [("foo", str, Multiplicity.OPTIONAL)],
+                exhaustive=True,
+            )
+
+    @test
+    def exhaustive_check__fails(self) -> None:
+        self.add_path_argument("foo", "v")
+        self.add_path_argument("unknown", "v")
+        try:
+            parse_args(
+                self.env,
+                [("foo", str, Multiplicity.OPTIONAL)],
+                exhaustive=True,
+            )
+        except ArgumentsError as exc:
+            assert_equal({"unknown": "unknown argument"}, exc.arguments)
+        else:
+            fail("ArgumentsError not raised")
+
+    @test
     def unsupported_method(self) -> None:
         self.env["REQUEST_METHOD"] = "UNKNOWN"
         with assert_raises(ValueError):
@@ -398,3 +437,20 @@ class ArgumentParserTest(TestCase):
             ]
         )
         assert_equal({"foo": "bar", "abc": "def"}, args2)
+
+    @test
+    def exhaustive_with_previous_calls(self) -> None:
+        environ = {
+            "wsgi.input": BytesIO(b"foo=bar&abc=def"),
+            "REQUEST_METHOD": "POST",
+            "CONTENT_LENGTH": "15",
+            "CONTENT_TYPE": "application/x-www-form-urlencoded",
+        }
+        parser = ArgumentParser(environ)
+        parser.parse_args(
+            [("foo", str, Multiplicity.REQUIRED)], exhaustive=False
+        )
+        with assert_succeeds(ArgumentsError):
+            parser.parse_args(
+                [("abc", str, Multiplicity.REQUIRED)], exhaustive=True
+            )

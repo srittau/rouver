@@ -76,12 +76,17 @@ class RouteHandlerBase(collections.abc.Iterable):
         raise NotImplementedError()
 
     def parse_args(
-        self, argument_template: Sequence[ArgumentTemplate]
+        self,
+        argument_template: Sequence[ArgumentTemplate],
+        *,
+        exhaustive: bool = False
     ) -> ArgumentDict:
         if self._argument_parser is None:
             environ = self.request.environ
             self._argument_parser = ArgumentParser(environ)
-        return self._argument_parser.parse_args(argument_template)
+        return self._argument_parser.parse_args(
+            argument_template, exhaustive=exhaustive
+        )
 
     def parse_json_request(self) -> Any:
         """Parse the request body as JSON.

@@ -87,10 +87,56 @@ class ArgumentParser:
         else:
             raise ValueError("unsupported method: '{}'".format(method))
         self._arguments = _create_arg_dict(args, files)
+        self._not_found = {a for a in self._arguments}
 
     def parse_args(
-        self, argument_template: Sequence[ArgumentTemplate]
+        self,
+        argument_template: Sequence[ArgumentTemplate],
+        *,
+        exhaustive: bool = False
     ) -> ArgumentDict:
+        """Parse CGI/WSGI arguments and return an argument dict.
+
+        argument_template is a list of (argname, value_parser, multiplicity)
+        tuples. argname is the argument name that is expected to be provided.
+
+        If multiplicity is REQUIRED and the argument was not supplied, an
+        ArgumentsError is raised. If multiplicity is OPTIONAL and the
+        argument was not supplied, the returned dict does not contain a key
+        for this argument. multiplicity can also be ANY, in which case
+        the key may be supplied any number of times, or REQUIRED_ANY, which
+        works like ANY, but requires the argument to be provided at least
+        once.
+
+        value_parser is a callable that takes a single string argument. The
+        value returned by this function will be used as the value of the
+        returned dict. If the supplied string or list can't be parsed, this
+        function should raise a ValueError exception. In this case, parse_args
+        raises an ArgumentsError. If value_func is the string "file",
+        the value of the argument is a FileArgument instance.
+
+        The returned dict contains the names of all parsed arguments that were
+        present in the CGI arguments as key. The value is the corresponding
+        parsed argument value. In the case of ANY and REQUIRED_ANY arguments,
+        the value is a list of parsed arguments values. Each ANY argument
+        has an entry in the dict, even if the argument was not supplied.
+        In this case the value is the empty list.
+
+        Arguments of HEAD and GET requests will be parsed from the query
+        string, while arguments of POST, PUT, PATCH, and DELETE requests
+        are parsed from the request body. Other methods are not supported.
+
+        If the exhaustive argument is set to True and the request contains
+        arguments not listed in the argument_template of this or previous
+        calls, raise an ArgumentsError.
+
+        If there is any error while parsing the arguments, an ArgumentsError
+        will be raised.
+
+        parse_args() consumes the request input, but the arguments are
+        cached in the ArgumentParser object, so multiple calls on the same
+        object are possible.
+        """
 
         errors = {}  # type: Dict[str, str]
         parsed_arguments = {}  # type: ArgumentDict
@@ -107,9 +153,14 @@ class ArgumentParser:
                     parsed_arguments[name] = argument_parser.parse()
                 except _ArgumentError as exc:
                     errors[name] = exc.args[0]
+            self._not_found.discard(name)
 
         for tmpl in argument_template:
             parse_template(*tmpl)
+
+        if exhaustive:
+            for arg in self._not_found:
+                errors[arg] = "unknown argument"
 
         if len(errors) > 0:
             raise ArgumentsError(errors)
@@ -160,7 +211,10 @@ def _has_wrong_content_type(environ: WSGIEnvironment) -> bool:
 
 
 def parse_args(
-    environ: WSGIEnvironment, argument_template: Sequence[ArgumentTemplate]
+    environ: WSGIEnvironment,
+    argument_template: Sequence[ArgumentTemplate],
+    *,
+    exhaustive: bool = False
 ) -> ArgumentDict:
     """Parse CGI/WSGI arguments and return an argument dict.
 
@@ -192,6 +246,9 @@ def parse_args(
     while arguments of POST, PUT, PATCH, and DELETE requests are parsed from
     the request body. Other methods are not supported.
 
+    If the exhaustive argument is set to True and the request contains
+    arguments not listed in the argument_template, raise an ArgumentsError.
+
     If there is any error while parsing the arguments, an ArgumentsError
     will be raised.
 
@@ -219,14 +276,19 @@ def parse_args(
     Traceback (most recent call last):
     ...
     ArgumentsError: 400 Bad Request
-    >>>
+    >>> parse_args(
+    ...     environment, [("multi", str, Multiplicity.ANY)], exhaustive=True
+    ... )
+    Traceback (most recent call last):
+    ...
+    ArgumentsError: 400 Bad Request
 
     parse_args() consumes the request input, so multiple calls per request
     are not possible.
     """
 
     parser = ArgumentParser(environ)
-    return parser.parse_args(argument_template)
+    return parser.parse_args(argument_template, exhaustive=exhaustive)
 
 
 class _ValueParserWrapper:
