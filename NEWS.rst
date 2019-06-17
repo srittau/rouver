@@ -1,3 +1,11 @@
+News in rouver 0.99.0
+=====================
+
+Incompatible Changes
+--------------------
+
+* `parse_args()`
+
 News in rouver 0.10.9
 =====================
 
