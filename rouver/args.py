@@ -80,7 +80,7 @@ class ArgumentParser:
         method = environ.get("REQUEST_METHOD", "GET")
         if method in _GET_METHODS:
             qs = cast(str, environ.get("QUERY_STRING", ""))
-            args = MultiDict(parse_qs(qs))
+            args = MultiDict(parse_qs(qs, keep_blank_values=True))
             files = MultiDict()
         elif method in _FORM_METHODS:
             _, args, files = parse_form_data(environ)

@@ -150,6 +150,12 @@ class ParseArgsTest(TestCase):
         assert_equal({}, args)
 
     @test
+    def optional_argument_empty(self) -> None:
+        self.add_path_argument("foo", "")
+        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert_equal({"foo": ""}, args)
+
+    @test
     def any_argument_empty(self) -> None:
         args = parse_args(self.env, [("foo", int, Multiplicity.ANY)])
         assert_equal({"foo": []}, args)
@@ -282,6 +288,13 @@ class ParseArgsTest(TestCase):
         self.setup_multipart_request("foo", ["bar", "baz"])
         args = parse_args(self.env, [("foo", str, Multiplicity.ANY)])
         assert_equal({"foo": ["bar", "baz"]}, args)
+
+    @test
+    def multipart__optional_argument_empty(self) -> None:
+        self.env["REQUEST_METHOD"] = "PUT"
+        self.setup_multipart_request("foo", "")
+        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert_equal({"foo": ""}, args)
 
     @test
     def multipart_post_request_with_file(self) -> None:
