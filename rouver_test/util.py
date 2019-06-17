@@ -16,8 +16,9 @@ class TestingStartResponse:
         self.status = ""
         self.headers = []  # type: List[Header]
 
-    def __call__(self, status: str, headers: List[Header],
-                 exc_info: Any = None) -> StartResponseReturnType:
+    def __call__(
+        self, status: str, headers: List[Header], exc_info: Any = None
+    ) -> StartResponseReturnType:
         assert_false(self.was_called, "start_response() called twice")
         assert_regex(status, _status_re)
         self.was_called = True
@@ -46,8 +47,11 @@ class TestingStartResponse:
         header_value = self._find_header(name)
         if header_value is None:
             raise AssertionError("missing header '{}'".format(name))
-        assert_equal(value, header_value, "'{}': '{}' != '{}".format(
-            name, value, header_value))
+        assert_equal(
+            value,
+            header_value,
+            "'{}': '{}' != '{}".format(name, value, header_value),
+        )
 
     def _find_header(self, name: str) -> Optional[str]:
         self.assert_was_called()
@@ -58,7 +62,8 @@ class TestingStartResponse:
                     raise AssertionError("invalue header value")
                 if found is not None:
                     raise AssertionError(
-                        "duplicate header '{}'".format(header_name))
+                        "duplicate header '{}'".format(header_name)
+                    )
                 found = header_value
         return found
 

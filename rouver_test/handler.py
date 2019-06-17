@@ -93,14 +93,14 @@ class RouteHandlerBaseTest(TestCase):
         self.environ["CONTENT_LENGTH"] = "15"
         self.environ["CONTENT_TYPE"] = "application/x-www-form-urlencoded"
         handler = TestingHandler(self.environ, self.start_response)
-        args1 = handler.parse_args([
-            ("foo", str, Multiplicity.REQUIRED),
-        ])
+        args1 = handler.parse_args([("foo", str, Multiplicity.REQUIRED)])
         assert_equal({"foo": "bar"}, args1)
-        args2 = handler.parse_args([
-            ("foo", str, Multiplicity.REQUIRED),
-            ("abc", str, Multiplicity.REQUIRED),
-        ])
+        args2 = handler.parse_args(
+            [
+                ("foo", str, Multiplicity.REQUIRED),
+                ("abc", str, Multiplicity.REQUIRED),
+            ]
+        )
         assert_equal({"foo": "bar", "abc": "def"}, args2)
 
     @test
@@ -137,7 +137,7 @@ class RouteHandlerBaseTest(TestCase):
 
     @test
     def parse_json_request__unknown_encoding(self) -> None:
-        self.environ["wsgi.input"] = BytesIO(b'{}')
+        self.environ["wsgi.input"] = BytesIO(b"{}")
         self.environ["CONTENT_LENGTH"] = "2"
         self.environ["CONTENT_TYPE"] = "application/json; charset=unknown"
         handler = TestingHandler(self.environ, self.start_response)
@@ -146,7 +146,7 @@ class RouteHandlerBaseTest(TestCase):
 
     @test
     def parse_json_request__no_content_type(self) -> None:
-        self.environ["wsgi.input"] = BytesIO(b'{}')
+        self.environ["wsgi.input"] = BytesIO(b"{}")
         self.environ["CONTENT_LENGTH"] = "2"
         handler = TestingHandler(self.environ, self.start_response)
         with assert_raises(UnsupportedMediaType):
@@ -154,7 +154,7 @@ class RouteHandlerBaseTest(TestCase):
 
     @test
     def parse_json_request__wrong_content_type(self) -> None:
-        self.environ["wsgi.input"] = BytesIO(b'{}')
+        self.environ["wsgi.input"] = BytesIO(b"{}")
         self.environ["CONTENT_LENGTH"] = "2"
         self.environ["CONTENT_TYPE"] = "application/octet-stream"
         handler = TestingHandler(self.environ, self.start_response)
@@ -163,7 +163,7 @@ class RouteHandlerBaseTest(TestCase):
 
     @test
     def parse_json_request__invalid_data(self) -> None:
-        self.environ["wsgi.input"] = BytesIO(b'INVALID')
+        self.environ["wsgi.input"] = BytesIO(b"INVALID")
         self.environ["CONTENT_LENGTH"] = "7"
         self.environ["CONTENT_TYPE"] = "application/json"
         handler = TestingHandler(self.environ, self.start_response)

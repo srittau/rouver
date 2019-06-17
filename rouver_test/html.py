@@ -4,9 +4,13 @@ from asserts import assert_equal, assert_raises, assert_in
 
 from dectest import TestCase, test
 
-from rouver.html import \
-    http_status_page, bad_arguments_list, created_at_page, \
-    temporary_redirect_page, see_other_page
+from rouver.html import (
+    http_status_page,
+    bad_arguments_list,
+    created_at_page,
+    temporary_redirect_page,
+    see_other_page,
+)
 
 
 class HTTPStatusPageTest(TestCase):
@@ -23,7 +27,9 @@ class HTTPStatusPageTest(TestCase):
         <h1>406 &#x2014; Not Acceptable</h1>
     </body>
 </html>
-""", html)
+""",
+            html,
+        )
 
     @test
     def message_and_html_message(self) -> None:
@@ -31,12 +37,14 @@ class HTTPStatusPageTest(TestCase):
             http_status_page(
                 HTTPStatus.NOT_ACCEPTABLE,
                 message="Test",
-                html_message="HTML Test")
+                html_message="HTML Test",
+            )
 
     @test
     def message(self) -> None:
         html = http_status_page(
-            HTTPStatus.NOT_ACCEPTABLE, message="Test <em>message</em>.")
+            HTTPStatus.NOT_ACCEPTABLE, message="Test <em>message</em>."
+        )
         assert_equal(
             """<!DOCTYPE html>
 <html>
@@ -48,12 +56,15 @@ class HTTPStatusPageTest(TestCase):
         <p>Test &lt;em&gt;message&lt;/em&gt;.</p>
     </body>
 </html>
-""", html)
+""",
+            html,
+        )
 
     @test
     def html_message(self) -> None:
         html = http_status_page(
-            HTTPStatus.NOT_ACCEPTABLE, html_message="Test <em>message</em>.")
+            HTTPStatus.NOT_ACCEPTABLE, html_message="Test <em>message</em>."
+        )
         assert_equal(
             """<!DOCTYPE html>
 <html>
@@ -65,12 +76,15 @@ class HTTPStatusPageTest(TestCase):
         <p>Test <em>message</em>.</p>
     </body>
 </html>
-""", html)
+""",
+            html,
+        )
 
     @test
     def html_content(self) -> None:
         html = http_status_page(
-            HTTPStatus.NOT_ACCEPTABLE, html_content="<div>Test content.</div>")
+            HTTPStatus.NOT_ACCEPTABLE, html_content="<div>Test content.</div>"
+        )
         assert_equal(
             """<!DOCTYPE html>
 <html>
@@ -82,14 +96,17 @@ class HTTPStatusPageTest(TestCase):
 <div>Test content.</div>
     </body>
 </html>
-""", html)
+""",
+            html,
+        )
 
     @test
     def html_message_and_html_content(self) -> None:
         html = http_status_page(
             HTTPStatus.NOT_ACCEPTABLE,
             html_message="Test message.",
-            html_content="<div>Test content.</div>")
+            html_content="<div>Test content.</div>",
+        )
         assert_equal(
             """<!DOCTYPE html>
 <html>
@@ -102,31 +119,36 @@ class HTTPStatusPageTest(TestCase):
 <div>Test content.</div>
     </body>
 </html>
-""", html)
+""",
+            html,
+        )
 
 
 class CreatedAtPageTest(TestCase):
     @test
     def encode_url(self) -> None:
         page = created_at_page('/foo/"bar"')
-        assert_in('<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>',
-                  page)
+        assert_in(
+            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page
+        )
 
 
 class TemporaryRedirectPageTest(TestCase):
     @test
     def encode_url(self) -> None:
         page = temporary_redirect_page('/foo/"bar"')
-        assert_in('<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>',
-                  page)
+        assert_in(
+            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page
+        )
 
 
 class SeeOtherPageTest(TestCase):
     @test
     def encode_url(self) -> None:
         page = see_other_page('/foo/"bar"')
-        assert_in('<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>',
-                  page)
+        assert_in(
+            '<a href="/foo/&quot;bar&quot;">/foo/&quot;bar&quot;</a>', page
+        )
 
 
 class BadArgumentsListTest(TestCase):
@@ -145,15 +167,15 @@ class BadArgumentsListTest(TestCase):
         <span class="error-message">bar</span>
     </li>
 </ul>
-""", html)
+""",
+            html,
+        )
 
     @test
     def multiple_items_alphabetically(self) -> None:
-        html = bad_arguments_list({
-            "def": "error 1",
-            "abc": "error 2",
-            "ghi": "error 3",
-        })
+        html = bad_arguments_list(
+            {"def": "error 1", "abc": "error 2", "ghi": "error 3"}
+        )
         assert_equal(
             """<ul class="bad-arguments">
     <li class="argument">
@@ -169,13 +191,13 @@ class BadArgumentsListTest(TestCase):
         <span class="error-message">error 3</span>
     </li>
 </ul>
-""", html)
+""",
+            html,
+        )
 
     @test
     def escape_html(self) -> None:
-        html = bad_arguments_list({
-            "a<c": "d<f",
-        })
+        html = bad_arguments_list({"a<c": "d<f"})
         assert_equal(
             """<ul class="bad-arguments">
     <li class="argument">
@@ -183,4 +205,6 @@ class BadArgumentsListTest(TestCase):
         <span class="error-message">d&lt;f</span>
     </li>
 </ul>
-""", html)
+""",
+            html,
+        )

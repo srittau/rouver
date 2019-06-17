@@ -5,8 +5,11 @@ from typing import Union, Any, Iterable, Sequence, Optional
 
 from werkzeug.wrappers import Request
 
-from rouver.html import created_at_page, see_other_page, \
-    temporary_redirect_page
+from rouver.html import (
+    created_at_page,
+    see_other_page,
+    temporary_redirect_page,
+)
 from rouver.status import status_line
 from rouver.types import StartResponse, Header
 
@@ -31,11 +34,13 @@ def _location_header(request: Request, url: str) -> Header:
     return "Location", _absolute_url(request, url)
 
 
-def respond(start_response: StartResponse,
-            *,
-            status: HTTPStatus = HTTPStatus.OK,
-            content_type: Optional[str] = None,
-            extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
+def respond(
+    start_response: StartResponse,
+    *,
+    status: HTTPStatus = HTTPStatus.OK,
+    content_type: Optional[str] = None,
+    extra_headers: Sequence[Header] = []
+) -> Iterable[bytes]:
     """Prepare an empty WSGI response.
 
     >>> def handler(start_response, request):
@@ -59,12 +64,13 @@ def respond(start_response: StartResponse,
 
 
 def respond_with_content(
-        start_response: StartResponse,
-        content: bytes,
-        *,
-        status: HTTPStatus = HTTPStatus.OK,
-        content_type: str = "application/octet-stream",
-        extra_headers: Sequence[Header] = []) -> Iterable[bytes]:
+    start_response: StartResponse,
+    content: bytes,
+    *,
+    status: HTTPStatus = HTTPStatus.OK,
+    content_type: str = "application/octet-stream",
+    extra_headers: Sequence[Header] = []
+) -> Iterable[bytes]:
     """Prepare an WSGI response.
 
     >>> def handler(start_response, request):
@@ -83,11 +89,13 @@ def respond_with_content(
     return [content]
 
 
-def respond_with_json(start_response: StartResponse,
-                      json: Union[str, bytes, Any], *,
-                      status: HTTPStatus = HTTPStatus.OK,
-                      extra_headers: Sequence[Header] = []) \
-        -> Iterable[bytes]:
+def respond_with_json(
+    start_response: StartResponse,
+    json: Union[str, bytes, Any],
+    *,
+    status: HTTPStatus = HTTPStatus.OK,
+    extra_headers: Sequence[Header] = []
+) -> Iterable[bytes]:
     """Prepare a JSON WSGI response.
 
     >>> def handler(start_response, request):
@@ -112,13 +120,17 @@ def respond_with_json(start_response: StartResponse,
         encoded,
         status=status,
         content_type="application/json; charset=utf-8",
-        extra_headers=extra_headers)
+        extra_headers=extra_headers,
+    )
 
 
-def respond_with_html(start_response: StartResponse, html: str, *,
-                      status: HTTPStatus = HTTPStatus.OK,
-                      extra_headers: Sequence[Header] = []) \
-        -> Iterable[bytes]:
+def respond_with_html(
+    start_response: StartResponse,
+    html: str,
+    *,
+    status: HTTPStatus = HTTPStatus.OK,
+    extra_headers: Sequence[Header] = []
+) -> Iterable[bytes]:
     """Prepare an HTML WSGI response.
 
     >>> def handler(start_response, request):
@@ -134,12 +146,17 @@ def respond_with_html(start_response: StartResponse, html: str, *,
         encoded,
         status=status,
         content_type="text/html; charset=utf-8",
-        extra_headers=extra_headers)
+        extra_headers=extra_headers,
+    )
 
 
-def created_at(request: Request, start_response: StartResponse,
-               url_part: str, *, extra_headers: Sequence[Header] = []) \
-        -> Iterable[bytes]:
+def created_at(
+    request: Request,
+    start_response: StartResponse,
+    url_part: str,
+    *,
+    extra_headers: Sequence[Header] = []
+) -> Iterable[bytes]:
     """Prepare a 201 Created WSGI response with a Location header.
 
     The default content-type is "text/html" and the return value generates
@@ -157,10 +174,14 @@ def created_at(request: Request, start_response: StartResponse,
     )
 
 
-def created_as_json(request: Request, start_response: StartResponse,
-                    url_part: str, json: Union[str, bytes, Any], *,
-                    extra_headers: Sequence[Header] = []) \
-        -> Iterable[bytes]:
+def created_as_json(
+    request: Request,
+    start_response: StartResponse,
+    url_part: str,
+    json: Union[str, bytes, Any],
+    *,
+    extra_headers: Sequence[Header] = []
+) -> Iterable[bytes]:
     """Prepare a 201 Created WSGI response with a Location header and JSON body.
     """
 
@@ -173,12 +194,13 @@ def created_as_json(request: Request, start_response: StartResponse,
     )
 
 
-def temporary_redirect(request: Request,
-                       start_response: StartResponse,
-                       url_part: str,
-                       *,
-                       extra_headers: Sequence[Header] = []) \
-        -> Iterable[bytes]:
+def temporary_redirect(
+    request: Request,
+    start_response: StartResponse,
+    url_part: str,
+    *,
+    extra_headers: Sequence[Header] = []
+) -> Iterable[bytes]:
     url = _absolute_url(request, url_part)
     html = temporary_redirect_page(url)
     all_headers = [_location_header(request, url_part)] + list(extra_headers)
@@ -190,12 +212,13 @@ def temporary_redirect(request: Request,
     )
 
 
-def see_other(request: Request,
-              start_response: StartResponse,
-              url_part: str,
-              *,
-              extra_headers: Sequence[Header] = []) \
-        -> Iterable[bytes]:
+def see_other(
+    request: Request,
+    start_response: StartResponse,
+    url_part: str,
+    *,
+    extra_headers: Sequence[Header] = []
+) -> Iterable[bytes]:
     url = _absolute_url(request, url_part)
     html = see_other_page(url)
     all_headers = [_location_header(request, url_part)] + list(extra_headers)

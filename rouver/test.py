@@ -4,8 +4,17 @@ from http import HTTPStatus
 from io import BytesIO
 from json import JSONDecodeError
 from types import TracebackType
-from typing import \
-    Optional, Union, Sequence, List, Tuple, Callable, Any, Type, Iterable
+from typing import (
+    Optional,
+    Union,
+    Sequence,
+    List,
+    Tuple,
+    Callable,
+    Any,
+    Type,
+    Iterable,
+)
 from urllib.parse import quote_plus, urlparse
 
 from asserts import fail, assert_equal, assert_in
@@ -45,7 +54,8 @@ class TestRequest:
             raise ValueError("GET requests can not have a body")
         if self._arguments:
             raise ValueError(
-                "setting arguments and a body is mutually exclusive")
+                "setting arguments and a body is mutually exclusive"
+            )
         self._body = body
 
     def set_json_request(self, body: Union[str, bytes, dict, list]) -> None:
@@ -81,12 +91,14 @@ class TestRequest:
     def prepare_for_arguments(self) -> None:
         if self.body != b"":
             raise ValueError(
-                "setting arguments and a body is mutually exclusive")
+                "setting arguments and a body is mutually exclusive"
+            )
         if self.method != "GET" and self.content_type is None:
             self.content_type = "application/x-www-form-urlencoded"
 
-    def add_argument(self, name: str, value: Union[str, Sequence[str]]) \
-            -> None:
+    def add_argument(
+        self, name: str, value: Union[str, Sequence[str]]
+    ) -> None:
         self.prepare_for_arguments()
         values = [value] if isinstance(value, str) else list(value)
         for v in values:
@@ -117,8 +129,9 @@ class TestRequest:
                 env["QUERY_STRING"] = self._build_query_string()
             else:
                 assert self._body == b""
-                env["wsgi.input"] = \
-                    BytesIO(self._build_query_string().encode("ascii"))
+                env["wsgi.input"] = BytesIO(
+                    self._build_query_string().encode("ascii")
+                )
         if self._body != b"":
             env["CONTENT_LENGTH"] = str(len(self._body))
         if self.content_type is not None:
@@ -159,16 +172,18 @@ class TestResponse:
         Raise an AssertionError if the response headers are incorrect or
         the JSON response is invalid.
         """
-        self.assert_content_type("application/json",
-                                 charset=[None, "us-ascii", "utf-8"])
+        self.assert_content_type(
+            "application/json", charset=[None, "us-ascii", "utf-8"]
+        )
         try:
             return json.loads(self.body.decode("utf-8"))
         except (UnicodeDecodeError, JSONDecodeError) as exc:
             raise AssertionError(str(exc)) from exc
 
     def assert_status(self, status: HTTPStatus) -> None:
-        assert_equal(status, self.status,
-                     msg_fmt="unexpected HTTP status: {msg}")
+        assert_equal(
+            status, self.status, msg_fmt="unexpected HTTP status: {msg}"
+        )
 
     def assert_header_not_set(self, name: str) -> None:
         for n, v in self._headers:
@@ -183,8 +198,9 @@ class TestResponse:
         msg = "header value of {} differs: {{msg}}".format(name)
         assert_equal(expected_value, real_value, msg_fmt=msg)
 
-    def _assert_location_response(self, expected_status: HTTPStatus,
-                                  expected_location: str) -> None:
+    def _assert_location_response(
+        self, expected_status: HTTPStatus, expected_location: str
+    ) -> None:
         self.assert_status(expected_status)
         if ":" in expected_location:
             self.assert_header_equal("Location", expected_location)
@@ -220,13 +236,16 @@ class TestResponse:
         The expected location can either be an absolute URL, or just the
         path portion.
         """
-        self._assert_location_response(HTTPStatus.TEMPORARY_REDIRECT,
-                                       expected_location)
+        self._assert_location_response(
+            HTTPStatus.TEMPORARY_REDIRECT, expected_location
+        )
 
     def assert_content_type(
-            self, content_type: str, *,
-            charset: Optional[Union[str, Sequence[Optional[str]]]] = None) \
-            -> None:
+        self,
+        content_type: str,
+        *,
+        charset: Optional[Union[str, Sequence[Optional[str]]]] = None
+    ) -> None:
         """Assert the response's Content-Type header.
 
         If the optional charset argument is given, compare the charset
@@ -251,22 +270,28 @@ class TestResponse:
             msg = "unexpected content type charset: {msg}"
             assert_in(got_charset, cs_list, msg)
 
-    def assert_set_cookie(self,
-                          expected_name: str,
-                          expected_value: str,
-                          *,
-                          secure: Optional[bool] = None,
-                          http_only: Optional[bool] = None,
-                          max_age: Optional[int] = None) -> None:
+    def assert_set_cookie(
+        self,
+        expected_name: str,
+        expected_value: str,
+        *,
+        secure: Optional[bool] = None,
+        http_only: Optional[bool] = None,
+        max_age: Optional[int] = None
+    ) -> None:
         def assert_flag(flag: Optional[bool], name_: str) -> None:
             if flag:
                 if find_arg(name_) is None:
-                    fail("Set-Cookie does not contain the {} "
-                         "flag".format(name_))
+                    fail(
+                        "Set-Cookie does not contain the {} "
+                        "flag".format(name_)
+                    )
             elif flag is not None and not flag:
                 if find_arg(name_) is not None:
-                    fail("Set-Cookie contains the {} flag "
-                         "unexpectedly".format(name_))
+                    fail(
+                        "Set-Cookie contains the {} flag "
+                        "unexpectedly".format(name_)
+                    )
 
         def find_arg(arg_name: str) -> Optional[str]:
             for a in args:
@@ -279,7 +304,9 @@ class TestResponse:
             if arg_value is None:
                 raise AssertionError(
                     "Set-Cookie does not contain the '{}' argument".format(
-                        name))
+                        name
+                    )
+                )
             return arg_value
 
         try:
@@ -312,9 +339,9 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
             output_written = True
 
     def start_response(
-            status: str,
-            response_headers: List[Header],
-            exc_info: Optional[_exc_info] = None
+        status: str,
+        response_headers: List[Header],
+        exc_info: Optional[_exc_info] = None,
     ) -> Callable[[bytes], Any]:
         nonlocal response
         if response and not exc_info:
@@ -337,13 +364,15 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
 
 
 ArgumentToTest = Union[
-    Tuple[str, Multiplicity, str],
-    Tuple[str, Multiplicity, str, str],
+    Tuple[str, Multiplicity, str], Tuple[str, Multiplicity, str, str]
 ]
 
 
-def test_wsgi_arguments(app: WSGIApplication, request: TestRequest,
-                        arguments: Iterable[ArgumentToTest]) -> None:
+def test_wsgi_arguments(
+    app: WSGIApplication,
+    request: TestRequest,
+    arguments: Iterable[ArgumentToTest],
+) -> None:
     def setup_args(args: Iterable[ArgumentToTest]) -> None:
         request.clear_arguments()
         if not args and request.method != "GET":
@@ -352,8 +381,10 @@ def test_wsgi_arguments(app: WSGIApplication, request: TestRequest,
             assert len(argument) == 3 or len(argument) == 4
             name, multi, valid_value = argument[:3]
             if multi not in [Multiplicity.REQUIRED, Multiplicity.OPTIONAL]:
-                message = "unsupported multiplicity '{}' " \
-                          "for argument '{}'".format(multi, name)
+                message = (
+                    "unsupported multiplicity '{}' "
+                    "for argument '{}'".format(multi, name)
+                )
                 raise ValueError(message)
             request.add_argument(name, valid_value)
 
@@ -362,8 +393,11 @@ def test_wsgi_arguments(app: WSGIApplication, request: TestRequest,
         if response.status == HTTPStatus.BAD_REQUEST:
             fail("Bad Request returned, although CGI arguments were correct")
         elif response.status.value >= 400:
-            fail("status was: '{}', but expected a successful result".format(
-                response.status))
+            fail(
+                "status was: '{}', but expected a successful result".format(
+                    response.status
+                )
+            )
 
     def call_expect_bad_request(message: str) -> None:
         response = test_wsgi_app(app, request)
@@ -378,12 +412,14 @@ def test_wsgi_arguments(app: WSGIApplication, request: TestRequest,
         setup_args(arguments)
         call_expect_success()
 
-    def assert_failure_if_required_argument_missing(missing_argument: str) \
-            -> None:
+    def assert_failure_if_required_argument_missing(
+        missing_argument: str
+    ) -> None:
         setup_args([a for a in required_arguments if a[0] != missing_argument])
         call_expect_bad_request(
             "Bad Request not returned, although required CGI argument "
-            "'{}' was missing".format(missing_argument))
+            "'{}' was missing".format(missing_argument)
+        )
 
     def assert_failure_if_argument_invalid(argument: ArgumentToTest) -> None:
         assert len(argument) >= 4
@@ -391,11 +427,16 @@ def test_wsgi_arguments(app: WSGIApplication, request: TestRequest,
         setup_args([a for a in required_arguments if a[0] != name])
         request.add_argument(name, invalid_value)
         call_expect_bad_request(
-            "Bad Request not returned, although CGI argument '" + name +
-            "' had invalid value '" + str(invalid_value) + "'")
+            "Bad Request not returned, although CGI argument '"
+            + name
+            + "' had invalid value '"
+            + str(invalid_value)
+            + "'"
+        )
 
-    required_arguments = \
-        [a for a in arguments if a[1] == Multiplicity.REQUIRED]
+    required_arguments = [
+        a for a in arguments if a[1] == Multiplicity.REQUIRED
+    ]
     wrong_value_arguments = [a for a in arguments if len(a) > 3]
 
     assert_success_if_mandatory_arguments_ok()
@@ -418,6 +459,7 @@ class RouterTestCase(TestCase):
     def send_request(self, request: TestRequest) -> TestResponse:
         return test_wsgi_app(self.router, request)
 
-    def assert_arguments(self, request: TestRequest,
-                         arguments: Iterable[ArgumentToTest]) -> None:
+    def assert_arguments(
+        self, request: TestRequest, arguments: Iterable[ArgumentToTest]
+    ) -> None:
         test_wsgi_arguments(self.router, request, arguments)

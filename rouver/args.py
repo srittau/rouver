@@ -47,8 +47,9 @@ class FileArgument:
     b'file content'
     """
 
-    def __init__(self, stream: IO[bytes], filename: str, content_type: str) \
-            -> None:
+    def __init__(
+        self, stream: IO[bytes], filename: str, content_type: str
+    ) -> None:
         self._stream = stream
         self.filename = filename
         self.content_type = content_type
@@ -60,7 +61,8 @@ class FileArgument:
 class CGIFileArgument(FileArgument):
     def __init__(self, value: cgi.FieldStorage) -> None:
         content_type = value.headers.get(
-            "content-type", "application/octet-stream").split(";")[0]
+            "content-type", "application/octet-stream"
+        ).split(";")[0]
         assert value.file is not None
         assert value.filename is not None
         super().__init__(value.file, value.filename, content_type)
@@ -80,20 +82,28 @@ class ArgumentParser:
         self.environ = environ
 
         if _has_wrong_content_type(environ):
-            raise BadRequest("incorrect content type, expected {}".format(
-                " or ".join(_FORM_TYPES)))
+            raise BadRequest(
+                "incorrect content type, expected {}".format(
+                    " or ".join(_FORM_TYPES)
+                )
+            )
 
         self._fields = cgi.FieldStorage(
-            environ["wsgi.input"], environ=environ, keep_blank_values=True)
+            environ["wsgi.input"], environ=environ, keep_blank_values=True
+        )
 
-    def parse_args(self, argument_template: Sequence[ArgumentTemplate]) \
-            -> ArgumentDict:
+    def parse_args(
+        self, argument_template: Sequence[ArgumentTemplate]
+    ) -> ArgumentDict:
 
         errors = {}  # type: Dict[str, str]
         parsed_arguments = {}  # type: ArgumentDict
 
-        def parse_template(name: str, value_parser: ArgumentValueType,
-                           multiplicity: Multiplicity) -> None:
+        def parse_template(
+            name: str,
+            value_parser: ArgumentValueType,
+            multiplicity: Multiplicity,
+        ) -> None:
             cls = _VALUE_PARSER_CLASSES[multiplicity]
             argument_parser = cls(self._fields, name, value_parser)
             if argument_parser.should_parse():
@@ -118,8 +128,9 @@ def _has_wrong_content_type(environ: WSGIEnvironment) -> bool:
     return content_type not in _FORM_TYPES
 
 
-def parse_args(environ: WSGIEnvironment,
-               argument_template: Sequence[ArgumentTemplate]) -> ArgumentDict:
+def parse_args(
+    environ: WSGIEnvironment, argument_template: Sequence[ArgumentTemplate]
+) -> ArgumentDict:
     """Parse CGI/WSGI arguments and return an argument dict.
 
     argument_template is a list of (argname, value_parser, multiplicity)
@@ -205,8 +216,9 @@ class _FunctionValueParser(_ValueParserWrapper):
     def parse_from_file(self, value: cgi.FieldStorage) -> Any:
         assert value.file is not None
         content = value.file.read()
-        decoded = \
+        decoded = (
             content.decode("utf-8") if isinstance(content, bytes) else content
+        )
         return self.parse_from_string(decoded)
 
 
@@ -219,8 +231,9 @@ class _FileArgumentValueParser(_ValueParserWrapper):
         return CGIFileArgument(value)
 
 
-def _create_argument_value_parser(value_parser: ArgumentValueType) \
-        -> _ValueParserWrapper:
+def _create_argument_value_parser(
+    value_parser: ArgumentValueType
+) -> _ValueParserWrapper:
     if value_parser == "file":
         return _FileArgumentValueParser()
     elif callable(value_parser):
@@ -230,8 +243,12 @@ def _create_argument_value_parser(value_parser: ArgumentValueType) \
 
 
 class _ArgumentParser:
-    def __init__(self, args: cgi.FieldStorage, name: str,
-                 value_parser: ArgumentValueType) -> None:
+    def __init__(
+        self,
+        args: cgi.FieldStorage,
+        name: str,
+        value_parser: ArgumentValueType,
+    ) -> None:
         self.args = args
         self.name = name
         self.value_parser = _create_argument_value_parser(value_parser)

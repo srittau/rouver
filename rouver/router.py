@@ -11,9 +11,14 @@ from werkzeug.wrappers import Request
 from rouver.exceptions import ArgumentsError
 from rouver.html import http_status_page, bad_arguments_page
 from rouver.response import respond_with_html
-from rouver.types import \
-    StartResponse, WSGIEnvironment, RouteDescription, \
-    RouteTemplateHandler, BadArgumentsDict, WSGIApplication
+from rouver.types import (
+    StartResponse,
+    WSGIEnvironment,
+    RouteDescription,
+    RouteTemplateHandler,
+    BadArgumentsDict,
+    WSGIApplication,
+)
 
 LOGGER_NAME = "rouver"
 
@@ -41,25 +46,34 @@ class Router:
         self._template_handlers = {}  # type: _TemplateHandlerDict
         self.error_handling = True
 
-    def __call__(self, environment: WSGIEnvironment,
-                 start_response: StartResponse) -> Iterable[bytes]:
+    def __call__(
+        self, environment: WSGIEnvironment, start_response: StartResponse
+    ) -> Iterable[bytes]:
         try:
-            return _dispatch(environment, start_response, self._handlers,
-                             self._sub_routers, self._template_handlers)
+            return _dispatch(
+                environment,
+                start_response,
+                self._handlers,
+                self._sub_routers,
+                self._template_handlers,
+            )
         except Exception:
             if self.error_handling:
                 logging.getLogger(LOGGER_NAME).exception(
-                    "error while handling request")
+                    "error while handling request"
+                )
                 return _respond_internal_server_error(start_response)
             else:
                 raise
 
     def add_routes(self, routes: Sequence[RouteDescription]) -> None:
         self._handlers.extend(
-            [_RouteHandler(r, self._template_handlers) for r in routes])
+            [_RouteHandler(r, self._template_handlers) for r in routes]
+        )
 
-    def add_template_handler(self, name: str, handler: RouteTemplateHandler) \
-            -> None:
+    def add_template_handler(
+        self, name: str, handler: RouteTemplateHandler
+    ) -> None:
         self._template_handlers[name] = handler
 
     def add_sub_router(self, path: str, sub_router: WSGIApplication) -> None:
@@ -98,15 +112,16 @@ class Router:
         """
 
         self._sub_routers.append(
-            _SubRouterHandler(path, sub_router, self._template_handlers))
+            _SubRouterHandler(path, sub_router, self._template_handlers)
+        )
 
 
 _pattern_re = re.compile(r"^{(.*)}$")
 
 
 def _parse_route_template_part(
-        part: str, template_handlers: _TemplateHandlerDict) \
-        -> _RouteTemplatePart:
+    part: str, template_handlers: _TemplateHandlerDict
+) -> _RouteTemplatePart:
     if part == "*":
         raise ValueError("wildcard not at end of path")
     m = _pattern_re.match(part)
@@ -120,10 +135,12 @@ def _parse_route_template_part(
         return _TemplatePartType.STATIC, part
 
 
-def _parse_path(path_string: str,
-                template_handlers: _TemplateHandlerDict, *,
-                allow_wildcard: bool = False) \
-        -> Tuple[List[_RouteTemplatePart], bool]:
+def _parse_path(
+    path_string: str,
+    template_handlers: _TemplateHandlerDict,
+    *,
+    allow_wildcard: bool = False
+) -> Tuple[List[_RouteTemplatePart], bool]:
     parts = _split_path(path_string)
     if allow_wildcard and parts and parts[-1] == "*":
         parts = parts[:-1]
@@ -137,25 +154,34 @@ def _parse_path(path_string: str,
 
 
 class _RouteHandler:
-    def __init__(self, route: RouteDescription,
-                 template_handlers: _TemplateHandlerDict) -> None:
-        self.path, self.wildcard = \
-            _parse_path(route[0], template_handlers, allow_wildcard=True)
+    def __init__(
+        self, route: RouteDescription, template_handlers: _TemplateHandlerDict
+    ) -> None:
+        self.path, self.wildcard = _parse_path(
+            route[0], template_handlers, allow_wildcard=True
+        )
         self.method = route[1]
         self.handler = route[2]
 
 
 class _SubRouterHandler:
-    def __init__(self, path: str, router: WSGIApplication,
-                 template_handlers: _TemplateHandlerDict) -> None:
+    def __init__(
+        self,
+        path: str,
+        router: WSGIApplication,
+        template_handlers: _TemplateHandlerDict,
+    ) -> None:
         self.path, _ = _parse_path(path, template_handlers)
         self.router = router
 
 
-def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
-              handlers: Sequence[_RouteHandler],
-              sub_routers: Sequence[_SubRouterHandler],
-              template_handlers: _TemplateHandlerDict) -> Iterable[bytes]:
+def _dispatch(
+    environment: WSGIEnvironment,
+    start_response: StartResponse,
+    handlers: Sequence[_RouteHandler],
+    sub_routers: Sequence[_SubRouterHandler],
+    template_handlers: _TemplateHandlerDict,
+) -> Iterable[bytes]:
 
     request = Request(environment)
     path = _split_path(request.path[1:])
@@ -170,8 +196,9 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
             except NotFound:
                 return _respond_not_found(environment, start_response)
         except MethodNotAllowed as exc:
-            return _respond_method_not_allowed(start_response, request.method,
-                                               exc.valid_methods)
+            return _respond_method_not_allowed(
+                start_response, request.method, exc.valid_methods
+            )
         else:
             return call_handler(matcher)
 
@@ -182,8 +209,9 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
         if not matching_paths:
             raise NotFound()
 
-        matching_routes = \
-            [m for m in matching_paths if m.method == request.method]
+        matching_routes = [
+            m for m in matching_paths if m.method == request.method
+        ]
         if not matching_routes:
             valid_methods = sorted(set(m.method for m in matching_paths))
             raise MethodNotAllowed(valid_methods)
@@ -216,22 +244,25 @@ def _dispatch(environment: WSGIEnvironment, start_response: StartResponse,
 
     def call_sub_router(matcher: _SubRouterMatcher) -> Iterable[bytes]:
         new_environ = environment.copy()
-        new_environ["PATH_INFO"] = \
-            matcher.remaining_path.encode("utf-8").decode("latin-1")
+        new_environ["PATH_INFO"] = matcher.remaining_path.encode(
+            "utf-8"
+        ).decode("latin-1")
         return matcher.call(new_environ, start_response)
 
     return find_route_and_call_handler()
 
 
 class _RouteArguments:
-    def __init__(self, request: Request,
-                 template_handlers: _TemplateHandlerDict) -> None:
+    def __init__(
+        self, request: Request, template_handlers: _TemplateHandlerDict
+    ) -> None:
         self._request = request
         self._handlers = template_handlers
         self._cache = {}  # type: Dict[Tuple[str, str], Any]
 
-    def parse_argument(self, paths: Sequence[Any], name: str, path: str) \
-            -> Any:
+    def parse_argument(
+        self, paths: Sequence[Any], name: str, path: str
+    ) -> Any:
         key = name, path
         if key not in self._cache:
             handler = self._handlers[name]
@@ -240,12 +271,14 @@ class _RouteArguments:
 
 
 class _MatcherBase:
-    def __init__(self,
-                 match_path: Sequence[_RouteTemplatePart],
-                 request_path: Sequence[str],
-                 arguments: _RouteArguments,
-                 *,
-                 match_full_path: bool = False) -> None:
+    def __init__(
+        self,
+        match_path: Sequence[_RouteTemplatePart],
+        request_path: Sequence[str],
+        arguments: _RouteArguments,
+        *,
+        match_full_path: bool = False
+    ) -> None:
         if request_path and request_path[-1] == "":
             request_path = request_path[:-1]
             self._trailing_slash = True
@@ -283,7 +316,8 @@ class _MatcherBase:
             elif tmpl_type == _TemplatePartType.PATTERN:
                 try:
                     arg = self._arguments.parse_argument(
-                        path_args, text, decoded)
+                        path_args, text, decoded
+                    )
                 except ValueError:
                     return False, []
                 path_args.append(arg)
@@ -296,8 +330,7 @@ class _MatcherBase:
 
     @property
     def remaining_path(self) -> str:
-        remaining_path = \
-            list(self._request_path[len(self._match_path):])
+        remaining_path = list(self._request_path[len(self._match_path) :])
         path = "/".join([""] + remaining_path)
         if self._trailing_slash:
             path += "/"
@@ -305,37 +338,45 @@ class _MatcherBase:
 
 
 class _RouteMatcher(_MatcherBase):
-    def __init__(self, handler: _RouteHandler, path: Sequence[str],
-                 arguments: _RouteArguments) -> None:
+    def __init__(
+        self,
+        handler: _RouteHandler,
+        path: Sequence[str],
+        arguments: _RouteArguments,
+    ) -> None:
         super().__init__(
-            handler.path,
-            path,
-            arguments,
-            match_full_path=not handler.wildcard)
+            handler.path, path, arguments, match_full_path=not handler.wildcard
+        )
         self.method = handler.method
         self._handler = handler.handler
 
-    def call(self, environ: WSGIEnvironment, start_response: StartResponse) \
-            -> Iterable[bytes]:
+    def call(
+        self, environ: WSGIEnvironment, start_response: StartResponse
+    ) -> Iterable[bytes]:
         environ["rouver.path_args"] = self.path_args
         environ["rouver.wildcard_path"] = self.remaining_path
         return self._handler(environ, start_response)
 
 
 class _SubRouterMatcher(_MatcherBase):
-    def __init__(self, handler: _SubRouterHandler, path: Sequence[str],
-                 arguments: _RouteArguments) -> None:
+    def __init__(
+        self,
+        handler: _SubRouterHandler,
+        path: Sequence[str],
+        arguments: _RouteArguments,
+    ) -> None:
         super().__init__(handler.path, path, arguments)
         self._router = handler.router
 
-    def call(self, environ: WSGIEnvironment, start_response: StartResponse) \
-            -> Iterable[bytes]:
+    def call(
+        self, environ: WSGIEnvironment, start_response: StartResponse
+    ) -> Iterable[bytes]:
         return self._router(environ, start_response)
 
 
-def _respond_not_found(environment: WSGIEnvironment,
-                       start_response: StartResponse) \
-        -> Iterable[bytes]:
+def _respond_not_found(
+    environment: WSGIEnvironment, start_response: StartResponse
+) -> Iterable[bytes]:
     path = cast(str, environment.get("PATH_INFO", ""))
     message = "Path '{}' not found.".format(path)
     page = http_status_page(HTTPStatus.NOT_FOUND, message=message)
@@ -343,37 +384,44 @@ def _respond_not_found(environment: WSGIEnvironment,
 
 
 def _respond_method_not_allowed(
-        start_response: StartResponse,
-        method: str, allowed_methods: Sequence[str]) \
-        -> Iterable[bytes]:
+    start_response: StartResponse, method: str, allowed_methods: Sequence[str]
+) -> Iterable[bytes]:
     method_string = " or ".join(allowed_methods)
     message = "Method '{}' not allowed. Please try {}.".format(
-        method, method_string)
+        method, method_string
+    )
     html = http_status_page(HTTPStatus.METHOD_NOT_ALLOWED, message=message)
     return respond_with_html(
         start_response,
         html,
         status=HTTPStatus.METHOD_NOT_ALLOWED,
-        extra_headers=[("Allow", ", ".join(allowed_methods))])
+        extra_headers=[("Allow", ", ".join(allowed_methods))],
+    )
 
 
-def _respond_internal_server_error(start_response: StartResponse) \
-        -> Iterable[bytes]:
+def _respond_internal_server_error(
+    start_response: StartResponse
+) -> Iterable[bytes]:
     html = http_status_page(
-        HTTPStatus.INTERNAL_SERVER_ERROR, message="Internal server error.")
+        HTTPStatus.INTERNAL_SERVER_ERROR, message="Internal server error."
+    )
     return respond_with_html(
-        start_response, html, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        start_response, html, status=HTTPStatus.INTERNAL_SERVER_ERROR
+    )
 
 
-def _respond_http_exception(start_response: StartResponse,
-                            exception: HTTPException) -> Iterable[bytes]:
+def _respond_http_exception(
+    start_response: StartResponse, exception: HTTPException
+) -> Iterable[bytes]:
     status = HTTPStatus(exception.code)
     html = http_status_page(status, message=exception.description or "")
     return respond_with_html(start_response, html, status=status)
 
 
-def _respond_arguments_error(start_response: StartResponse,
-                             arguments: BadArgumentsDict) -> Iterable[bytes]:
+def _respond_arguments_error(
+    start_response: StartResponse, arguments: BadArgumentsDict
+) -> Iterable[bytes]:
     html = bad_arguments_page(arguments)
     return respond_with_html(
-        start_response, html, status=HTTPStatus.BAD_REQUEST)
+        start_response, html, status=HTTPStatus.BAD_REQUEST
+    )

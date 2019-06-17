@@ -3,17 +3,31 @@ from http import HTTPStatus
 from io import BytesIO
 from typing import Iterable, Optional, Tuple, Any, Sequence
 
-from asserts import \
-    assert_equal, assert_is_instance, assert_has_attr, assert_is_none, \
-    assert_dict_superset, assert_not_in, assert_raises, assert_succeeds, \
-    assert_true, assert_false
+from asserts import (
+    assert_equal,
+    assert_is_instance,
+    assert_has_attr,
+    assert_is_none,
+    assert_dict_superset,
+    assert_not_in,
+    assert_raises,
+    assert_succeeds,
+    assert_true,
+    assert_false,
+)
 
 from dectest import TestCase, test
 
 from rouver.args import Multiplicity, parse_args, ArgumentTemplate
 from rouver.exceptions import ArgumentsError
-from rouver.test import create_request, TestResponse, test_wsgi_app, \
-    test_wsgi_arguments, ArgumentToTest, TestRequest
+from rouver.test import (
+    create_request,
+    TestResponse,
+    test_wsgi_app,
+    test_wsgi_arguments,
+    ArgumentToTest,
+    TestRequest,
+)
 from rouver.types import WSGIEnvironment, StartResponse, WSGIApplication
 
 
@@ -42,19 +56,22 @@ class TestRequestTest(TestCase):
     def to_environment__minimal(self) -> None:
         request = create_request("GET", "/foo/bar")
         environ = request.to_environment()
-        assert_dict_superset({
-            "REQUEST_METHOD": "GET",
-            "PATH_INFO": "/foo/bar",
-            "SERVER_NAME": "www.example.com",
-            "SERVER_PORT": "80",
-            "SERVER_PROTOCOL": "HTTP/1.1",
-            "wsgi.version": (1, 0),
-            "wsgi.url_scheme": "http",
-            "wsgi.multithread": False,
-            "wsgi.multiprocess": False,
-            "wsgi.run_once": True,
-            "wsgi.errors": request.error_stream,
-        }, environ)
+        assert_dict_superset(
+            {
+                "REQUEST_METHOD": "GET",
+                "PATH_INFO": "/foo/bar",
+                "SERVER_NAME": "www.example.com",
+                "SERVER_PORT": "80",
+                "SERVER_PROTOCOL": "HTTP/1.1",
+                "wsgi.version": (1, 0),
+                "wsgi.url_scheme": "http",
+                "wsgi.multithread": False,
+                "wsgi.multiprocess": False,
+                "wsgi.run_once": True,
+                "wsgi.errors": request.error_stream,
+            },
+            environ,
+        )
         assert_wsgi_input_stream(environ["wsgi.input"])
         assert_equal(b"", environ["wsgi.input"].read())
         assert_not_in("CONTENT_TYPE", environ)
@@ -65,19 +82,22 @@ class TestRequestTest(TestCase):
     def to_environment__post(self) -> None:
         request = create_request("POST", "/foo/bar")
         environ = request.to_environment()
-        assert_dict_superset({
-            "REQUEST_METHOD": "POST",
-            "PATH_INFO": "/foo/bar",
-            "SERVER_NAME": "www.example.com",
-            "SERVER_PORT": "80",
-            "SERVER_PROTOCOL": "HTTP/1.1",
-            "wsgi.version": (1, 0),
-            "wsgi.url_scheme": "http",
-            "wsgi.multithread": False,
-            "wsgi.multiprocess": False,
-            "wsgi.run_once": True,
-            "wsgi.errors": request.error_stream,
-        }, environ)
+        assert_dict_superset(
+            {
+                "REQUEST_METHOD": "POST",
+                "PATH_INFO": "/foo/bar",
+                "SERVER_NAME": "www.example.com",
+                "SERVER_PORT": "80",
+                "SERVER_PROTOCOL": "HTTP/1.1",
+                "wsgi.version": (1, 0),
+                "wsgi.url_scheme": "http",
+                "wsgi.multithread": False,
+                "wsgi.multiprocess": False,
+                "wsgi.run_once": True,
+                "wsgi.errors": request.error_stream,
+            },
+            environ,
+        )
         assert_wsgi_input_stream(environ["wsgi.input"])
         assert_equal(b"", environ["wsgi.input"].read())
         assert_not_in("CONTENT_TYPE", environ)
@@ -98,10 +118,9 @@ class TestRequestTest(TestCase):
         request.set_env_var("HTTP_X_FOO", "Set by env var")
         request.set_header("X-Foo", "Set by header")
         environ = request.to_environment()
-        assert_dict_superset({
-            "SERVER_PORT": "8888",
-            "HTTP_X_FOO": "Set by env var",
-        }, environ)
+        assert_dict_superset(
+            {"SERVER_PORT": "8888", "HTTP_X_FOO": "Set by env var"}, environ
+        )
 
     @test
     def set_header(self) -> None:
@@ -116,9 +135,7 @@ class TestRequestTest(TestCase):
         request.set_header("Content-Type", "text/html")
         assert_equal("text/html", request.content_type)
         environ = request.to_environment()
-        assert_dict_superset({
-            "CONTENT_TYPE": "text/html",
-        }, environ)
+        assert_dict_superset({"CONTENT_TYPE": "text/html"}, environ)
         assert_not_in("HTTP_CONTENT_TYPE", environ)
 
     @test
@@ -174,9 +191,7 @@ class TestRequestTest(TestCase):
         request = create_request("GET", "/foo/bar")
         request.content_type = "image/png"
         environ = request.to_environment()
-        assert_dict_superset({
-            "CONTENT_TYPE": "image/png",
-        }, environ)
+        assert_dict_superset({"CONTENT_TYPE": "image/png"}, environ)
 
     @test
     def arguments__get_request(self) -> None:
@@ -184,9 +199,9 @@ class TestRequestTest(TestCase):
         request.add_argument("foo", "bar")
         request.add_argument("abc", ["def", "ghi"])
         environ = request.to_environment()
-        assert_dict_superset({
-            "QUERY_STRING": "foo=bar&abc=def&abc=ghi",
-        }, environ)
+        assert_dict_superset(
+            {"QUERY_STRING": "foo=bar&abc=def&abc=ghi"}, environ
+        )
 
     @test
     def arguments__put_request(self) -> None:
@@ -195,8 +210,9 @@ class TestRequestTest(TestCase):
         request.add_argument("abc", ["def", "ghi"])
         environ = request.to_environment()
         assert_not_in("QUERY_STRING", environ)
-        assert_equal("application/x-www-form-urlencoded",
-                     environ["CONTENT_TYPE"])
+        assert_equal(
+            "application/x-www-form-urlencoded", environ["CONTENT_TYPE"]
+        )
         content = environ["wsgi.input"].read()
         assert_equal(b"foo=bar&abc=def&abc=ghi", content)
 
@@ -205,9 +221,7 @@ class TestRequestTest(TestCase):
         request = create_request("GET", "/foo")
         request.add_argument("föo", "bär")
         environ = request.to_environment()
-        assert_dict_superset({
-            "QUERY_STRING": "f%C3%B6o=b%C3%A4r",
-        }, environ)
+        assert_dict_superset({"QUERY_STRING": "f%C3%B6o=b%C3%A4r"}, environ)
 
     @test
     def clear_arguments(self) -> None:
@@ -251,8 +265,9 @@ class TestRequestTest(TestCase):
         with assert_raises(ValueError):
             request.body = b"Body"
 
-    def _assert_json_request(self, request: TestRequest,
-                             expected_body: bytes) -> None:
+    def _assert_json_request(
+        self, request: TestRequest, expected_body: bytes
+    ) -> None:
         assert_equal(expected_body, request.body)
         env = request.to_environment()
         assert_equal(str(len(expected_body)), env["CONTENT_LENGTH"])
@@ -310,11 +325,14 @@ class TestResponseTest(TestCase):
 
     @test
     def get_header_value(self) -> None:
-        response = TestResponse("200 OK", [
-            ("X-Header", "Foobar"),
-            ("Content-Type", "image/png"),
-            ("Allow", "GET"),
-        ])
+        response = TestResponse(
+            "200 OK",
+            [
+                ("X-Header", "Foobar"),
+                ("Content-Type", "image/png"),
+                ("Allow", "GET"),
+            ],
+        )
         assert_equal("image/png", response.get_header_value("Content-Type"))
         assert_equal("image/png", response.get_header_value("content-TYPE"))
         with assert_raises(ValueError):
@@ -322,45 +340,43 @@ class TestResponseTest(TestCase):
 
     @test
     def parse_json_body(self) -> None:
-        response = TestResponse("200 OK", [
-            ("Content-Type", "application/json"),
-        ])
+        response = TestResponse(
+            "200 OK", [("Content-Type", "application/json")]
+        )
         response.body = b'{"foo": 5}'
         json = response.parse_json_body()
         assert_equal({"foo": 5}, json)
 
     @test
     def parse_json_body__wrong_content_type(self) -> None:
-        response = TestResponse("200 OK", [
-            ("Content-Type", "text/plain"),
-        ])
+        response = TestResponse("200 OK", [("Content-Type", "text/plain")])
         response.body = b"{}"
         with assert_raises(AssertionError):
             response.parse_json_body()
 
     @test
     def parse_json_body__wrong_content_encoding(self) -> None:
-        response = TestResponse("200 OK", [
-            ("Content-Type", "application/json; charset=latin1"),
-        ])
+        response = TestResponse(
+            "200 OK", [("Content-Type", "application/json; charset=latin1")]
+        )
         response.body = b"{}"
         with assert_raises(AssertionError):
             response.parse_json_body()
 
     @test
     def parse_json_body__invalid_json(self) -> None:
-        response = TestResponse("200 OK", [
-            ("Content-Type", "application/json"),
-        ])
+        response = TestResponse(
+            "200 OK", [("Content-Type", "application/json")]
+        )
         response.body = b'{"foo":'
         with assert_raises(AssertionError):
             response.parse_json_body()
 
     @test
     def parse_json_body__invalid_encoding(self) -> None:
-        response = TestResponse("200 OK", [
-            ("Content-Type", "application/json; charset=utf-8"),
-        ])
+        response = TestResponse(
+            "200 OK", [("Content-Type", "application/json; charset=utf-8")]
+        )
         response.body = '{"föo": 5}'.encode("iso-8859-1")
         with assert_raises(AssertionError):
             response.parse_json_body()
@@ -410,14 +426,16 @@ class TestResponseTest(TestCase):
     @test
     def assert_created_at__ok(self) -> None:
         response = TestResponse(
-            "201 Created", [("Location", "http://example.com/")])
+            "201 Created", [("Location", "http://example.com/")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_created_at("http://example.com/")
 
     @test
     def assert_created_at__wrong_status(self) -> None:
         response = TestResponse(
-            "200 OK", [("Location", "http://example.com/")])
+            "200 OK", [("Location", "http://example.com/")]
+        )
         with assert_raises(AssertionError):
             response.assert_created_at("http://example.com/")
 
@@ -430,37 +448,41 @@ class TestResponseTest(TestCase):
     @test
     def assert_created_at__wrong_location(self) -> None:
         response = TestResponse(
-            "201 Created", [("Location", "http://example.com/")])
+            "201 Created", [("Location", "http://example.com/")]
+        )
         with assert_raises(AssertionError):
             response.assert_created_at("http://example.org/")
 
     @test
     def assert_created_at__relative_location(self) -> None:
         response = TestResponse(
-            "201 Created", [("Location", "http://example.com/foo/bar")])
+            "201 Created", [("Location", "http://example.com/foo/bar")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_created_at("/foo/bar")
 
     @test
     def assert_created_at__keep_query_string(self) -> None:
         response = TestResponse(
-            "201 Created", [
-                ("Location", "http://example.com/foo?abc=def#frag"),
-            ])
+            "201 Created",
+            [("Location", "http://example.com/foo?abc=def#frag")],
+        )
         with assert_succeeds(AssertionError):
             response.assert_created_at("/foo?abc=def#frag")
 
     @test
     def assert_see_other__ok(self) -> None:
         response = TestResponse(
-            "303 See Other", [("Location", "http://example.com/")])
+            "303 See Other", [("Location", "http://example.com/")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_see_other("http://example.com/")
 
     @test
     def assert_see_other__wrong_status(self) -> None:
         response = TestResponse(
-            "200 OK", [("Location", "http://example.com/")])
+            "200 OK", [("Location", "http://example.com/")]
+        )
         with assert_raises(AssertionError):
             response.assert_see_other("http://example.com/")
 
@@ -473,38 +495,41 @@ class TestResponseTest(TestCase):
     @test
     def assert_see_other__wrong_location(self) -> None:
         response = TestResponse(
-            "303 See Other", [("Location", "http://example.com/")])
+            "303 See Other", [("Location", "http://example.com/")]
+        )
         with assert_raises(AssertionError):
             response.assert_see_other("http://example.org/")
 
     @test
     def assert_see_other__relative_location(self) -> None:
         response = TestResponse(
-            "303 See Other",
-            [("Location", "http://example.com/foo/bar")])
+            "303 See Other", [("Location", "http://example.com/foo/bar")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_see_other("/foo/bar")
 
     @test
     def assert_see_other__keep_query_string(self) -> None:
         response = TestResponse(
-            "303 See Other", [
-                ("Location", "http://example.com/foo?abc=def#frag"),
-            ])
+            "303 See Other",
+            [("Location", "http://example.com/foo?abc=def#frag")],
+        )
         with assert_succeeds(AssertionError):
             response.assert_see_other("/foo?abc=def#frag")
 
     @test
     def assert_temporary_redirect__ok(self) -> None:
         response = TestResponse(
-            "307 Temporary Redirect", [("Location", "http://example.com/")])
+            "307 Temporary Redirect", [("Location", "http://example.com/")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_temporary_redirect("http://example.com/")
 
     @test
     def assert_temporary_redirect__wrong_status(self) -> None:
         response = TestResponse(
-            "200 OK", [("Location", "http://example.com/")])
+            "200 OK", [("Location", "http://example.com/")]
+        )
         with assert_raises(AssertionError):
             response.assert_temporary_redirect("http://example.com/")
 
@@ -517,7 +542,8 @@ class TestResponseTest(TestCase):
     @test
     def assert_temporary_redirect__wrong_location(self) -> None:
         response = TestResponse(
-            "307 Temporary Redirect", [("Location", "http://example.com/")])
+            "307 Temporary Redirect", [("Location", "http://example.com/")]
+        )
         with assert_raises(AssertionError):
             response.assert_temporary_redirect("http://example.org/")
 
@@ -525,16 +551,17 @@ class TestResponseTest(TestCase):
     def assert_temporary_redirect__relative_location(self) -> None:
         response = TestResponse(
             "307 Temporary Redirect",
-            [("Location", "http://example.com/foo/bar")])
+            [("Location", "http://example.com/foo/bar")],
+        )
         with assert_succeeds(AssertionError):
             response.assert_temporary_redirect("/foo/bar")
 
     @test
     def assert_temporary_redirect__keep_query_string(self) -> None:
         response = TestResponse(
-            "307 Temporary Redirect", [
-                ("Location", "http://example.com/foo?abc=def#frag"),
-            ])
+            "307 Temporary Redirect",
+            [("Location", "http://example.com/foo?abc=def#frag")],
+        )
         with assert_succeeds(AssertionError):
             response.assert_temporary_redirect("/foo?abc=def#frag")
 
@@ -559,52 +586,56 @@ class TestResponseTest(TestCase):
     @test
     def assert_content_type__charset_matches(self) -> None:
         response = TestResponse(
-            "200 OK", [("Content-Type", "text/html; charset=us-ascii")])
+            "200 OK", [("Content-Type", "text/html; charset=us-ascii")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_content_type("text/html", charset="us-ascii")
 
     @test
     def assert_content_type__charset_list_matches(self) -> None:
         response = TestResponse(
-            "200 OK", [("Content-Type", "text/html; charset=us-ascii")])
+            "200 OK", [("Content-Type", "text/html; charset=us-ascii")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_content_type(
-                "text/html", charset=["us-ascii", "utf-8", None])
+                "text/html", charset=["us-ascii", "utf-8", None]
+            )
 
     @test
     def assert_content_type__charset_list_matches__none(self) -> None:
-        response = TestResponse(
-            "200 OK", [("Content-Type", "text/html")])
+        response = TestResponse("200 OK", [("Content-Type", "text/html")])
         with assert_succeeds(AssertionError):
             response.assert_content_type(
-                "text/html", charset=["us-ascii", "utf-8", None])
+                "text/html", charset=["us-ascii", "utf-8", None]
+            )
 
     @test
     def assert_content_type__charset_not_checked(self) -> None:
         response = TestResponse(
-            "200 OK", [("Content-Type", "text/html; charset=utf-8")])
+            "200 OK", [("Content-Type", "text/html; charset=utf-8")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_content_type("text/html")
 
     @test
     def assert_content_type__no_charset_in_response(self) -> None:
-        response = TestResponse(
-            "200 OK", [("Content-Type", "text/html")])
+        response = TestResponse("200 OK", [("Content-Type", "text/html")])
         with assert_raises(AssertionError):
             response.assert_content_type("text/html", charset="us-ascii")
 
     @test
     def assert_content_type__wrong_charset(self) -> None:
         response = TestResponse(
-            "200 OK", [("Content-Type", "text/html; charset=utf-8")])
+            "200 OK", [("Content-Type", "text/html; charset=utf-8")]
+        )
         with assert_raises(AssertionError):
             response.assert_content_type("text/html", charset="us-ascii")
 
     @test
     def assert_set_cookie__simple_match(self) -> None:
-        response = TestResponse("200 OK", [
-            ("Set-Cookie", "Foo=Bar; Secure; Max-Age=1234"),
-        ])
+        response = TestResponse(
+            "200 OK", [("Set-Cookie", "Foo=Bar; Secure; Max-Age=1234")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
 
@@ -655,7 +686,8 @@ class TestResponseTest(TestCase):
     @test
     def assert_set_cookie__has_http_only(self) -> None:
         response = TestResponse(
-            "200 OK", [("Set-Cookie", "Foo=Bar; HttpOnly")])
+            "200 OK", [("Set-Cookie", "Foo=Bar; HttpOnly")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
         with assert_succeeds(AssertionError):
@@ -676,7 +708,8 @@ class TestResponseTest(TestCase):
     @test
     def assert_set_cookie__has_max_age(self) -> None:
         response = TestResponse(
-            "200 OK", [("Set-Cookie", "Foo=Bar; Max-Age=1234")])
+            "200 OK", [("Set-Cookie", "Foo=Bar; Max-Age=1234")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
         with assert_succeeds(AssertionError):
@@ -687,7 +720,8 @@ class TestResponseTest(TestCase):
     @test
     def assert_set_cookie__invalid_max_age(self) -> None:
         response = TestResponse(
-            "200 OK", [("Set-Cookie", "Foo=Bar; Max-Age=INVALID")])
+            "200 OK", [("Set-Cookie", "Foo=Bar; Max-Age=INVALID")]
+        )
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
         with assert_raises(AssertionError):
@@ -695,8 +729,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__no_max_age(self) -> None:
-        response = TestResponse(
-            "200 OK", [("Set-Cookie", "Foo=Bar")])
+        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
         with assert_raises(AssertionError):
@@ -709,8 +742,9 @@ class TestWSGIAppTest(TestCase):
         app_run = False
         env = None  # type: Optional[WSGIEnvironment]
 
-        def app(environ: WSGIEnvironment, sr: StartResponse) \
-                -> Iterable[bytes]:
+        def app(
+            environ: WSGIEnvironment, sr: StartResponse
+        ) -> Iterable[bytes]:
             nonlocal app_run, env
             app_run = True
             env = environ
@@ -726,8 +760,7 @@ class TestWSGIAppTest(TestCase):
 
     @test
     def response(self) -> None:
-        def app(_: WSGIEnvironment, sr: StartResponse) \
-                -> Iterable[bytes]:
+        def app(_: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
             sr("404 Not Found", [("X-Foo", "Bar")])
             return []
 
@@ -738,8 +771,7 @@ class TestWSGIAppTest(TestCase):
 
     @test
     def response_body(self) -> None:
-        def app(_: WSGIEnvironment, sr: StartResponse) \
-                -> Iterable[bytes]:
+        def app(_: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
             writer = sr("200 OK", [])
             writer(b"Abc")
             writer(b"def")
@@ -825,8 +857,9 @@ def _get_exc_info() -> Tuple[Any, Any, Any]:
 
 
 class TestWSGIArgumentsTest(TestCase):
-    def _create_app(self, argument_template: Sequence[ArgumentTemplate]) \
-            -> WSGIApplication:
+    def _create_app(
+        self, argument_template: Sequence[ArgumentTemplate]
+    ) -> WSGIApplication:
         def app(env: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
             try:
                 parse_args(env, argument_template)
@@ -835,19 +868,24 @@ class TestWSGIArgumentsTest(TestCase):
             else:
                 sr("200 OK", [])
             return []
+
         return app
 
-    def _successful_arg_test(self,
-                             app_args: Sequence[ArgumentTemplate],
-                             expected_args: Iterable[ArgumentToTest]) -> None:
+    def _successful_arg_test(
+        self,
+        app_args: Sequence[ArgumentTemplate],
+        expected_args: Iterable[ArgumentToTest],
+    ) -> None:
         app = self._create_app(app_args)
         request = create_request("GET", "/")
         with assert_succeeds(AssertionError):
             test_wsgi_arguments(app, request, expected_args)
 
-    def _failing_arg_test(self,
-                          app_args: Sequence[ArgumentTemplate],
-                          expected_args: Iterable[ArgumentToTest]) -> None:
+    def _failing_arg_test(
+        self,
+        app_args: Sequence[ArgumentTemplate],
+        expected_args: Iterable[ArgumentToTest],
+    ) -> None:
         app = self._create_app(app_args)
         request = create_request("GET", "/")
         with assert_raises(AssertionError):
@@ -859,62 +897,50 @@ class TestWSGIArgumentsTest(TestCase):
 
     @test
     def required_argument_present(self) -> None:
-        self._successful_arg_test([
-            ("arg", int, Multiplicity.REQUIRED),
-        ], [
-            ("arg", Multiplicity.REQUIRED, "42"),
-        ])
+        self._successful_arg_test(
+            [("arg", int, Multiplicity.REQUIRED)],
+            [("arg", Multiplicity.REQUIRED, "42")],
+        )
 
     @test
     def required_argument_not_in_app(self) -> None:
-        self._failing_arg_test([
-            ("arg", int, Multiplicity.OPTIONAL),
-        ], [
-            ("arg", Multiplicity.REQUIRED, "42"),
-        ])
+        self._failing_arg_test(
+            [("arg", int, Multiplicity.OPTIONAL)],
+            [("arg", Multiplicity.REQUIRED, "42")],
+        )
 
     @test
     def required_argument_not_in_test(self) -> None:
-        self._failing_arg_test([
-            ("arg", int, Multiplicity.REQUIRED),
-        ], [])
+        self._failing_arg_test([("arg", int, Multiplicity.REQUIRED)], [])
 
     @test
     def required_argument_optional_in_test(self) -> None:
-        self._failing_arg_test([
-            ("arg", int, Multiplicity.REQUIRED),
-        ], [
-            ("arg", Multiplicity.OPTIONAL, "42"),
-        ])
+        self._failing_arg_test(
+            [("arg", int, Multiplicity.REQUIRED)],
+            [("arg", Multiplicity.OPTIONAL, "42")],
+        )
 
     @test
     def optional_argument_not_in_app(self) -> None:
-        self._successful_arg_test([
-        ], [
-            ("arg", Multiplicity.OPTIONAL, "foo"),
-        ])
+        self._successful_arg_test([], [("arg", Multiplicity.OPTIONAL, "foo")])
 
     @test
     def optional_argument_not_in_test(self) -> None:
-        self._successful_arg_test([
-            ("arg", int, Multiplicity.OPTIONAL),
-        ], [])
+        self._successful_arg_test([("arg", int, Multiplicity.OPTIONAL)], [])
 
     @test
     def correct_value_not_accepted(self) -> None:
-        self._failing_arg_test([
-            ("arg", int, Multiplicity.OPTIONAL),
-        ], [
-            ("arg", Multiplicity.OPTIONAL, "not-a-number"),
-        ])
+        self._failing_arg_test(
+            [("arg", int, Multiplicity.OPTIONAL)],
+            [("arg", Multiplicity.OPTIONAL, "not-a-number")],
+        )
 
     @test
     def invalid_value_accepted(self) -> None:
-        self._failing_arg_test([
-            ("arg", str, Multiplicity.OPTIONAL),
-        ], [
-            ("arg", Multiplicity.OPTIONAL, "42", "not-a-number"),
-        ])
+        self._failing_arg_test(
+            [("arg", str, Multiplicity.OPTIONAL)],
+            [("arg", Multiplicity.OPTIONAL, "42", "not-a-number")],
+        )
 
     @test
     def handle_other_errors(self) -> None:
@@ -928,9 +954,7 @@ class TestWSGIArgumentsTest(TestCase):
 
     @test
     def post_request__no_args(self) -> None:
-        app = self._create_app([
-            ("arg", int, Multiplicity.OPTIONAL),
-        ])
+        app = self._create_app([("arg", int, Multiplicity.OPTIONAL)])
         request = create_request("POST", "/")
         with assert_succeeds(AssertionError):
             test_wsgi_arguments(app, request, [])

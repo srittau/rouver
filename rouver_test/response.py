@@ -7,9 +7,16 @@ from dectest import TestCase, test, before
 
 from werkzeug.wrappers import Request
 
-from rouver.response import \
-    respond, respond_with_json, respond_with_html, created_at, see_other, \
-    created_as_json, temporary_redirect, respond_with_content
+from rouver.response import (
+    respond,
+    respond_with_json,
+    respond_with_html,
+    created_at,
+    see_other,
+    created_as_json,
+    temporary_redirect,
+    respond_with_content,
+)
 
 from rouver_test.util import TestingStartResponse, default_environment
 
@@ -30,10 +37,7 @@ class RespondTest(TestCase):
     @test
     def extra_headers(self) -> None:
         sr = TestingStartResponse()
-        respond(
-            sr, extra_headers=[
-                ("X-Custom-Header", "Foobar"),
-            ])
+        respond(sr, extra_headers=[("X-Custom-Header", "Foobar")])
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     @test
@@ -61,15 +65,14 @@ class RespondTest(TestCase):
             respond(
                 sr,
                 content_type="image/png",
-                extra_headers=[
-                    ("Content-Type", "image/jpeg"),
-                ])
+                extra_headers=[("Content-Type", "image/jpeg")],
+            )
 
     @test
     def response(self) -> None:
         sr = TestingStartResponse()
         response = respond(sr)
-        assert_equal(b'', b"".join(response))
+        assert_equal(b"", b"".join(response))
 
 
 class RespondWithContentTest(TestCase):
@@ -107,9 +110,8 @@ class RespondWithContentTest(TestCase):
     def extra_headers(self) -> None:
         sr = TestingStartResponse()
         respond_with_content(
-            sr, b"", extra_headers=[
-                ("X-Custom-Header", "Foobar"),
-            ])
+            sr, b"", extra_headers=[("X-Custom-Header", "Foobar")]
+        )
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     @test
@@ -136,8 +138,9 @@ class RespondWithJSONTest(TestCase):
     def content_type(self) -> None:
         sr = TestingStartResponse()
         respond_with_json(sr, {})
-        sr.assert_header_equals("Content-Type",
-                                "application/json; charset=utf-8")
+        sr.assert_header_equals(
+            "Content-Type", "application/json; charset=utf-8"
+        )
 
     @test
     def content_length(self) -> None:
@@ -149,9 +152,8 @@ class RespondWithJSONTest(TestCase):
     def extra_headers(self) -> None:
         sr = TestingStartResponse()
         respond_with_json(
-            sr, {}, extra_headers=[
-                ("X-Custom-Header", "Foobar"),
-            ])
+            sr, {}, extra_headers=[("X-Custom-Header", "Foobar")]
+        )
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     @test
@@ -184,7 +186,8 @@ class RespondWithHTMLTest(TestCase):
     def custom_status(self) -> None:
         sr = TestingStartResponse()
         respond_with_html(
-            sr, "<div>Test</div>", status=HTTPStatus.NOT_ACCEPTABLE)
+            sr, "<div>Test</div>", status=HTTPStatus.NOT_ACCEPTABLE
+        )
         sr.assert_status(HTTPStatus.NOT_ACCEPTABLE)
 
     @test
@@ -205,9 +208,8 @@ class RespondWithHTMLTest(TestCase):
         respond_with_html(
             sr,
             "<div>Täst</div>",
-            extra_headers=[
-                ("X-Custom-Header", "Foobar"),
-            ])
+            extra_headers=[("X-Custom-Header", "Foobar")],
+        )
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     @test
@@ -235,17 +237,20 @@ class CreatedAtTest(TestCase):
         request = Request(self.environment)
         created_at(request, self.start_response, "/foo/bar")
         self.start_response.assert_status(HTTPStatus.CREATED)
-        self.start_response.assert_header_equals("Content-Type",
-                                                 "text/html; charset=utf-8")
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/foo/bar")
+            "Content-Type", "text/html; charset=utf-8"
+        )
+        self.start_response.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar"
+        )
 
     @test
     def absolute_url(self) -> None:
         request = Request(self.environment)
         created_at(request, self.start_response, "http://example.com/foo")
-        self.start_response.assert_header_equals("Location",
-                                                 "http://example.com/foo")
+        self.start_response.assert_header_equals(
+            "Location", "http://example.com/foo"
+        )
 
     @test
     def url_without_leading_slash(self) -> None:
@@ -253,7 +258,8 @@ class CreatedAtTest(TestCase):
         request = Request(self.environment)
         created_at(request, self.start_response, "foo/bar")
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/foo/bar")
+            "Location", "http://www.example.com/foo/bar"
+        )
 
     @test
     def non_utf8_url(self) -> None:
@@ -269,7 +275,8 @@ class CreatedAtTest(TestCase):
             request,
             self.start_response,
             "foo",
-            extra_headers=[("X-Foo", "Bar")])
+            extra_headers=[("X-Foo", "Bar")],
+        )
         self.start_response.assert_header_equals("X-Foo", "Bar")
 
     @test
@@ -293,17 +300,21 @@ class CreatedAsJSONTest(TestCase):
         created_as_json(request, self.start_response, "/foo/bar", {})
         self.start_response.assert_status(HTTPStatus.CREATED)
         self.start_response.assert_header_equals(
-            "Content-Type", "application/json; charset=utf-8")
+            "Content-Type", "application/json; charset=utf-8"
+        )
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/foo/bar")
+            "Location", "http://www.example.com/foo/bar"
+        )
 
     @test
     def absolute_url(self) -> None:
         request = Request(self.environment)
-        created_as_json(request, self.start_response, "http://example.com/foo",
-                        {})
-        self.start_response.assert_header_equals("Location",
-                                                 "http://example.com/foo")
+        created_as_json(
+            request, self.start_response, "http://example.com/foo", {}
+        )
+        self.start_response.assert_header_equals(
+            "Location", "http://example.com/foo"
+        )
 
     @test
     def url_without_leading_slash(self) -> None:
@@ -311,7 +322,8 @@ class CreatedAsJSONTest(TestCase):
         request = Request(self.environment)
         created_as_json(request, self.start_response, "foo/bar", {})
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/foo/bar")
+            "Location", "http://www.example.com/foo/bar"
+        )
 
     @test
     def non_utf8_url(self) -> None:
@@ -326,16 +338,18 @@ class CreatedAsJSONTest(TestCase):
         created_as_json(
             request,
             self.start_response,
-            "foo", {},
-            extra_headers=[("X-Foo", "Bar")])
+            "foo",
+            {},
+            extra_headers=[("X-Foo", "Bar")],
+        )
         self.start_response.assert_header_equals("X-Foo", "Bar")
 
     @test
     def json(self) -> None:
         request = Request(self.environment)
-        response = created_as_json(request, self.start_response, "foo/bar", {
-            "foo": 3,
-        })
+        response = created_as_json(
+            request, self.start_response, "foo/bar", {"foo": 3}
+        )
         json = json_decode(b"".join(response).decode("utf-8"))
         assert_equal({"foo": 3}, json)
 
@@ -352,18 +366,22 @@ class TemporaryRedirectTest(TestCase):
         request = Request(self.environment)
         temporary_redirect(request, self.start_response, "/foo/bar")
         self.start_response.assert_status(HTTPStatus.TEMPORARY_REDIRECT)
-        self.start_response.assert_header_equals("Content-Type",
-                                                 "text/html; charset=utf-8")
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/foo/bar")
+            "Content-Type", "text/html; charset=utf-8"
+        )
+        self.start_response.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar"
+        )
 
     @test
     def absolute_url(self) -> None:
         request = Request(self.environment)
-        temporary_redirect(request, self.start_response,
-                           "http://example.com/foo")
-        self.start_response.assert_header_equals("Location",
-                                                 "http://example.com/foo")
+        temporary_redirect(
+            request, self.start_response, "http://example.com/foo"
+        )
+        self.start_response.assert_header_equals(
+            "Location", "http://example.com/foo"
+        )
 
     @test
     def url_without_leading_slash(self) -> None:
@@ -371,7 +389,8 @@ class TemporaryRedirectTest(TestCase):
         request = Request(self.environment)
         temporary_redirect(request, self.start_response, "foo/bar")
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/foo/bar")
+            "Location", "http://www.example.com/foo/bar"
+        )
 
     @test
     def non_utf8_url(self) -> None:
@@ -384,10 +403,12 @@ class TemporaryRedirectTest(TestCase):
     def do_not_encode_cgi_arguments(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        temporary_redirect(request, self.start_response,
-                           "foo?bar=baz&abc=%6A;+,@:$")
+        temporary_redirect(
+            request, self.start_response, "foo?bar=baz&abc=%6A;+,@:$"
+        )
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/foo?bar=baz&abc=%6A;+,@:$")
+            "Location", "http://www.example.com/foo?bar=baz&abc=%6A;+,@:$"
+        )
 
     @test
     def extra_headers(self) -> None:
@@ -396,9 +417,8 @@ class TemporaryRedirectTest(TestCase):
             request,
             self.start_response,
             "foo",
-            extra_headers=[
-                ("X-Foo", "Bar"),
-            ])
+            extra_headers=[("X-Foo", "Bar")],
+        )
         self.start_response.assert_header_equals("X-Foo", "Bar")
 
     @test
@@ -422,17 +442,20 @@ class SeeOtherTest(TestCase):
         request = Request(self.environment)
         see_other(request, self.start_response, "/foo/bar")
         self.start_response.assert_status(HTTPStatus.SEE_OTHER)
-        self.start_response.assert_header_equals("Content-Type",
-                                                 "text/html; charset=utf-8")
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/foo/bar")
+            "Content-Type", "text/html; charset=utf-8"
+        )
+        self.start_response.assert_header_equals(
+            "Location", "http://www.example.com/foo/bar"
+        )
 
     @test
     def absolute_url(self) -> None:
         request = Request(self.environment)
         see_other(request, self.start_response, "http://example.com/foo")
-        self.start_response.assert_header_equals("Location",
-                                                 "http://example.com/foo")
+        self.start_response.assert_header_equals(
+            "Location", "http://example.com/foo"
+        )
 
     @test
     def url_without_leading_slash(self) -> None:
@@ -441,7 +464,8 @@ class SeeOtherTest(TestCase):
         request = Request(self.environment)
         see_other(request, self.start_response, "foo/bar")
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/abc/def/foo/bar")
+            "Location", "http://www.example.com/abc/def/foo/bar"
+        )
 
     @test
     def url_path_without_trailing_slash(self) -> None:
@@ -450,7 +474,8 @@ class SeeOtherTest(TestCase):
         request = Request(self.environment)
         see_other(request, self.start_response, "foo/bar")
         self.start_response.assert_header_equals(
-            "Location", "http://www.example.com/abc/foo/bar")
+            "Location", "http://www.example.com/abc/foo/bar"
+        )
 
     @test
     def non_utf8_url(self) -> None:
@@ -466,9 +491,8 @@ class SeeOtherTest(TestCase):
             request,
             self.start_response,
             "foo",
-            extra_headers=[
-                ("X-Foo", "Bar"),
-            ])
+            extra_headers=[("X-Foo", "Bar")],
+        )
         self.start_response.assert_header_equals("X-Foo", "Bar")
 
     @test
