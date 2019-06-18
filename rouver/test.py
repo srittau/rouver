@@ -116,7 +116,6 @@ class TestRequest:
             "SERVER_PROTOCOL": "HTTP/1.1",
             "wsgi.version": (1, 0),
             "wsgi.url_scheme": "http",
-            "wsgi.input": BytesIO(self._body),
             "wsgi.errors": self.error_stream,
             "wsgi.multithread": False,
             "wsgi.multiprocess": False,
@@ -124,16 +123,16 @@ class TestRequest:
         }
         for header, value in self._extra_headers:
             env["HTTP_" + header.upper().replace("-", "_")] = value
+        body = self._body
         if self._arguments:
             if self.method == "GET":
                 env["QUERY_STRING"] = self._build_query_string()
             else:
-                assert self._body == b""
-                env["wsgi.input"] = BytesIO(
-                    self._build_query_string().encode("ascii")
-                )
-        if self._body != b"":
-            env["CONTENT_LENGTH"] = str(len(self._body))
+                assert body == b""
+                body = self._build_query_string().encode("ascii")
+        env["wsgi.input"] = BytesIO(body)
+        if body != b"":
+            env["CONTENT_LENGTH"] = str(len(body))
         if self.content_type is not None:
             env["CONTENT_TYPE"] = self.content_type
         env.update(self._extra_environ)

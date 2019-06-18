@@ -105,6 +105,23 @@ class TestRequestTest(TestCase):
         assert_not_in("QUERY_STRING", environ)
 
     @test
+    def to_environment__post_urlencoded(self) -> None:
+        request = create_request("POST", "/foo/bar")
+        request.add_argument("arg", "value")
+        environ = request.to_environment()
+        assert_dict_superset(
+            {
+                "REQUEST_METHOD": "POST",
+                "CONTENT_TYPE": "application/x-www-form-urlencoded",
+                "CONTENT_LENGTH": "9",
+            },
+            environ,
+        )
+        assert_wsgi_input_stream(environ["wsgi.input"])
+        assert_equal(b"arg=value", environ["wsgi.input"].read())
+        assert_not_in("QUERY_STRING", environ)
+
+    @test
     def set_env_var(self) -> None:
         request = create_request("GET", "/foo/bar")
         request.set_env_var("foo.bar", "baz")

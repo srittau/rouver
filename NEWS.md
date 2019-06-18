@@ -1,3 +1,10 @@
+# News in rouver 0.99.1
+
+## Bug Fixes
+
+* `rouver.test`: Include `Content-Length` header when sending CGI
+  arguments in request body (content type `application/x-www-form-urlencoded`).
+
 # News in rouver 0.99.0
 
 ## Incompatible Changes
