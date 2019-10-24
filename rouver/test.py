@@ -330,6 +330,9 @@ class TestResponse:
 
 
 def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
+    output_written = False
+    response = None  # type: Optional[TestResponse]
+
     def write(b: bytes) -> None:
         nonlocal output_written
         assert response is not None
@@ -352,8 +355,6 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
         return write
 
     env = request.to_environment()
-    response = None  # type: Optional[TestResponse]
-    output_written = False
     body = app(env, start_response)
     if response is None:
         raise AssertionError("start_response() was not called")

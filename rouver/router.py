@@ -413,6 +413,7 @@ def _respond_internal_server_error(
 def _respond_http_exception(
     start_response: StartResponse, exception: HTTPException
 ) -> Iterable[bytes]:
+    assert exception.code is not None
     status = HTTPStatus(exception.code)
     html = http_status_page(status, message=exception.description or "")
     return respond_with_html(start_response, html, status=status)
