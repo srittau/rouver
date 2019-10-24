@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name="rouver",
-    version="0.99.1",
+    version="0.99.2",
     description="A microframework",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
