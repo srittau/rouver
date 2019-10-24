@@ -463,3 +463,9 @@ class RouterTestCase(TestCase):
         self, request: TestRequest, arguments: Iterable[ArgumentToTest]
     ) -> None:
         test_wsgi_arguments(self.router, request, arguments)
+
+
+# pytest-friendly aliases
+FakeRequest = TestRequest
+FakeResponse = TestResponse
+run_wsgi_test = test_wsgi_app

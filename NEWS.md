@@ -1,3 +1,12 @@
+# News in rouver 0.99.2
+
+## API Additions
+
+* `rouver.test`: Add pytest-friendly aliases:
+    * `run_wsgi_test()` for `test_wsgi_app()`
+    * `FakeRequest` for `TestRequest`
+    * `FakeResponse` for `TestResponse`
+
 # News in rouver 0.99.1
 
 ## Bug Fixes
