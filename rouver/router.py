@@ -400,7 +400,7 @@ def _respond_method_not_allowed(
 
 
 def _respond_internal_server_error(
-    start_response: StartResponse
+    start_response: StartResponse,
 ) -> Iterable[bytes]:
     html = http_status_page(
         HTTPStatus.INTERNAL_SERVER_ERROR, message="Internal server error."
@@ -416,7 +416,12 @@ def _respond_http_exception(
     assert exception.code is not None
     status = HTTPStatus(exception.code)
     html = http_status_page(status, message=exception.description or "")
-    return respond_with_html(start_response, html, status=status)
+    headers = [
+        h for h in exception.get_headers() if h[0].lower() != "content-type"
+    ]
+    return respond_with_html(
+        start_response, html, status=status, extra_headers=headers,
+    )
 
 
 def _respond_arguments_error(

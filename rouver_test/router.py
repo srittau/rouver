@@ -13,7 +13,7 @@ from asserts import (
 
 from dectest import TestCase, test, before
 
-from werkzeug.exceptions import Conflict
+from werkzeug.exceptions import Unauthorized
 from werkzeug.wrappers import Request
 
 from rouver.exceptions import ArgumentsError
@@ -741,21 +741,25 @@ class RouterTest(TestCase):
     @test
     def http_error(self) -> None:
         def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
-            raise Conflict("Foo < Bar")
+            raise Unauthorized("Foo < Bar", www_authenticate="Test")
 
         self.router.error_handling = False
         self.router.add_routes([("foo", "GET", handle)])
         response = self.handle_wsgi("GET", "/foo")
-        self.start_response.assert_status(HTTPStatus.CONFLICT)
+        self.start_response.assert_status(HTTPStatus.UNAUTHORIZED)
+        self.start_response.assert_header_equals(
+            "Content-Type", "text/html; charset=utf-8"
+        )
+        self.start_response.assert_header_equals("WWW-Authenticate", "Test")
         html = b"".join(response).decode("utf-8")
         assert_equal(
             """<!DOCTYPE html>
 <html>
     <head>
-        <title>409 &#x2014; Conflict</title>
+        <title>401 &#x2014; Unauthorized</title>
     </head>
     <body>
-        <h1>409 &#x2014; Conflict</h1>
+        <h1>401 &#x2014; Unauthorized</h1>
         <p>Foo &lt; Bar</p>
     </body>
 </html>

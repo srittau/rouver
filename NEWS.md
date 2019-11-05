@@ -1,5 +1,10 @@
 # News in rouver 1.0.0
 
+## Bug Fixes
+
+* `rouver.router`: Include extra headers from `HTTPException` sub-classes
+  in responses.
+
 # News in rouver 0.99.2
 
 ## API Additions
