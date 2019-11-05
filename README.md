@@ -3,6 +3,7 @@
 A microframework for Python 3, based on werkzeug.
 
 [![MIT License](https://img.shields.io/pypi/l/rouver.svg)](https://pypi.python.org/pypi/rouver/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rouver)](https://pypi.python.org/pypi/rouver/)
 [![GitHub](https://img.shields.io/github/release/srittau/rouver/all.svg)](https://github.com/srittau/rouver/releases/)
 [![pypi](https://img.shields.io/pypi/v/rouver.svg)](https://pypi.python.org/pypi/rouver/)
 [![Travis CI](https://travis-ci.org/srittau/rouver.svg?branch=master)](https://travis-ci.org/srittau/rouver)
