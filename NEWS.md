@@ -1,3 +1,14 @@
+# News in rouver 1.1.0
+
+## API Additions
+
+* Add `absolute_url()` utility function.
+
+## Improvements
+
+* URL constructing functions, such as `created_as_json()` now encode
+  special characters in the path instead of throwing a `ValueError`.
+
 # News in rouver 1.0.0
 
 ## Bug Fixes

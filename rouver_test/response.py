@@ -262,11 +262,13 @@ class CreatedAtTest(TestCase):
         )
 
     @test
-    def non_utf8_url(self) -> None:
+    def umlauts_in_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        with assert_raises(ValueError):
-            created_at(request, self.start_response, "foo/bär")
+        created_at(request, self.start_response, "foo/bär")
+        self.start_response.assert_header_equals(
+            "Location", "http://www.example.com/foo/b%C3%A4r"
+        )
 
     @test
     def extra_headers(self) -> None:
@@ -326,11 +328,13 @@ class CreatedAsJSONTest(TestCase):
         )
 
     @test
-    def non_utf8_url(self) -> None:
+    def umlauts_in_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        with assert_raises(ValueError):
-            created_as_json(request, self.start_response, "foo/bär", {})
+        created_as_json(request, self.start_response, "foo/bär", {})
+        self.start_response.assert_header_equals(
+            "Location", "http://www.example.com/foo/b%C3%A4r"
+        )
 
     @test
     def extra_headers(self) -> None:
@@ -393,11 +397,13 @@ class TemporaryRedirectTest(TestCase):
         )
 
     @test
-    def non_utf8_url(self) -> None:
+    def umlauts_in_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        with assert_raises(ValueError):
-            temporary_redirect(request, self.start_response, "foo/bär")
+        temporary_redirect(request, self.start_response, "foo/bär")
+        self.start_response.assert_header_equals(
+            "Location", "http://www.example.com/foo/b%C3%A4r"
+        )
 
     @test
     def do_not_encode_cgi_arguments(self) -> None:
@@ -478,11 +484,13 @@ class SeeOtherTest(TestCase):
         )
 
     @test
-    def non_utf8_url(self) -> None:
+    def umlauts_in_url(self) -> None:
         self.environment["SERVER_NAME"] = "www.example.com"
         request = Request(self.environment)
-        with assert_raises(ValueError):
-            see_other(request, self.start_response, "foo/bär")
+        see_other(request, self.start_response, "foo/bär")
+        self.start_response.assert_header_equals(
+            "Location", "http://www.example.com/foo/b%C3%A4r"
+        )
 
     @test
     def extra_headers(self) -> None:

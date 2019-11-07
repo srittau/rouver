@@ -1,4 +1,3 @@
-import re
 from http import HTTPStatus
 from json import dumps as dumps_json
 from typing import Union, Any, Iterable, Sequence, Optional
@@ -12,26 +11,11 @@ from rouver.html import (
 )
 from rouver.status import status_line
 from rouver.types import StartResponse, Header
-
-_url_scheme_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9.+-]*:")
-
-
-def _absolute_url(request: Request, url: str) -> str:
-    url.encode("ascii")
-    if _url_scheme_re.match(url):
-        return url
-    if url.startswith("/"):
-        base_url = request.host_url[:-1]
-    else:
-        if request.base_url.endswith("/"):
-            base_url = request.base_url
-        else:
-            base_url = request.base_url.rsplit("/", 1)[0] + "/"
-    return base_url + url
+from rouver.util import absolute_url
 
 
 def _location_header(request: Request, url: str) -> Header:
-    return "Location", _absolute_url(request, url)
+    return "Location", absolute_url(request, url)
 
 
 def respond(
@@ -163,7 +147,7 @@ def created_at(
     a simple HTML body.
     """
 
-    url = _absolute_url(request, url_part)
+    url = absolute_url(request, url_part)
     html = created_at_page(url)
     all_headers = [_location_header(request, url_part)] + list(extra_headers)
     return respond_with_html(
@@ -182,7 +166,8 @@ def created_as_json(
     *,
     extra_headers: Sequence[Header] = []
 ) -> Iterable[bytes]:
-    """Prepare a 201 Created WSGI response with a Location header and JSON body.
+    """
+    Prepare a 201 Created WSGI response with a Location header and JSON body.
     """
 
     all_headers = [_location_header(request, url_part)] + list(extra_headers)
@@ -201,7 +186,7 @@ def temporary_redirect(
     *,
     extra_headers: Sequence[Header] = []
 ) -> Iterable[bytes]:
-    url = _absolute_url(request, url_part)
+    url = absolute_url(request, url_part)
     html = temporary_redirect_page(url)
     all_headers = [_location_header(request, url_part)] + list(extra_headers)
     return respond_with_html(
@@ -219,7 +204,7 @@ def see_other(
     *,
     extra_headers: Sequence[Header] = []
 ) -> Iterable[bytes]:
-    url = _absolute_url(request, url_part)
+    url = absolute_url(request, url_part)
     html = see_other_page(url)
     all_headers = [_location_header(request, url_part)] + list(extra_headers)
     return respond_with_html(
