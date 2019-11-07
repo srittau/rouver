@@ -49,7 +49,7 @@ class AbsoluteURLTest(TestCase):
         assert_equal("https://example.com/base/foo", url)
 
     @test
-    def do_not_encode_special_characters(self):
+    def do_not_encode_special_characters(self) -> None:
         request = self._create_request()
         url = absolute_url(request, "/foo?bar=baz&abc=%6A;+,@:$")
         assert_equal("https://example.com/foo?bar=baz&abc=%6A;+,@:$", url)
