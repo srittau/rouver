@@ -16,4 +16,4 @@ def absolute_url(request: Request, path: str) -> str:
     can potentially contain such characters before passing them to
     absolute_url().
     """
-    return urljoin(request.base_url, quote(path, safe="/:?&$@,;+=%"))
+    return urljoin(request.base_url, quote(path, safe="/:?&$@,;+=%~"))
