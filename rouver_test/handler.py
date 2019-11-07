@@ -12,7 +12,7 @@ from werkzeug.wrappers import Request
 from rouver.args import Multiplicity
 from rouver.handler import RouteHandlerBase
 
-from rouver_test.util import default_environment, TestingStartResponse
+from rouver_test.testutil import default_environment, TestingStartResponse
 
 
 class TestingHandler(RouteHandlerBase):

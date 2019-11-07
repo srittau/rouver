@@ -18,7 +18,7 @@ from werkzeug.exceptions import BadRequest
 from rouver.args import parse_args, Multiplicity, ArgumentParser
 from rouver.exceptions import ArgumentsError
 
-from rouver_test.util import default_environment
+from rouver_test.testutil import default_environment
 
 MULTIPART_PART_TMPL = """--1234567890
 Content-Disposition: form-data; name="{name}"

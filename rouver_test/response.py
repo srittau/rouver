@@ -18,7 +18,7 @@ from rouver.response import (
     respond_with_content,
 )
 
-from rouver_test.util import TestingStartResponse, default_environment
+from rouver_test.testutil import TestingStartResponse, default_environment
 
 
 class RespondTest(TestCase):
