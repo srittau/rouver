@@ -1,10 +1,9 @@
 from enum import Enum
 from io import BytesIO
-from typing import IO, Any, Callable, Dict, List, Sequence, Tuple, Union, cast
+from typing import IO, Any, Callable, Dict, List, Sequence, Tuple, Union
 from urllib.parse import parse_qs
 
 from werkzeug.datastructures import FileStorage, MultiDict
-from werkzeug.exceptions import BadRequest
 from werkzeug.formparser import parse_form_data
 
 from rouver.exceptions import ArgumentsError
@@ -25,7 +24,6 @@ ArgumentDict = Dict[str, Any]
 
 _GET_METHODS = ["GET", "HEAD"]
 _FORM_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
-_FORM_TYPES = ["application/x-www-form-urlencoded", "multipart/form-data"]
 
 
 class _ArgumentError(Exception):
@@ -70,20 +68,13 @@ class ArgumentParser:
     def __init__(self, environ: WSGIEnvironment) -> None:
         self.environ = environ
 
-        if _has_wrong_content_type(environ):
-            raise BadRequest(
-                "incorrect content type, expected {}".format(
-                    " or ".join(_FORM_TYPES)
-                )
-            )
-
-        method = environ.get("REQUEST_METHOD", "GET")
+        method: str = environ.get("REQUEST_METHOD", "GET")
+        args: MultiDict[str, Any]
+        files: MultiDict[str, Any]
         if method in _GET_METHODS:
-            qs = cast(str, environ.get("QUERY_STRING", ""))
-            args = MultiDict(
-                parse_qs(qs, keep_blank_values=True)
-            )  # type: MultiDict[str, Any]
-            files = MultiDict()  # type: MultiDict[str, Any]
+            qs: str = environ.get("QUERY_STRING", "")
+            args = MultiDict(parse_qs(qs, keep_blank_values=True))
+            files = MultiDict()
         elif method in _FORM_METHODS:
             _, args, files = parse_form_data(environ)
         else:
@@ -202,14 +193,6 @@ def _create_arg_dict(
     for name, v in files.items():
         _all_args[name] = _Argument(v, is_file=True)
     return _all_args
-
-
-def _has_wrong_content_type(environ: WSGIEnvironment) -> bool:
-    method = environ.get("REQUEST_METHOD", "GET")
-    if method.upper() not in _FORM_METHODS:
-        return False
-    content_type = environ.get("CONTENT_TYPE", "").split(";")[0]
-    return content_type not in _FORM_TYPES
 
 
 def parse_args(

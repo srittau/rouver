@@ -7,6 +7,9 @@
     * Remove `TestRequest.prepare_for_arguments()`.
     * `TestRequest.content_type` will not be set when calling
       `add_argument()`.
+* `ArgumentParser` and `parse_args()` will not raise a
+  `BadRequest` if request has wrong content type. Instead,
+  they will treat it as if no arguments were given.
 
 # News in rouver 1.1.0
 

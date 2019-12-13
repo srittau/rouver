@@ -368,7 +368,7 @@ class ParseArgsTest(TestCase):
         assert_equal("bär".encode("utf-8"), f.read())
 
     @test
-    def post_wrong_content_type(self) -> None:
+    def post_wrong_content_type__optional_args(self) -> None:
         """This exposes a bug in Python's cgi module that will raise a
         TypeError when no request string was provided. See
         <https://bugs.python.org/issue32029>.
@@ -377,17 +377,35 @@ class ParseArgsTest(TestCase):
         self.env["CONTENT_TYPE"] = "application/octet-stream"
         self.env["CONTENT_LENGTH"] = "2"
         self.env["wsgi.input"] = BytesIO(b"AB")
-        with assert_raises(BadRequest):
-            parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert_equal({}, args)
 
     @test
-    def patch_wrong_content_type(self) -> None:
+    def post_wrong_content_type__required_args(self) -> None:
+        self.env["REQUEST_METHOD"] = "POST"
+        self.env["CONTENT_TYPE"] = "application/octet-stream"
+        self.env["CONTENT_LENGTH"] = "2"
+        self.env["wsgi.input"] = BytesIO(b"AB")
+        with assert_raises(BadRequest):
+            parse_args(self.env, [("foo", str, Multiplicity.REQUIRED)])
+
+    @test
+    def patch_wrong_content_type__optional_args(self) -> None:
+        self.env["REQUEST_METHOD"] = "PATCH"
+        self.env["CONTENT_TYPE"] = "application/octet-stream"
+        self.env["CONTENT_LENGTH"] = "2"
+        self.env["wsgi.input"] = BytesIO(b"AB")
+        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert_equal({}, args)
+
+    @test
+    def patch_wrong_content_type__required_args(self) -> None:
         self.env["REQUEST_METHOD"] = "PATCH"
         self.env["CONTENT_TYPE"] = "application/octet-stream"
         self.env["CONTENT_LENGTH"] = "2"
         self.env["wsgi.input"] = BytesIO(b"AB")
         with assert_raises(BadRequest):
-            parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+            parse_args(self.env, [("foo", str, Multiplicity.REQUIRED)])
 
     @test
     def no_exhaustive_check(self) -> None:
