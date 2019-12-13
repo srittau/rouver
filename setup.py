@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name="rouver",
-    version="1.1.0",
+    version="2.0.0",
     description="A microframework",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
@@ -22,14 +22,12 @@ setup(
     package_data={"rouver": ["py.typed"]},
     install_requires=["dectest >= 1.0.0, < 2", "werkzeug >= 0.12.0"],
     tests_require=["asserts >= 0.8.5, < 0.9"],
-    python_requires=">= 3.5",
+    python_requires=">= 3.7",
     license="MIT",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Topic :: Internet :: WWW/HTTP :: WSGI",

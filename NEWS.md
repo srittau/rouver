@@ -1,3 +1,9 @@
+# News in rouver 2.0.0
+
+## Incompatible Changes
+
+* Drop support for Python 3.5 and 3.6.
+
 # News in rouver 1.1.0
 
 ## API Additions
