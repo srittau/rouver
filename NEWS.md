@@ -3,6 +3,10 @@
 ## Incompatible Changes
 
 * Drop support for Python 3.5 and 3.6.
+* Rework `TestRequest` argument handling.
+    * Remove `TestRequest.prepare_for_arguments()`.
+    * `TestRequest.content_type` will not be set when calling
+      `add_argument()`.
 
 # News in rouver 1.1.0
 

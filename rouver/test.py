@@ -87,18 +87,13 @@ class TestRequest:
         else:
             self._extra_headers.append((name, value))
 
-    def prepare_for_arguments(self) -> None:
+    def add_argument(
+        self, name: str, value: Union[str, Sequence[str]]
+    ) -> None:
         if self.body != b"":
             raise ValueError(
                 "setting arguments and a body is mutually exclusive"
             )
-        if self.method != "GET" and self.content_type is None:
-            self.content_type = "application/x-www-form-urlencoded"
-
-    def add_argument(
-        self, name: str, value: Union[str, Sequence[str]]
-    ) -> None:
-        self.prepare_for_arguments()
         values = [value] if isinstance(value, str) else list(value)
         for v in values:
             self._arguments.append((name, v))
@@ -134,6 +129,8 @@ class TestRequest:
             env["CONTENT_LENGTH"] = str(len(body))
         if self.content_type is not None:
             env["CONTENT_TYPE"] = self.content_type
+        elif self.method not in ["GET", "HEAD"] and self._arguments:
+            env["CONTENT_TYPE"] = "application/x-www-form-urlencoded"
         env.update(self._extra_environ)
         return env
 

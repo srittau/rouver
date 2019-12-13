@@ -155,45 +155,29 @@ class TestRequestTest(TestCase):
         assert_not_in("HTTP_CONTENT_TYPE", environ)
 
     @test
-    def prepare_for_arguments__content_type(self) -> None:
-        request = create_request("POST", "/foo/bar")
-        assert_is_none(request.content_type)
-
-        request.prepare_for_arguments()
-        assert_equal("application/x-www-form-urlencoded", request.content_type)
-
-        request.content_type = "image/png"
-        request.prepare_for_arguments()
-        assert_equal("image/png", request.content_type)
-
-        request = create_request("GET", "/foo/bar")
-        assert_is_none(request.content_type)
-        request.prepare_for_arguments()
-        assert_is_none(request.content_type)
-
-    @test
-    def prepare_for_arguments__body_set(self) -> None:
-        put_request = create_request("PUT", "/foo")
-        put_request.body = b"Body"
-        with assert_raises(ValueError):
-            put_request.prepare_for_arguments()
-
-    @test
     def add_argument__content_type(self) -> None:
         request = create_request("POST", "/foo/bar")
         assert_is_none(request.content_type)
-
         request.add_argument("foo", "bar")
-        assert_equal("application/x-www-form-urlencoded", request.content_type)
+        assert_is_none(request.content_type)
+        environ = request.to_environment()
+        assert_dict_superset(
+            {"CONTENT_TYPE": "application/x-www-form-urlencoded"}, environ
+        )
 
+        request = create_request("POST", "/foo/bar")
         request.content_type = "image/png"
         request.add_argument("abc", "def")
         assert_equal("image/png", request.content_type)
+        environ = request.to_environment()
+        assert_dict_superset({"CONTENT_TYPE": "image/png"}, environ)
 
         request = create_request("GET", "/foo/bar")
         assert_is_none(request.content_type)
         request.add_argument("foo", "bar")
         assert_is_none(request.content_type)
+        environ = request.to_environment()
+        assert_not_in("CONTENT_TYPE", environ)
 
     @test
     def add_argument__body_set(self) -> None:
