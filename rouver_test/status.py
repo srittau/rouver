@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from asserts import assert_equal
-
 from dectest import TestCase, test
 
 from rouver.status import status_line

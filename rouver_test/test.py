@@ -1,34 +1,33 @@
 import sys
 from http import HTTPStatus
 from io import BytesIO
-from typing import Iterable, Optional, Tuple, Any, Sequence
+from typing import Any, Iterable, Optional, Sequence, Tuple
 
 from asserts import (
-    assert_equal,
-    assert_is_instance,
-    assert_has_attr,
-    assert_is_none,
     assert_dict_superset,
+    assert_equal,
+    assert_false,
+    assert_has_attr,
+    assert_is_instance,
+    assert_is_none,
     assert_not_in,
     assert_raises,
     assert_succeeds,
     assert_true,
-    assert_false,
 )
-
 from dectest import TestCase, test
 
-from rouver.args import Multiplicity, parse_args, ArgumentTemplate
+from rouver.args import ArgumentTemplate, Multiplicity, parse_args
 from rouver.exceptions import ArgumentsError
 from rouver.test import (
-    create_request,
-    TestResponse,
-    test_wsgi_app,
-    test_wsgi_arguments,
     ArgumentToTest,
     TestRequest,
+    TestResponse,
+    create_request,
+    test_wsgi_app,
+    test_wsgi_arguments,
 )
-from rouver.types import WSGIEnvironment, StartResponse, WSGIApplication
+from rouver.types import StartResponse, WSGIApplication, WSGIEnvironment
 
 
 def assert_wsgi_input_stream(stream: object) -> None:

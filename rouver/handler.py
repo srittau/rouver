@@ -1,25 +1,33 @@
 import collections
 from http import HTTPStatus
-from json import loads as json_loads, JSONDecodeError
-from typing import Optional
-from typing import cast, Any, Union, Iterator, Sequence, Iterable, List
+from json import JSONDecodeError, loads as json_loads
+from typing import (
+    Any,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Union,
+    cast,
+)
 from urllib.parse import unquote
 
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 
-from rouver.args import ArgumentParser, ArgumentTemplate, ArgumentDict
+from rouver.args import ArgumentDict, ArgumentParser, ArgumentTemplate
 from rouver.response import (
-    respond,
-    respond_with_json,
-    respond_with_html,
-    created_at,
-    see_other,
     created_as_json,
-    temporary_redirect,
+    created_at,
+    respond,
     respond_with_content,
+    respond_with_html,
+    respond_with_json,
+    see_other,
+    temporary_redirect,
 )
-from rouver.types import StartResponse, Header, WSGIEnvironment
+from rouver.types import Header, StartResponse, WSGIEnvironment
 
 
 class RouteHandlerBase(collections.abc.Iterable):
@@ -79,7 +87,7 @@ class RouteHandlerBase(collections.abc.Iterable):
         self,
         argument_template: Sequence[ArgumentTemplate],
         *,
-        exhaustive: bool = False
+        exhaustive: bool = False,
     ) -> ArgumentDict:
         if self._argument_parser is None:
             environ = self.request.environ
@@ -108,7 +116,7 @@ class RouteHandlerBase(collections.abc.Iterable):
         *,
         status: HTTPStatus = HTTPStatus.OK,
         content_type: Optional[str] = None,
-        extra_headers: Sequence[Header] = []
+        extra_headers: Sequence[Header] = [],
     ) -> Iterable[bytes]:
         return respond(
             self.start_response,
@@ -123,7 +131,7 @@ class RouteHandlerBase(collections.abc.Iterable):
         *,
         status: HTTPStatus = HTTPStatus.OK,
         content_type: str = "application/octet-stream",
-        extra_headers: Sequence[Header] = []
+        extra_headers: Sequence[Header] = [],
     ) -> Iterable[bytes]:
         """Prepare an WSGI response.
 
@@ -145,7 +153,7 @@ class RouteHandlerBase(collections.abc.Iterable):
         json: Union[str, bytes, Any],
         *,
         status: HTTPStatus = HTTPStatus.OK,
-        extra_headers: Sequence[Header] = []
+        extra_headers: Sequence[Header] = [],
     ) -> Iterable[bytes]:
         return respond_with_json(
             self.start_response,
@@ -159,7 +167,7 @@ class RouteHandlerBase(collections.abc.Iterable):
         html: str,
         *,
         status: HTTPStatus = HTTPStatus.OK,
-        extra_headers: Sequence[Header] = []
+        extra_headers: Sequence[Header] = [],
     ) -> Iterable[bytes]:
         return respond_with_html(
             self.start_response,

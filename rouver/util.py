@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urljoin, quote
+from urllib.parse import quote, urljoin
 
 from werkzeug import Request
 

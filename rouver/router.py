@@ -1,23 +1,23 @@
-from enum import Enum
-from http import HTTPStatus
 import logging
 import re
-from typing import cast, Iterable, List, Dict, Any, Tuple, Iterator, Sequence
+from enum import Enum
+from http import HTTPStatus
+from typing import Any, Dict, Iterable, Iterator, List, Sequence, Tuple, cast
 from urllib.parse import unquote
 
-from werkzeug.exceptions import NotFound, MethodNotAllowed, HTTPException
+from werkzeug.exceptions import HTTPException, MethodNotAllowed, NotFound
 from werkzeug.wrappers import Request
 
 from rouver.exceptions import ArgumentsError
-from rouver.html import http_status_page, bad_arguments_page
+from rouver.html import bad_arguments_page, http_status_page
 from rouver.response import respond_with_html
 from rouver.types import (
-    StartResponse,
-    WSGIEnvironment,
+    BadArgumentsDict,
     RouteDescription,
     RouteTemplateHandler,
-    BadArgumentsDict,
+    StartResponse,
     WSGIApplication,
+    WSGIEnvironment,
 )
 
 LOGGER_NAME = "rouver"
@@ -139,7 +139,7 @@ def _parse_path(
     path_string: str,
     template_handlers: _TemplateHandlerDict,
     *,
-    allow_wildcard: bool = False
+    allow_wildcard: bool = False,
 ) -> Tuple[List[_RouteTemplatePart], bool]:
     parts = _split_path(path_string)
     if allow_wildcard and parts and parts[-1] == "*":
@@ -277,7 +277,7 @@ class _MatcherBase:
         request_path: Sequence[str],
         arguments: _RouteArguments,
         *,
-        match_full_path: bool = False
+        match_full_path: bool = False,
     ) -> None:
         if request_path and request_path[-1] == "":
             request_path = request_path[:-1]

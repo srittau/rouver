@@ -5,26 +5,25 @@ from io import BytesIO
 from json import JSONDecodeError
 from types import TracebackType
 from typing import (
-    Optional,
-    Union,
-    Sequence,
-    List,
-    Tuple,
-    Callable,
     Any,
-    Type,
+    Callable,
     Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
 )
 from urllib.parse import quote_plus, urlparse
 
-from asserts import fail, assert_equal, assert_in
-
+from asserts import assert_equal, assert_in, fail
 from dectest import TestCase, before
 from werkzeug.http import parse_options_header
 
 from rouver.args import Multiplicity
 from rouver.router import Router
-from rouver.types import WSGIApplication, WSGIEnvironment, Header
+from rouver.types import Header, WSGIApplication, WSGIEnvironment
 
 _STATUS_RE = re.compile(r"^(\d\d\d) [ -~]+$")
 
@@ -243,7 +242,7 @@ class TestResponse:
         self,
         content_type: str,
         *,
-        charset: Optional[Union[str, Sequence[Optional[str]]]] = None
+        charset: Optional[Union[str, Sequence[Optional[str]]]] = None,
     ) -> None:
         """Assert the response's Content-Type header.
 
@@ -276,7 +275,7 @@ class TestResponse:
         *,
         secure: Optional[bool] = None,
         http_only: Optional[bool] = None,
-        max_age: Optional[int] = None
+        max_age: Optional[int] = None,
     ) -> None:
         def assert_flag(flag: Optional[bool], name_: str) -> None:
             if flag:
@@ -413,7 +412,7 @@ def test_wsgi_arguments(
         call_expect_success()
 
     def assert_failure_if_required_argument_missing(
-        missing_argument: str
+        missing_argument: str,
     ) -> None:
         setup_args([a for a in required_arguments if a[0] != missing_argument])
         call_expect_bad_request(

@@ -1,18 +1,15 @@
 from http import HTTPStatus
 from io import BytesIO
-from typing import Type, Iterable
+from typing import Iterable, Type
 
-from asserts import assert_is, assert_equal, assert_is_instance, assert_raises
-
-from dectest import TestCase, test, before
-
+from asserts import assert_equal, assert_is, assert_is_instance, assert_raises
+from dectest import TestCase, before, test
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 
 from rouver.args import Multiplicity
 from rouver.handler import RouteHandlerBase
-
-from rouver_test.testutil import default_environment, TestingStartResponse
+from rouver_test.testutil import TestingStartResponse, default_environment
 
 
 class TestingHandler(RouteHandlerBase):

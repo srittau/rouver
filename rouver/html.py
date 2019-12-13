@@ -9,7 +9,7 @@ def http_status_page(
     *,
     message: str = "",
     html_message: str = "",
-    html_content: str = ""
+    html_content: str = "",
 ) -> str:
     """Create an HTML error page for a given status code.
 

@@ -1,11 +1,11 @@
+import re
 from http import HTTPStatus
 from io import BytesIO, StringIO
-import re
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
-from asserts import assert_false, assert_regex, assert_equal, assert_true
+from asserts import assert_equal, assert_false, assert_regex, assert_true
 
-from rouver.types import StartResponseReturnType, Header, WSGIEnvironment
+from rouver.types import Header, StartResponseReturnType, WSGIEnvironment
 
 _status_re = re.compile(r"^(\d\d\d) (.*)$")
 

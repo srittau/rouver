@@ -1,23 +1,20 @@
 from io import BytesIO
-from typing import Union, Iterable
+from typing import Iterable, Union
 from urllib.parse import quote_plus
 
 from asserts import (
     assert_equal,
-    fail,
-    assert_raises,
     assert_in,
     assert_not_in,
+    assert_raises,
     assert_succeeds,
+    fail,
 )
-
-from dectest import TestCase, test, before
-
+from dectest import TestCase, before, test
 from werkzeug.exceptions import BadRequest
 
-from rouver.args import parse_args, Multiplicity, ArgumentParser
+from rouver.args import ArgumentParser, Multiplicity, parse_args
 from rouver.exceptions import ArgumentsError
-
 from rouver_test.testutil import default_environment
 
 MULTIPART_PART_TMPL = """--1234567890

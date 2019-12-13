@@ -1,30 +1,27 @@
-from http import HTTPStatus
 import logging
-from typing import Iterable, Any, Sequence
+from http import HTTPStatus
+from typing import Any, Iterable, Sequence
 
 from asserts import (
     assert_equal,
-    assert_raises,
-    assert_is_instance,
-    assert_regex,
     assert_in,
+    assert_is_instance,
+    assert_raises,
+    assert_regex,
     fail,
 )
-
-from dectest import TestCase, test, before
-
+from dectest import TestCase, before, test
 from werkzeug.exceptions import Unauthorized
 from werkzeug.wrappers import Request
 
 from rouver.exceptions import ArgumentsError
-from rouver.router import Router, LOGGER_NAME
+from rouver.router import LOGGER_NAME, Router
 from rouver.types import (
     StartResponse,
+    WSGIApplication,
     WSGIEnvironment,
     WSGIResponse,
-    WSGIApplication,
 )
-
 from rouver_test.testutil import TestingStartResponse, default_environment
 
 

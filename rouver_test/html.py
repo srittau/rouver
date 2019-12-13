@@ -1,15 +1,14 @@
 from http import HTTPStatus
 
-from asserts import assert_equal, assert_raises, assert_in
-
+from asserts import assert_equal, assert_in, assert_raises
 from dectest import TestCase, test
 
 from rouver.html import (
-    http_status_page,
     bad_arguments_list,
     created_at_page,
-    temporary_redirect_page,
+    http_status_page,
     see_other_page,
+    temporary_redirect_page,
 )
 
 

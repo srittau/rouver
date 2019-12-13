@@ -1,2 +1,13 @@
 [tool.black]
 line-length = 79
+target-version = ["py37"]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+combine_as_imports = true
+line_length = 79
+known_zctest = "test_zcapi,test_zcbase,test_zcevents"
+sections="FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER,ZCTEST"

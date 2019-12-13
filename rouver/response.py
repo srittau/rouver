@@ -1,6 +1,6 @@
 from http import HTTPStatus
 from json import dumps as dumps_json
-from typing import Union, Any, Iterable, Sequence, Optional
+from typing import Any, Iterable, Optional, Sequence, Union
 
 from werkzeug.wrappers import Request
 
@@ -10,7 +10,7 @@ from rouver.html import (
     temporary_redirect_page,
 )
 from rouver.status import status_line
-from rouver.types import StartResponse, Header
+from rouver.types import Header, StartResponse
 from rouver.util import absolute_url
 
 
@@ -23,7 +23,7 @@ def respond(
     *,
     status: HTTPStatus = HTTPStatus.OK,
     content_type: Optional[str] = None,
-    extra_headers: Sequence[Header] = []
+    extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     """Prepare an empty WSGI response.
 
@@ -53,7 +53,7 @@ def respond_with_content(
     *,
     status: HTTPStatus = HTTPStatus.OK,
     content_type: str = "application/octet-stream",
-    extra_headers: Sequence[Header] = []
+    extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     """Prepare an WSGI response.
 
@@ -78,7 +78,7 @@ def respond_with_json(
     json: Union[str, bytes, Any],
     *,
     status: HTTPStatus = HTTPStatus.OK,
-    extra_headers: Sequence[Header] = []
+    extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     """Prepare a JSON WSGI response.
 
@@ -113,7 +113,7 @@ def respond_with_html(
     html: str,
     *,
     status: HTTPStatus = HTTPStatus.OK,
-    extra_headers: Sequence[Header] = []
+    extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     """Prepare an HTML WSGI response.
 
@@ -139,7 +139,7 @@ def created_at(
     start_response: StartResponse,
     url_part: str,
     *,
-    extra_headers: Sequence[Header] = []
+    extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     """Prepare a 201 Created WSGI response with a Location header.
 
@@ -164,7 +164,7 @@ def created_as_json(
     url_part: str,
     json: Union[str, bytes, Any],
     *,
-    extra_headers: Sequence[Header] = []
+    extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     """
     Prepare a 201 Created WSGI response with a Location header and JSON body.
@@ -184,7 +184,7 @@ def temporary_redirect(
     start_response: StartResponse,
     url_part: str,
     *,
-    extra_headers: Sequence[Header] = []
+    extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     url = absolute_url(request, url_part)
     html = temporary_redirect_page(url)
@@ -202,7 +202,7 @@ def see_other(
     start_response: StartResponse,
     url_part: str,
     *,
-    extra_headers: Sequence[Header] = []
+    extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     url = absolute_url(request, url_part)
     html = see_other_page(url)

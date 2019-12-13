@@ -1,6 +1,6 @@
 from enum import Enum
 from io import BytesIO
-from typing import Callable, Any, Tuple, Dict, List, Union, IO, Sequence, cast
+from typing import IO, Any, Callable, Dict, List, Sequence, Tuple, Union, cast
 from urllib.parse import parse_qs
 
 from werkzeug.datastructures import FileStorage, MultiDict
@@ -95,7 +95,7 @@ class ArgumentParser:
         self,
         argument_template: Sequence[ArgumentTemplate],
         *,
-        exhaustive: bool = False
+        exhaustive: bool = False,
     ) -> ArgumentDict:
         """Parse CGI/WSGI arguments and return an argument dict.
 
@@ -216,7 +216,7 @@ def parse_args(
     environ: WSGIEnvironment,
     argument_template: Sequence[ArgumentTemplate],
     *,
-    exhaustive: bool = False
+    exhaustive: bool = False,
 ) -> ArgumentDict:
     """Parse CGI/WSGI arguments and return an argument dict.
 
@@ -332,7 +332,7 @@ class _FileArgumentValueParser(_ValueParserWrapper):
 
 
 def _create_argument_value_parser(
-    value_parser: ArgumentValueType
+    value_parser: ArgumentValueType,
 ) -> _ValueParserWrapper:
     if value_parser == "file":
         return _FileArgumentValueParser()

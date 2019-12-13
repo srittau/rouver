@@ -1,4 +1,4 @@
-from typing import Callable, Tuple, Dict, Any, Iterable, Sequence, Mapping
+from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple
 
 from werkzeug.wrappers import Request
 
