@@ -16,6 +16,7 @@ from asserts import (
     assert_true,
 )
 from dectest import TestCase, test
+from werkzeug.formparser import parse_form_data
 
 from rouver.args import ArgumentTemplate, Multiplicity, parse_args
 from rouver.exceptions import ArgumentsError
@@ -180,11 +181,41 @@ class TestRequestTest(TestCase):
         assert_not_in("CONTENT_TYPE", environ)
 
     @test
+    def add_file_argument__content_type(self) -> None:
+        request = create_request("POST", "/foo/bar")
+        assert_is_none(request.content_type)
+        request.add_file_argument("foo", b"", "text/plain")
+        assert_is_none(request.content_type)
+        environ = request.to_environment()
+        content_type, boundary = environ["CONTENT_TYPE"].split(";")
+        assert_equal("multipart/form-data", content_type)
+
+        request = create_request("POST", "/foo/bar")
+        request.content_type = "image/png"
+        request.add_file_argument("abc", b"", "text/plain")
+        assert_equal("image/png", request.content_type)
+        environ = request.to_environment()
+        assert_dict_superset({"CONTENT_TYPE": "image/png"}, environ)
+
+    @test
     def add_argument__body_set(self) -> None:
         put_request = create_request("PUT", "/foo")
         put_request.body = b"Body"
         with assert_raises(ValueError):
             put_request.add_argument("foo", "bar")
+
+    @test
+    def add_file_argument__body_set(self) -> None:
+        put_request = create_request("PUT", "/foo")
+        put_request.body = b"Body"
+        with assert_raises(ValueError):
+            put_request.add_file_argument("foo", b"", "text/plain")
+
+    @test
+    def add_file_argument__unsupported_method(self) -> None:
+        get_request = create_request("GET", "/foo")
+        with assert_raises(ValueError):
+            get_request.add_file_argument("foo", b"", "text/plain")
 
     @test
     def to_environment__content_type(self) -> None:
@@ -222,6 +253,51 @@ class TestRequestTest(TestCase):
         request.add_argument("föo", "bär")
         environ = request.to_environment()
         assert_dict_superset({"QUERY_STRING": "f%C3%B6o=b%C3%A4r"}, environ)
+
+    @test
+    def file_arguments(self) -> None:
+        request = create_request("PUT", "/foo")
+        request.add_argument("foo", "bar")
+        request.add_file_argument("file1", b"content1", "text/plain")
+        request.add_file_argument(
+            "file2", b"content2", "image/png", filename="foobar"
+        )
+        environ = request.to_environment()
+        assert_not_in("QUERY_STRING", environ)
+        content_type, boundary = environ["CONTENT_TYPE"].split(";")
+        assert_equal("multipart/form-data", content_type)
+        _, args, files = parse_form_data(environ)
+        assert_equal(1, len(args))
+        assert_equal(args["foo"], "bar")
+        assert_equal(2, len(files))
+        file1 = files["file1"]
+        assert_equal("text/plain", file1.mimetype)
+        assert_equal("", file1.filename)
+        assert_equal(b"content1", file1.stream.read())
+        file2 = files["file2"]
+        assert_equal("image/png", file2.mimetype)
+        assert_equal("foobar", file2.filename)
+        assert_equal(b"content2", file2.stream.read())
+
+    @test
+    def file_arguments__umlauts(self) -> None:
+        request = create_request("PUT", "/foo")
+        request.add_argument('f"öo', "bär")
+        request.add_file_argument(
+            'f"öle', b"", "text/plain", filename="ä\"'bc"
+        )
+        environ = request.to_environment()
+        assert_not_in("QUERY_STRING", environ)
+        content_type, boundary = environ["CONTENT_TYPE"].split(";")
+        assert_equal("multipart/form-data", content_type)
+        _, args, files = parse_form_data(environ)
+        assert_equal(1, len(args))
+        assert_equal(args["f%22%C3%B6o"], "bär")
+        assert_equal(1, len(files))
+        file = files["f%22%C3%B6le"]
+        assert_equal("text/plain", file.mimetype)
+        assert_equal("ä\"'bc", file.filename)
+        assert_equal(b"", file.stream.read())
 
     @test
     def clear_arguments(self) -> None:

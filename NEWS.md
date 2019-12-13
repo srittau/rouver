@@ -11,6 +11,10 @@
   `BadRequest` if request has wrong content type. Instead,
   they will treat it as if no arguments were given.
 
+## API Additions
+
+* Add `TestRequest.add_file_argument()`.
+
 # News in rouver 1.1.0
 
 ## API Additions

@@ -1,5 +1,6 @@
 import json
 import re
+import secrets
 from http import HTTPStatus
 from io import BytesIO
 from json import JSONDecodeError
@@ -36,10 +37,12 @@ class TestRequest:
         self.path = path
         self._body = b""
         self.error_stream = BytesIO()
-        self.content_type = None  # type: Optional[str]
-        self._extra_environ = {}  # type: WSGIEnvironment
-        self._extra_headers = []  # type: List[Tuple[str, str]]
-        self._arguments = []  # type: List[Tuple[str, str]]
+        self.content_type: Optional[str] = None
+        self._extra_environ: WSGIEnvironment = {}
+        self._extra_headers: List[Tuple[str, str]] = []
+        self._arguments: List[Tuple[str, str]] = []
+        self._file_arguments: List[Tuple[str, bytes, str, Optional[str]]] = []
+        self._boundary: Optional[str] = None
 
     @property
     def body(self) -> bytes:
@@ -90,6 +93,12 @@ class TestRequest:
     def add_argument(
         self, name: str, value: Union[str, Sequence[str]]
     ) -> None:
+        """Add a CGI argument to this request.
+
+        For GET and HEAD requests, this will add a query string to the
+        URL, for other requests it will include the arguments in the
+        request body.
+        """
         if self.body != b"":
             raise ValueError(
                 "setting arguments and a body is mutually exclusive"
@@ -97,6 +106,29 @@ class TestRequest:
         values = [value] if isinstance(value, str) else list(value)
         for v in values:
             self._arguments.append((name, v))
+
+    def add_file_argument(
+        self,
+        name: str,
+        content: bytes,
+        content_type: str,
+        *,
+        filename: Optional[str] = None,
+    ) -> None:
+        """Add a file CGI argument to this request.
+
+        This is not available for GET and HEAD requests. In other requests
+        it will force a multipart request body.
+        """
+        if self.method in ["GET", "HEAD"]:
+            raise ValueError(
+                "file arguments not supported in GET and HEAD requests"
+            )
+        if self.body != b"":
+            raise ValueError(
+                "setting arguments and a body is mutually exclusive"
+            )
+        self._file_arguments.append((name, content, content_type, filename))
 
     def clear_arguments(self) -> None:
         self._arguments = []
@@ -118,7 +150,10 @@ class TestRequest:
         for header, value in self._extra_headers:
             env["HTTP_" + header.upper().replace("-", "_")] = value
         body = self._body
-        if self._arguments:
+        if self._file_arguments:
+            assert body == b""
+            body = self._build_multipart_body()
+        elif self._arguments:
             if self.method == "GET":
                 env["QUERY_STRING"] = self._build_query_string()
             else:
@@ -127,18 +162,68 @@ class TestRequest:
         env["wsgi.input"] = BytesIO(body)
         if body != b"":
             env["CONTENT_LENGTH"] = str(len(body))
-        if self.content_type is not None:
-            env["CONTENT_TYPE"] = self.content_type
-        elif self.method not in ["GET", "HEAD"] and self._arguments:
-            env["CONTENT_TYPE"] = "application/x-www-form-urlencoded"
+        content_type = self._determine_content_type()
+        if content_type is not None:
+            env["CONTENT_TYPE"] = content_type
         env.update(self._extra_environ)
         return env
 
+    def _determine_content_type(self) -> Optional[str]:
+        if self.content_type is not None:
+            return self.content_type
+        elif self._file_arguments:
+            boundary = self._ensure_boundary()
+            return f"multipart/form-data; boundary={boundary}"
+        elif self.method not in ["GET", "HEAD"] and self._arguments:
+            return "application/x-www-form-urlencoded"
+        else:
+            return None
+
     def _build_query_string(self) -> str:
-        parts = []  # type: List[str]
+        parts: List[str] = []
         for name, value in self._arguments:
             parts.append("{}={}".format(quote_plus(name), quote_plus(value)))
         return "&".join(parts)
+
+    def _build_multipart_body(self) -> bytes:
+        boundary = self._ensure_boundary()
+        body = b""
+        for name, value in self._arguments:
+            body += b"--" + boundary.encode("ascii") + b"\r\n"
+            body += (
+                b'Content-Disposition: form-data; name="'
+                + quote_plus(name).encode("ascii")
+                + b'"\r\n\r\n'
+            )
+            body += value.encode("utf-8")
+            body += b"\r\n"
+        for name, content, content_type, filename in self._file_arguments:
+            body += b"--" + boundary.encode("ascii") + b"\r\n"
+            body += (
+                b'Content-Disposition: form-data; name="'
+                + quote_plus(name).encode("ascii")
+            ) + b'"; '
+            if filename:
+                body += b"filename*=UTF-8''" + quote_plus(filename).encode(
+                    "ascii"
+                )
+            else:
+                body += b'filename=""'
+            body += b"\r\n"
+            body += b"Content-Type: " + content_type.encode("ascii") + b"\r\n"
+            body += (
+                b"Content-Length: "
+                + str(len(content)).encode("ascii")
+                + b"\r\n\r\n"
+            )
+            body += content + b"\r\n"
+        body += b"--" + boundary.encode("ascii") + b"--\r\n"
+        return body
+
+    def _ensure_boundary(self) -> str:
+        if self._boundary is None:
+            self._boundary = secrets.token_hex()
+        return self._boundary
 
 
 def create_request(method: str, path: str) -> TestRequest:
