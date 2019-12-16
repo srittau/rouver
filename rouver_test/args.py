@@ -309,6 +309,31 @@ class ParseArgsTest(TestCase):
         assert_equal(b"content", f.read())
 
     @test
+    def multipart_post_request_with_optional_file(self) -> None:
+        self.env["REQUEST_METHOD"] = "POST"
+        self.setup_multipart_file_request(
+            "my-file", "my-file.txt", "content", "text/plain; charset=us-ascii"
+        )
+        args = parse_args(
+            self.env, [("my-file", "file-or-str", Multiplicity.REQUIRED)]
+        )
+        assert_in("my-file", args)
+        f = args["my-file"]
+        assert_equal("my-file.txt", f.filename)
+        assert_equal("text/plain", f.content_type)
+        assert_equal(b"content", f.read())
+
+    @test
+    def multipart_post_request_with_empty_file(self) -> None:
+        self.env["REQUEST_METHOD"] = "POST"
+        self.setup_multipart_request("my-file", "test")
+        args = parse_args(
+            self.env, [("my-file", "file-or-str", Multiplicity.REQUIRED)]
+        )
+        assert_in("my-file", args)
+        assert_equal("test", args["my-file"])
+
+    @test
     def multipart_post_request_with_file_and_umlauts(self) -> None:
         self.env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request(

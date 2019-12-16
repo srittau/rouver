@@ -106,7 +106,9 @@ class ArgumentParser:
         returned dict. If the supplied string or list can't be parsed, this
         function should raise a ValueError exception. In this case, parse_args
         raises an ArgumentsError. If value_func is the string "file",
-        the value of the argument is a FileArgument instance.
+        the value of the argument is a FileArgument instance. If value_func
+        is "file-or-str", the value is a FileArgument instance or a str
+        if the argument was given, but without a file as argument.
 
         The returned dict contains the names of all parsed arguments that were
         present in the CGI arguments as key. The value is the corresponding
@@ -131,8 +133,8 @@ class ArgumentParser:
         object are possible.
         """
 
-        errors = {}  # type: Dict[str, str]
-        parsed_arguments = {}  # type: ArgumentDict
+        errors: Dict[str, str] = {}
+        parsed_arguments: ArgumentDict = {}
 
         def parse_template(
             name: str,
@@ -187,7 +189,7 @@ class _Argument:
 def _create_arg_dict(
     args: MultiDict, files: MultiDict
 ) -> Dict[str, _Argument]:
-    _all_args = {}  # type: Dict[str, _Argument]
+    _all_args: Dict[str, _Argument] = {}
     for name, v in args.lists():
         _all_args[name] = _Argument(v)
     for name, v in files.items():
@@ -218,7 +220,9 @@ def parse_args(
     dict. If the supplied string or list can't be parsed, this function
     should raise a ValueError exception. In this case, parse_args raises
     an ArgumentsError. If value_func is the string "file", the value of the
-    argument is a FileArgument instance.
+    argument is a FileArgument instance. If value_func is "file-or-str",
+    the value is a FileArgument instance or a str if the argument was given,
+    but without a file as argument.
 
     The returned dict contains the names of all parsed arguments that were
     present in the CGI arguments as key. The value is the corresponding
@@ -314,11 +318,23 @@ class _FileArgumentValueParser(_ValueParserWrapper):
         return FileArgument(stream, filename, content_type)
 
 
+class _OptionalFileArgumentValueParser(_ValueParserWrapper):
+    def parse_from_string(self, value: str) -> str:
+        return value
+
+    def parse_from_file(
+        self, stream: IO[bytes], filename: str, content_type: str
+    ) -> FileArgument:
+        return FileArgument(stream, filename, content_type)
+
+
 def _create_argument_value_parser(
     value_parser: ArgumentValueType,
 ) -> _ValueParserWrapper:
     if value_parser == "file":
         return _FileArgumentValueParser()
+    elif value_parser == "file-or-str":
+        return _OptionalFileArgumentValueParser()
     elif callable(value_parser):
         return _FunctionValueParser(value_parser)
     else:

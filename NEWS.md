@@ -1,3 +1,9 @@
+# News in rouver 2.1.0
+
+## API Additions
+
+* `rouver.args`: Add `"file-or-str"` argument value type.
+
 # News in rouver 2.0.0
 
 ## Incompatible Changes
