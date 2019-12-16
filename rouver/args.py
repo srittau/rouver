@@ -3,6 +3,7 @@ from io import BytesIO
 from typing import IO, Any, Callable, Dict, List, Sequence, Tuple, Union
 from urllib.parse import parse_qs
 
+from typing_extensions import Literal
 from werkzeug.datastructures import FileStorage, MultiDict
 from werkzeug.formparser import parse_form_data
 
@@ -18,7 +19,7 @@ class Multiplicity(Enum):
 
 
 ArgumentValueParser = Callable[[str], Any]
-ArgumentValueType = Union[ArgumentValueParser, str]
+ArgumentValueType = Union[ArgumentValueParser, Literal["file", "file-or-str"]]
 ArgumentTemplate = Tuple[str, ArgumentValueType, Multiplicity]
 ArgumentDict = Dict[str, Any]
 

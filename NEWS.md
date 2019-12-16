@@ -4,6 +4,10 @@
 
 * `rouver.args`: Add `"file-or-str"` argument value type.
 
+## Improvements
+
+* `rouver.args`: Use `Literal`s for `ArgumentValueType`.
+
 # News in rouver 2.0.0
 
 ## Incompatible Changes

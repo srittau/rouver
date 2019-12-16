@@ -93,7 +93,16 @@ class ParseArgsTest(TestCase):
     @test
     def invalid_value_parser(self) -> None:
         with assert_raises(TypeError):
-            parse_args(self.env, [("foo", "INVALID", Multiplicity.OPTIONAL)])
+            parse_args(
+                self.env,
+                [
+                    (
+                        "foo",  # type: ignore
+                        "INVALID",
+                        Multiplicity.OPTIONAL,
+                    )
+                ],
+            )
 
     @test
     def parse_str_arg(self) -> None:
