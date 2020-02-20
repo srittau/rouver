@@ -27,7 +27,7 @@ pyflakes==2.1.1
 Pygments==2.5.2
 readme-renderer==24.0
 regex==2020.2.18
-requests==2.22.0
+requests==2.23.0
 requests-toolbelt==0.9.1
 six==1.14.0
 toml==0.10.0
