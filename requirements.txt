@@ -9,7 +9,7 @@ Werkzeug==1.0.1
 wheel==0.34.2
 
 # Indirect requirements
-appdirs==1.4.3
+appdirs==1.4.4
 attrs==19.3.0
 bleach==3.1.5
 certifi==2020.4.5.1
