@@ -244,6 +244,7 @@ def _dispatch(
 
     def call_sub_router(matcher: _SubRouterMatcher) -> Iterable[bytes]:
         new_environ = environment.copy()
+        new_environ["rouver.original_path_info"] = environment["PATH_INFO"]
         new_environ["PATH_INFO"] = matcher.remaining_path.encode(
             "utf-8"
         ).decode("latin-1")
