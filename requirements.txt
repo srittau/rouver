@@ -3,7 +3,7 @@ asserts==0.10.0
 black==19.10b0
 dectest==1.1.1
 flake8==3.8.3
-isort==5.1.4
+isort==5.2.0
 mypy==0.782
 Werkzeug==1.0.1
 wheel==0.34.2
