@@ -3,6 +3,7 @@ dist: bionic
 python:
   - "3.7"
   - "3.8"
+  - "3.9-dev"
 install: pip install -r requirements.txt
 script:
   - python -Wall -m unittest discover -t . -s rouver_test -p "*.py"
