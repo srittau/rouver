@@ -30,7 +30,7 @@ from rouver.response import (
 from rouver.types import Header, StartResponse, WSGIEnvironment
 
 
-class RouteHandlerBase(collections.abc.Iterable):
+class RouteHandlerBase(collections.Iterable):
     """Base class for rouver route handlers.
 
     Sub-classes of RouteHandlerBase can act as route handlers. They provide
