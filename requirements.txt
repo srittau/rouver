@@ -28,7 +28,7 @@ pycodestyle==2.6.0
 pyflakes==2.2.0
 Pygments==2.7.2
 readme-renderer==28.0
-regex==2020.10.28
+regex==2020.11.11
 requests==2.25.0
 requests-toolbelt==0.9.1
 six==1.15.0
