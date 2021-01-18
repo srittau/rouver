@@ -23,7 +23,7 @@ mccabe==0.6.1
 mypy-extensions==0.4.3
 packaging==20.8
 pathspec==0.8.1
-pkginfo==1.6.1
+pkginfo==1.7.0
 pycodestyle==2.6.0
 pyflakes==2.2.0
 Pygments==2.7.4
