@@ -1,4 +1,4 @@
-import collections
+import collections.abc
 from http import HTTPStatus
 from json import JSONDecodeError, loads as json_loads
 from typing import (
@@ -30,7 +30,7 @@ from rouver.response import (
 from rouver.types import Header, StartResponse, WSGIEnvironment
 
 
-class RouteHandlerBase(collections.Iterable):
+class RouteHandlerBase(collections.abc.Iterable):
     """Base class for rouver route handlers.
 
     Sub-classes of RouteHandlerBase can act as route handlers. They provide
