@@ -1,3 +1,10 @@
+# News in rouver 2.2.1
+
+## Improvements
+
+* `rouver.test`: Use build-in `assert` statements instead of assertions
+  from the `asserts` package.
+
 # News in rouver 2.2.0
 
 ## API Additions
@@ -5,13 +12,6 @@
 * Sub-routers now have access to WSGI environment variable
   called `rouver.original_path_info` that contains the original
   `PATH_INFO` value.
-
-# News in rouver 2.1.1
-
-## Improvements
-
-* `rouver.test`: Use build-in `assert` statements instead of assertions
-  from the `asserts` package.
 
 # News in rouver 2.1.0
 
