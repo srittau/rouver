@@ -18,7 +18,6 @@ from typing import (
 )
 from urllib.parse import quote_plus, urlparse
 
-from asserts import assert_equal, assert_in, fail
 from dectest import TestCase, before
 from werkzeug.http import parse_options_header
 
@@ -261,22 +260,24 @@ class TestResponse:
             raise AssertionError(str(exc)) from exc
 
     def assert_status(self, status: HTTPStatus) -> None:
-        assert_equal(
-            status, self.status, msg_fmt="unexpected HTTP status: {msg}"
-        )
+        assert (
+            status == self.status
+        ), f"unexpected HTTP status: {status} != {self.status}"
 
     def assert_header_not_set(self, name: str) -> None:
         for n, v in self._headers:
             if n.lower() == name.lower():
-                fail("header '{}' unexpectedly set".format(name))
+                raise AssertionError(f"header '{name}' unexpectedly set")
 
     def assert_header_equal(self, name: str, expected_value: str) -> None:
         try:
             real_value = self.get_header_value(name)
         except ValueError:
             raise AssertionError("missing header '{}'".format(name))
-        msg = "header value of {} differs: {{msg}}".format(name)
-        assert_equal(expected_value, real_value, msg_fmt=msg)
+        assert real_value == expected_value, (
+            f"header value of '{name}' differs: "
+            f"{real_value!r} != {expected_value!r}"
+        )
 
     def _assert_location_response(
         self, expected_status: HTTPStatus, expected_location: str
@@ -292,7 +293,10 @@ class TestResponse:
                 real_location += "?" + parsed.query
             if parsed.fragment:
                 real_location += "#" + parsed.fragment
-            assert_equal(expected_location, real_location)
+            assert real_location == expected_location, (
+                f"unexpected location: {real_location!r} != "
+                f"{expected_location!r}"
+            )
 
     def assert_created_at(self, expected_location: str) -> None:
         """Assert a correct 201 Created response.
@@ -336,9 +340,11 @@ class TestResponse:
         try:
             value = self.get_header_value("Content-Type")
         except ValueError:
-            fail("missing header 'Content-Type'")
+            raise AssertionError("missing header 'Content-Type'")
         type_, options = parse_options_header(value)
-        assert_equal(content_type, type_, "unexpected content type: {msg}")
+        assert (
+            type_ == content_type
+        ), f"unexpected content type: {type_!r} != {content_type!r}"
         if charset is not None:
             cs_list = [charset] if isinstance(charset, str) else charset
             try:
@@ -346,9 +352,11 @@ class TestResponse:
             except KeyError:
                 if None in cs_list:
                     return
-                fail("no charset in Content-Type header")
-            msg = "unexpected content type charset: {msg}"
-            assert_in(got_charset, cs_list, msg)
+                raise AssertionError("no charset in Content-Type header")
+            assert got_charset in cs_list, (
+                f"unexpected content type charset: "
+                f"{got_charset!r} not in {cs_list!r}"
+            )
 
     def assert_set_cookie(
         self,
@@ -362,15 +370,13 @@ class TestResponse:
         def assert_flag(flag: Optional[bool], name_: str) -> None:
             if flag:
                 if find_arg(name_) is None:
-                    fail(
-                        "Set-Cookie does not contain the {} "
-                        "flag".format(name_)
+                    raise AssertionError(
+                        f"Set-Cookie does not contain the '{name_}' flag"
                     )
             elif flag is not None and not flag:
                 if find_arg(name_) is not None:
-                    fail(
-                        "Set-Cookie contains the {} flag "
-                        "unexpectedly".format(name_)
+                    raise AssertionError(
+                        f"Set-Cookie contains the '{name_}' flag unexpectedly"
                     )
 
         def find_arg(arg_name: str) -> Optional[str]:
@@ -392,13 +398,17 @@ class TestResponse:
         try:
             header_value = self.get_header_value("Set-Cookie")
         except ValueError:
-            fail("missing header 'Set-Cookie'")
+            raise AssertionError("missing header 'Set-Cookie'")
         args = [s.strip().split("=", 1) for s in header_value.split(";")]
         if len(args[0]) < 2:
             raise AssertionError("invalid Set-Cookie header")
         name, value = args[0]
-        assert_equal(expected_name, name, "wrong cookie name, {msg}")
-        assert_equal(expected_value, value, "wrong cookie value, {msg}")
+        assert (
+            name == expected_name
+        ), f"wrong cookie name, {name!r} != {expected_name!r}"
+        assert (
+            value == expected_value
+        ), f"wrong cookie value, {value!r} != {expected_value!r}"
         assert_flag(secure, "Secure")
         assert_flag(http_only, "HttpOnly")
         if max_age is not None:
@@ -406,13 +416,15 @@ class TestResponse:
             try:
                 int_age = int(age)
             except ValueError:
-                fail("Set-Cookie max-age is not numeric")
-            assert_equal(max_age, int_age)
+                raise AssertionError("Set-Cookie max-age is not numeric")
+            assert (
+                int_age == max_age
+            ), f"wrong max-age: {int_age!r} != {max_age!r}"
 
 
 def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
     output_written = False
-    response = None  # type: Optional[TestResponse]
+    response: Optional[TestResponse] = None
 
     def write(b: bytes) -> None:
         nonlocal output_written
@@ -472,18 +484,19 @@ def test_wsgi_arguments(
     def call_expect_success() -> None:
         response = test_wsgi_app(app, request)
         if response.status == HTTPStatus.BAD_REQUEST:
-            fail("Bad Request returned, although CGI arguments were correct")
+            raise AssertionError(
+                "Bad Request returned, although CGI arguments were correct"
+            )
         elif response.status.value >= 400:
-            fail(
-                "status was: '{}', but expected a successful result".format(
-                    response.status
-                )
+            raise AssertionError(
+                f"status was: {response.status}, "
+                f"but expected a successful result"
             )
 
     def call_expect_bad_request(message: str) -> None:
         response = test_wsgi_app(app, request)
         if response.status != HTTPStatus.BAD_REQUEST:
-            fail(message)
+            raise AssertionError(message)
 
     def assert_success_if_mandatory_arguments_ok() -> None:
         setup_args(required_arguments)
