@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10-dev"]
+        python-version: ["3.7", "3.8", "3.9"]
       fail-fast: false
 
     steps:
@@ -31,8 +31,6 @@ jobs:
         flake8 --version
         flake8 --show-source --statistics rouver rouver_test
     - name: Type checking with mypy
-      # Disable on 3.10 for now: https://github.com/python/typed_ast/pull/158
-      if: ${{ matrix.python-version != '3.10-dev' }}
       run: |
         mypy --version
         mypy rouver rouver_test
