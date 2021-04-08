@@ -1000,12 +1000,45 @@ class TestWSGIArgumentsTest(TestCase):
         )
 
     @test
+    def required_any_argument_present(self) -> None:
+        self._successful_arg_test(
+            [("arg", int, Multiplicity.REQUIRED_ANY)],
+            [("arg", Multiplicity.REQUIRED_ANY, "42")],
+        )
+
+    @test
+    def required_any_argument_not_in_app(self) -> None:
+        self._failing_arg_test(
+            [("arg", int, Multiplicity.OPTIONAL)],
+            [("arg", Multiplicity.REQUIRED_ANY, "42")],
+        )
+
+    @test
+    def required_any_argument_not_in_test(self) -> None:
+        self._failing_arg_test([("arg", int, Multiplicity.REQUIRED_ANY)], [])
+
+    @test
+    def required_any_argument_optional_in_test(self) -> None:
+        self._failing_arg_test(
+            [("arg", int, Multiplicity.REQUIRED_ANY)],
+            [("arg", Multiplicity.OPTIONAL, "42")],
+        )
+
+    @test
     def optional_argument_not_in_app(self) -> None:
         self._successful_arg_test([], [("arg", Multiplicity.OPTIONAL, "foo")])
 
     @test
     def optional_argument_not_in_test(self) -> None:
         self._successful_arg_test([("arg", int, Multiplicity.OPTIONAL)], [])
+
+    @test
+    def any_argument_not_in_app(self) -> None:
+        self._successful_arg_test([], [("arg", Multiplicity.ANY, "foo")])
+
+    @test
+    def any_argument_not_in_test(self) -> None:
+        self._successful_arg_test([("arg", int, Multiplicity.ANY)], [])
 
     @test
     def correct_value_not_accepted(self) -> None:

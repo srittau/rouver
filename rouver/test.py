@@ -459,7 +459,10 @@ def test_wsgi_arguments(
     arguments: Iterable[ArgumentToTest],
 ) -> None:
     def is_required(argument: ArgumentToTest) -> bool:
-        return argument[1] == Multiplicity.REQUIRED
+        return argument[1] in (
+            Multiplicity.REQUIRED,
+            Multiplicity.REQUIRED_ANY,
+        )
 
     def setup_args(args: Iterable[ArgumentToTest]) -> None:
         request.clear_arguments()
@@ -468,12 +471,6 @@ def test_wsgi_arguments(
         for argument in args:
             assert len(argument) == 3 or len(argument) == 4
             name, multi, valid_value = argument[:3]
-            if multi not in [Multiplicity.REQUIRED, Multiplicity.OPTIONAL]:
-                message = (
-                    "unsupported multiplicity '{}' "
-                    "for argument '{}'".format(multi, name)
-                )
-                raise ValueError(message)
             request.add_argument(name, valid_value)
 
     def setup_required_args_except(argument_name: str) -> None:

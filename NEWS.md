@@ -1,5 +1,9 @@
 # News in rouver 2.3.0
 
+## Improvements
+
+* `rouver.test`: `test_wsgi_arguments()` now accepts all multiplicities.
+
 # News in rouver 2.2.2
 
 ## Bug Fixes
