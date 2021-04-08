@@ -458,6 +458,9 @@ def test_wsgi_arguments(
     request: TestRequest,
     arguments: Iterable[ArgumentToTest],
 ) -> None:
+    def is_required(argument: ArgumentToTest) -> bool:
+        return argument[1] == Multiplicity.REQUIRED
+
     def setup_args(args: Iterable[ArgumentToTest]) -> None:
         request.clear_arguments()
         if not args and request.method != "GET":
@@ -472,6 +475,11 @@ def test_wsgi_arguments(
                 )
                 raise ValueError(message)
             request.add_argument(name, valid_value)
+
+    def setup_required_args_except(argument_name: str) -> None:
+        setup_args(
+            a for a in arguments if is_required(a) and a[0] != argument_name
+        )
 
     def call_expect_success() -> None:
         response = test_wsgi_app(app, request)
@@ -490,46 +498,41 @@ def test_wsgi_arguments(
         if response.status != HTTPStatus.BAD_REQUEST:
             raise AssertionError(message)
 
-    def assert_success_if_mandatory_arguments_ok() -> None:
-        setup_args(required_arguments)
+    def assert_success_required_arguments() -> None:
+        setup_args(a for a in arguments if is_required(a))
         call_expect_success()
 
-    def assert_success_if_all_arguments_ok() -> None:
+    def assert_success_all_arguments() -> None:
         setup_args(arguments)
         call_expect_success()
 
-    def assert_failure_if_required_argument_missing(
-        missing_argument: str,
+    def assert_failure_if_argument_required_but_missing(
+        argument: ArgumentToTest,
     ) -> None:
-        setup_args([a for a in required_arguments if a[0] != missing_argument])
+        if not is_required(arg):
+            return
+        setup_required_args_except(argument[0])
         call_expect_bad_request(
             "Bad Request not returned, although required CGI argument "
-            "'{}' was missing".format(missing_argument)
+            f"'{argument[0]}' was missing"
         )
 
     def assert_failure_if_argument_invalid(argument: ArgumentToTest) -> None:
-        assert len(argument) >= 4
+        if len(argument) != 4:  # argument has no invalid value
+            return
         name, _, __, invalid_value = argument  # type: ignore
-        setup_args([a for a in required_arguments if a[0] != name])
+        setup_required_args_except(name)
         request.add_argument(name, invalid_value)
         call_expect_bad_request(
-            "Bad Request not returned, although CGI argument '"
-            + name
-            + "' had invalid value '"
-            + str(invalid_value)
-            + "'"
+            f"Bad Request not returned, although CGI argument '{name}' "
+            f"had invalid value '{invalid_value}'"
         )
 
-    required_arguments = [
-        a for a in arguments if a[1] == Multiplicity.REQUIRED
-    ]
-    wrong_value_arguments = [a for a in arguments if len(a) > 3]
-
-    assert_success_if_mandatory_arguments_ok()
-    assert_success_if_all_arguments_ok()
-    for arg in required_arguments:
-        assert_failure_if_required_argument_missing(arg[0])
-    for arg in wrong_value_arguments:
+    assert_success_required_arguments()
+    assert_success_all_arguments()
+    for arg in arguments:
+        assert_failure_if_argument_required_but_missing(arg)
+    for arg in arguments:
         assert_failure_if_argument_invalid(arg)
 
 
