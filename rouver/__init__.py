@@ -1,1 +1,1 @@
-from .util import absolute_url  # noqa: F401
+from .util import absolute_url as absolute_url  # noqa: F401

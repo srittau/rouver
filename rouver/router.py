@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import logging
 import re
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from enum import Enum
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, Iterator, List, Sequence, Tuple, cast
+from typing import Any, cast
 from urllib.parse import unquote
 
 from werkzeug.exceptions import HTTPException, MethodNotAllowed, NotFound
@@ -29,11 +32,7 @@ class _TemplatePartType(Enum):
     PATTERN = 2
 
 
-_TemplateHandlerDict = Dict[str, RouteTemplateHandler]
-_RouteTemplatePart = Tuple[_TemplatePartType, str]
-
-
-def _split_path(s: str) -> List[str]:
+def _split_path(s: str) -> list[str]:
     if not s:
         return []
     return s.split("/")
@@ -41,9 +40,9 @@ def _split_path(s: str) -> List[str]:
 
 class Router:
     def __init__(self) -> None:
-        self._handlers = []  # type: List[_RouteHandler]
-        self._sub_routers = []  # type: List[_SubRouterHandler]
-        self._template_handlers = {}  # type: _TemplateHandlerDict
+        self._handlers: list[_RouteHandler] = []
+        self._sub_routers: list[_SubRouterHandler] = []
+        self._template_handlers: dict[str, RouteTemplateHandler] = {}
         self.error_handling = True
 
     def __call__(
@@ -120,8 +119,8 @@ _pattern_re = re.compile(r"^{(.*)}$")
 
 
 def _parse_route_template_part(
-    part: str, template_handlers: _TemplateHandlerDict
-) -> _RouteTemplatePart:
+    part: str, template_handlers: Mapping[str, RouteTemplateHandler]
+) -> tuple[_TemplatePartType, str]:
     if part == "*":
         raise ValueError("wildcard not at end of path")
     m = _pattern_re.match(part)
@@ -137,10 +136,10 @@ def _parse_route_template_part(
 
 def _parse_path(
     path_string: str,
-    template_handlers: _TemplateHandlerDict,
+    template_handlers: Mapping[str, RouteTemplateHandler],
     *,
     allow_wildcard: bool = False,
-) -> Tuple[List[_RouteTemplatePart], bool]:
+) -> tuple[list[tuple[_TemplatePartType, str]], bool]:
     parts = _split_path(path_string)
     if allow_wildcard and parts and parts[-1] == "*":
         parts = parts[:-1]
@@ -155,7 +154,9 @@ def _parse_path(
 
 class _RouteHandler:
     def __init__(
-        self, route: RouteDescription, template_handlers: _TemplateHandlerDict
+        self,
+        route: RouteDescription,
+        template_handlers: Mapping[str, RouteTemplateHandler],
     ) -> None:
         self.path, self.wildcard = _parse_path(
             route[0], template_handlers, allow_wildcard=True
@@ -169,7 +170,7 @@ class _SubRouterHandler:
         self,
         path: str,
         router: WSGIApplication,
-        template_handlers: _TemplateHandlerDict,
+        template_handlers: Mapping[str, RouteTemplateHandler],
     ) -> None:
         self.path, _ = _parse_path(path, template_handlers)
         self.router = router
@@ -180,7 +181,7 @@ def _dispatch(
     start_response: StartResponse,
     handlers: Sequence[_RouteHandler],
     sub_routers: Sequence[_SubRouterHandler],
-    template_handlers: _TemplateHandlerDict,
+    template_handlers: Mapping[str, RouteTemplateHandler],
 ) -> Iterable[bytes]:
 
     request = Request(environment)
@@ -255,11 +256,13 @@ def _dispatch(
 
 class _RouteArguments:
     def __init__(
-        self, request: Request, template_handlers: _TemplateHandlerDict
+        self,
+        request: Request,
+        template_handlers: Mapping[str, RouteTemplateHandler],
     ) -> None:
         self._request = request
         self._handlers = template_handlers
-        self._cache = {}  # type: Dict[Tuple[str, str], Any]
+        self._cache: dict[tuple[str, str], Any] = {}
 
     def parse_argument(
         self, paths: Sequence[Any], name: str, path: str
@@ -274,7 +277,7 @@ class _RouteArguments:
 class _MatcherBase:
     def __init__(
         self,
-        match_path: Sequence[_RouteTemplatePart],
+        match_path: Sequence[tuple[_TemplatePartType, str]],
         request_path: Sequence[str],
         arguments: _RouteArguments,
         *,
@@ -291,7 +294,7 @@ class _MatcherBase:
         self._match_full_path = match_full_path
         self.matches, self.path_args = self._check_and_parse()
 
-    def _check_and_parse(self) -> Tuple[bool, List[Any]]:
+    def _check_and_parse(self) -> tuple[bool, list[Any]]:
         if self._path_length_matches():
             return self._parse()
         else:
@@ -303,8 +306,8 @@ class _MatcherBase:
         else:
             return len(self._match_path) <= len(self._request_path)
 
-    def _parse(self) -> Tuple[bool, List[Any]]:
-        path_args = []  # type: List[Any]
+    def _parse(self) -> tuple[bool, list[Any]]:
+        path_args: list[Any] = []
         for tmpl_part, path_part in self._path_compare_iter():
             try:
                 decoded = unquote(path_part, errors="strict")
@@ -326,7 +329,9 @@ class _MatcherBase:
                 raise AssertionError("unhandled template type")
         return True, path_args
 
-    def _path_compare_iter(self) -> Iterator[Tuple[_RouteTemplatePart, str]]:
+    def _path_compare_iter(
+        self,
+    ) -> Iterator[tuple[tuple[_TemplatePartType, str], str]]:
         return zip(self._match_path, self._request_path)
 
     @property
@@ -421,7 +426,10 @@ def _respond_http_exception(
         h for h in exception.get_headers() if h[0].lower() != "content-type"
     ]
     return respond_with_html(
-        start_response, html, status=status, extra_headers=headers,
+        start_response,
+        html,
+        status=status,
+        extra_headers=headers,
     )
 
 

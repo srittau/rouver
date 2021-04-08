@@ -1,16 +1,10 @@
+from __future__ import annotations
+
 import collections.abc
+from collections.abc import Iterable, Iterator, Sequence
 from http import HTTPStatus
 from json import JSONDecodeError, loads as json_loads
-from typing import (
-    Any,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from typing import Any, cast
 from urllib.parse import unquote
 
 from werkzeug.exceptions import UnsupportedMediaType
@@ -56,7 +50,7 @@ class RouteHandlerBase(collections.abc.Iterable):
     ) -> None:
         self.request = Request(environ)
         self.start_response = start_response
-        self._argument_parser = None  # type: Optional[ArgumentParser]
+        self._argument_parser: ArgumentParser | None = None
         self._response = self.prepare_response()
 
     def __iter__(self) -> Iterator[bytes]:
@@ -67,7 +61,7 @@ class RouteHandlerBase(collections.abc.Iterable):
         return cast(str, self.request.mimetype_params.get("charset", "utf-8"))
 
     @property
-    def path_args(self) -> List[Any]:
+    def path_args(self) -> list[Any]:
         path_args = self.request.environ.get("rouver.path_args")
         if not isinstance(path_args, list):
             return []
@@ -115,7 +109,7 @@ class RouteHandlerBase(collections.abc.Iterable):
         self,
         *,
         status: HTTPStatus = HTTPStatus.OK,
-        content_type: Optional[str] = None,
+        content_type: str | None = None,
         extra_headers: Sequence[Header] = [],
     ) -> Iterable[bytes]:
         return respond(
@@ -150,7 +144,7 @@ class RouteHandlerBase(collections.abc.Iterable):
 
     def respond_with_json(
         self,
-        json: Union[str, bytes, Any],
+        json: str | bytes | Any,
         *,
         status: HTTPStatus = HTTPStatus.OK,
         extra_headers: Sequence[Header] = [],
@@ -180,7 +174,7 @@ class RouteHandlerBase(collections.abc.Iterable):
         return created_at(self.request, self.start_response, url_part)
 
     def created_as_json(
-        self, url_part: str, json: Union[str, bytes, Any]
+        self, url_part: str, json: str | bytes | Any
     ) -> Iterable[bytes]:
         return created_as_json(
             self.request, self.start_response, url_part, json

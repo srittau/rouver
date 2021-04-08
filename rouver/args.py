@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
 from enum import Enum
 from io import BytesIO
-from typing import IO, Any, Callable, Dict, List, Sequence, Tuple, Union
+from typing import IO, Any, Callable, Dict, Tuple, Union
 from urllib.parse import parse_qs
 
 from typing_extensions import Literal
@@ -134,7 +137,7 @@ class ArgumentParser:
         object are possible.
         """
 
-        errors: Dict[str, str] = {}
+        errors: dict[str, str] = {}
         parsed_arguments: ArgumentDict = {}
 
         def parse_template(
@@ -165,7 +168,7 @@ class ArgumentParser:
 
 class _Argument:
     def __init__(
-        self, value: Union[List[str], FileStorage], *, is_file: bool = False
+        self, value: list[str] | FileStorage, *, is_file: bool = False
     ) -> None:
         self._value = value
         self.is_file = is_file
@@ -175,12 +178,12 @@ class _Argument:
             raise TypeError("value is not a string")
         return self._value[0]
 
-    def as_list(self) -> List[str]:
+    def as_list(self) -> list[str]:
         if not isinstance(self._value, list):
             raise TypeError("value is not a list of strings")
         return self._value
 
-    def as_file(self) -> Tuple[IO[bytes], str, str]:
+    def as_file(self) -> tuple[IO[bytes], str, str]:
         if not isinstance(self._value, FileStorage):
             raise TypeError("value is not a file")
         content_type = self._value.mimetype or "application/octet-stream"
@@ -189,8 +192,8 @@ class _Argument:
 
 def _create_arg_dict(
     args: MultiDict, files: MultiDict
-) -> Dict[str, _Argument]:
-    _all_args: Dict[str, _Argument] = {}
+) -> dict[str, _Argument]:
+    _all_args: dict[str, _Argument] = {}
     for name, v in args.lists():
         _all_args[name] = _Argument(v)
     for name, v in files.items():
@@ -345,7 +348,7 @@ def _create_argument_value_parser(
 class _ArgumentParser:
     def __init__(
         self,
-        args: Dict[str, _Argument],
+        args: dict[str, _Argument],
         name: str,
         value_parser: ArgumentValueType,
     ) -> None:
@@ -400,7 +403,7 @@ class _OptionalArgumentParser(_SingleArgumentParser):
 
 
 class _MultiArgumentParser(_ArgumentParser):
-    def parse(self) -> List[Any]:
+    def parse(self) -> list[Any]:
         try:
             arg = self.args[self.name]
             values = arg.as_list()
@@ -410,7 +413,7 @@ class _MultiArgumentParser(_ArgumentParser):
 
 
 class _AtLeastOneArgumentParser(_MultiArgumentParser):
-    def parse(self) -> List[Any]:
+    def parse(self) -> list[Any]:
         values = super().parse()
         if not values:
             raise _ArgumentError("mandatory argument missing")

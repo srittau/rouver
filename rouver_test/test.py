@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import sys
+from collections.abc import Iterable, Sequence
 from http import HTTPStatus
 from io import BytesIO
-from typing import Any, Iterable, Optional, Sequence, Tuple
+from typing import Any
 
 from asserts import (
     assert_dict_superset,
@@ -816,7 +819,7 @@ class TestWSGIAppTest(TestCase):
     @test
     def run_app(self) -> None:
         app_run = False
-        env = None  # type: Optional[WSGIEnvironment]
+        env: WSGIEnvironment | None = None
 
         def app(
             environ: WSGIEnvironment, sr: StartResponse
@@ -925,7 +928,7 @@ class TestWSGIAppTest(TestCase):
         response.assert_status(HTTPStatus.NOT_FOUND)
 
 
-def _get_exc_info() -> Tuple[Any, Any, Any]:
+def _get_exc_info() -> tuple[Any, Any, Any]:
     try:
         raise ValueError()
     except:  # noqa

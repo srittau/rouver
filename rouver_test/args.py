@@ -1,5 +1,7 @@
+from __future__ import annotations
+
+from collections.abc import Iterable
 from io import BytesIO
-from typing import Iterable, Union
 from urllib.parse import quote_plus
 
 from asserts import (
@@ -58,7 +60,7 @@ class ParseArgsTest(TestCase):
         self.env["wsgi.input"] = BytesIO(body)
 
     def setup_multipart_request(
-        self, name: str, value: Union[str, Iterable[str]]
+        self, name: str, value: str | Iterable[str]
     ) -> None:
         self.env["CONTENT_TYPE"] = "multipart/form-data; boundary=1234567890"
         if isinstance(value, str):

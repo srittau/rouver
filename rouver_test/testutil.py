@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import re
+from collections.abc import Iterable
 from http import HTTPStatus
 from io import BytesIO, StringIO
-from typing import Any, List, Optional
+from typing import Any
 
 from asserts import assert_equal, assert_false, assert_regex, assert_true
 
@@ -14,10 +17,10 @@ class TestingStartResponse:
     def __init__(self) -> None:
         self.was_called = False
         self.status = ""
-        self.headers = []  # type: List[Header]
+        self.headers: list[Header] = []
 
     def __call__(
-        self, status: str, headers: List[Header], exc_info: Any = None
+        self, status: str, headers: Iterable[Header], exc_info: Any = None
     ) -> StartResponseReturnType:
         assert_false(self.was_called, "start_response() called twice")
         assert_regex(status, _status_re)
@@ -53,7 +56,7 @@ class TestingStartResponse:
             "'{}': '{}' != '{}".format(name, value, header_value),
         )
 
-    def _find_header(self, name: str) -> Optional[str]:
+    def _find_header(self, name: str) -> str | None:
         self.assert_was_called()
         found = None
         for (header_name, header_value) in self.headers:

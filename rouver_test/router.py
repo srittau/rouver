@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import logging
+from collections.abc import Iterable, Sequence
 from http import HTTPStatus
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 from asserts import (
     assert_equal,

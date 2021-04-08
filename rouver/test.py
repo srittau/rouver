@@ -1,21 +1,14 @@
+from __future__ import annotations
+
 import json
 import re
 import secrets
+from collections.abc import Callable, Iterable, Sequence
 from http import HTTPStatus
 from io import BytesIO
 from json import JSONDecodeError
 from types import TracebackType
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Union
 from urllib.parse import quote_plus, urlparse
 
 from dectest import TestCase, before
@@ -27,8 +20,6 @@ from rouver.types import Header, WSGIApplication, WSGIEnvironment
 
 _STATUS_RE = re.compile(r"^(\d\d\d) [ -~]+$")
 
-_exc_info = Tuple[Type[BaseException], BaseException, TracebackType]
-
 
 class TestRequest:
     def __init__(self, method: str, path: str) -> None:
@@ -36,12 +27,12 @@ class TestRequest:
         self.path = path
         self._body = b""
         self.error_stream = BytesIO()
-        self.content_type: Optional[str] = None
+        self.content_type: str | None = None
         self._extra_environ: WSGIEnvironment = {}
-        self._extra_headers: List[Tuple[str, str]] = []
-        self._arguments: List[Tuple[str, str]] = []
-        self._file_arguments: List[Tuple[str, bytes, str, Optional[str]]] = []
-        self._boundary: Optional[str] = None
+        self._extra_headers: list[tuple[str, str]] = []
+        self._arguments: list[tuple[str, str]] = []
+        self._file_arguments: list[tuple[str, bytes, str, str | None]] = []
+        self._boundary: str | None = None
 
     @property
     def body(self) -> bytes:
@@ -59,7 +50,9 @@ class TestRequest:
             )
         self._body = body
 
-    def set_json_request(self, body: Union[str, bytes, dict, list]) -> None:
+    def set_json_request(
+        self, body: str | bytes | dict[str, Any] | list[Any]
+    ) -> None:
         """Send JSON data.
 
         body must either be UTF-8-encoded bytes, a string, or a dict or
@@ -89,9 +82,7 @@ class TestRequest:
         else:
             self._extra_headers.append((name, value))
 
-    def add_argument(
-        self, name: str, value: Union[str, Sequence[str]]
-    ) -> None:
+    def add_argument(self, name: str, value: str | Iterable[str]) -> None:
         """Add a CGI argument to this request.
 
         For GET and HEAD requests, this will add a query string to the
@@ -112,7 +103,7 @@ class TestRequest:
         content: bytes,
         content_type: str,
         *,
-        filename: Optional[str] = None,
+        filename: str | None = None,
     ) -> None:
         """Add a file CGI argument to this request.
 
@@ -167,7 +158,7 @@ class TestRequest:
         env.update(self._extra_environ)
         return env
 
-    def _determine_content_type(self) -> Optional[str]:
+    def _determine_content_type(self) -> str | None:
         if self.content_type is not None:
             return self.content_type
         elif self._file_arguments:
@@ -179,7 +170,7 @@ class TestRequest:
             return None
 
     def _build_query_string(self) -> str:
-        parts: List[str] = []
+        parts: list[str] = []
         for name, value in self._arguments:
             parts.append("{}={}".format(quote_plus(name), quote_plus(value)))
         return "&".join(parts)
@@ -230,7 +221,7 @@ def create_request(method: str, path: str) -> TestRequest:
 
 
 class TestResponse:
-    def __init__(self, status_line: str, headers: List[Header]) -> None:
+    def __init__(self, status_line: str, headers: list[Header]) -> None:
         m = _STATUS_RE.match(status_line)
         if not m:
             raise ValueError("invalid status line")
@@ -328,7 +319,7 @@ class TestResponse:
         self,
         content_type: str,
         *,
-        charset: Optional[Union[str, Sequence[Optional[str]]]] = None,
+        charset: str | Sequence[str | None] | None = None,
     ) -> None:
         """Assert the response's Content-Type header.
 
@@ -363,11 +354,11 @@ class TestResponse:
         expected_name: str,
         expected_value: str,
         *,
-        secure: Optional[bool] = None,
-        http_only: Optional[bool] = None,
-        max_age: Optional[int] = None,
+        secure: bool | None = None,
+        http_only: bool | None = None,
+        max_age: int | None = None,
     ) -> None:
-        def assert_flag(flag: Optional[bool], name_: str) -> None:
+        def assert_flag(flag: bool | None, name_: str) -> None:
             if flag:
                 if find_arg(name_) is None:
                     raise AssertionError(
@@ -379,7 +370,7 @@ class TestResponse:
                         f"Set-Cookie contains the '{name_}' flag unexpectedly"
                     )
 
-        def find_arg(arg_name: str) -> Optional[str]:
+        def find_arg(arg_name: str) -> str | None:
             for a in args:
                 if a[0].lower() == arg_name.lower():
                     return a[1] if len(a) >= 2 else ""
@@ -424,7 +415,7 @@ class TestResponse:
 
 def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
     output_written = False
-    response: Optional[TestResponse] = None
+    response: TestResponse | None = None
 
     def write(b: bytes) -> None:
         nonlocal output_written
@@ -435,8 +426,9 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
 
     def start_response(
         status: str,
-        response_headers: List[Header],
-        exc_info: Optional[_exc_info] = None,
+        response_headers: list[Header],
+        exc_info: tuple[type[BaseException], BaseException, TracebackType]
+        | None = None,
     ) -> Callable[[bytes], Any]:
         nonlocal response
         if response and not exc_info:
@@ -457,7 +449,7 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
 
 
 ArgumentToTest = Union[
-    Tuple[str, Multiplicity, str], Tuple[str, Multiplicity, str, str]
+    "tuple[str, Multiplicity, str]", "tuple[str, Multiplicity, str, str]"
 ]
 
 

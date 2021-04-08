@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+from collections.abc import Iterable, Sequence
 from http import HTTPStatus
 from json import dumps as dumps_json
-from typing import Any, Iterable, Optional, Sequence, Union
+from typing import Any
 
 from werkzeug.wrappers import Request
 
@@ -22,7 +25,7 @@ def respond(
     start_response: StartResponse,
     *,
     status: HTTPStatus = HTTPStatus.OK,
-    content_type: Optional[str] = None,
+    content_type: str | None = None,
     extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:
     """Prepare an empty WSGI response.
@@ -75,7 +78,7 @@ def respond_with_content(
 
 def respond_with_json(
     start_response: StartResponse,
-    json: Union[str, bytes, Any],
+    json: str | bytes | Any,
     *,
     status: HTTPStatus = HTTPStatus.OK,
     extra_headers: Sequence[Header] = [],
@@ -162,7 +165,7 @@ def created_as_json(
     request: Request,
     start_response: StartResponse,
     url_part: str,
-    json: Union[str, bytes, Any],
+    json: str | bytes | Any,
     *,
     extra_headers: Sequence[Header] = [],
 ) -> Iterable[bytes]:

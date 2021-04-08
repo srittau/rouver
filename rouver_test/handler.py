@@ -1,6 +1,8 @@
+from __future__ import annotations
+
+from collections.abc import Iterable
 from http import HTTPStatus
 from io import BytesIO
-from typing import Iterable, Type
 
 from asserts import assert_equal, assert_is, assert_is_instance, assert_raises
 from dectest import TestCase, before, test
@@ -13,7 +15,7 @@ from rouver_test.testutil import TestingStartResponse, default_environment
 
 
 class TestingHandler(RouteHandlerBase):
-    response = []  # type: Iterable[bytes]
+    response: Iterable[bytes] = []
 
     def prepare_response(self) -> Iterable[bytes]:
         self.respond()
@@ -26,7 +28,7 @@ class RouteHandlerBaseTest(TestCase):
         self.environ = default_environment()
         self.start_response = TestingStartResponse()
 
-    def call_handler(self, handler_class: Type[RouteHandlerBase]) -> bytes:
+    def call_handler(self, handler_class: type[RouteHandlerBase]) -> bytes:
         handler = handler_class(self.environ, self.start_response)
         return b"".join(handler)
 
