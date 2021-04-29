@@ -1,6 +1,6 @@
 # Direct requirements
 asserts==0.11.1
-black==21.4b1
+black==21.4b2
 dectest==1.1.1
 flake8==3.9.1
 isort==5.8.0
