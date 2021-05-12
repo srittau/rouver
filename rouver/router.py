@@ -390,9 +390,11 @@ def _respond_not_found(
 
 
 def _respond_method_not_allowed(
-    start_response: StartResponse, method: str, allowed_methods: Sequence[str]
+    start_response: StartResponse,
+    method: str,
+    allowed_methods: Iterable[str] | None,
 ) -> Iterable[bytes]:
-    method_string = " or ".join(allowed_methods)
+    method_string = " or ".join(allowed_methods or [])
     message = "Method '{}' not allowed. Please try {}.".format(
         method, method_string
     )
@@ -401,7 +403,7 @@ def _respond_method_not_allowed(
         start_response,
         html,
         status=HTTPStatus.METHOD_NOT_ALLOWED,
-        extra_headers=[("Allow", ", ".join(allowed_methods))],
+        extra_headers=[("Allow", ", ".join(allowed_methods or []))],
     )
 
 

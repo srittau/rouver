@@ -14,6 +14,7 @@ from asserts import (
     fail,
 )
 from dectest import TestCase, before, test
+from werkzeug.datastructures import WWWAuthenticate
 from werkzeug.exceptions import Unauthorized
 from werkzeug.wrappers import Request
 
@@ -754,7 +755,9 @@ class RouterTest(TestCase):
     @test
     def http_error(self) -> None:
         def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
-            raise Unauthorized("Foo < Bar", www_authenticate="Test")
+            raise Unauthorized(
+                "Foo < Bar", www_authenticate=WWWAuthenticate("Test")
+            )
 
         self.router.error_handling = False
         self.router.add_routes([("foo", "GET", handle)])
@@ -763,7 +766,7 @@ class RouterTest(TestCase):
         self.start_response.assert_header_equals(
             "Content-Type", "text/html; charset=utf-8"
         )
-        self.start_response.assert_header_equals("WWW-Authenticate", "Test")
+        self.start_response.assert_header_equals("WWW-Authenticate", "Test ")
         html = b"".join(response).decode("utf-8")
         assert_equal(
             """<!DOCTYPE html>

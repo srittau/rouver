@@ -20,7 +20,7 @@ setup(
     url="https://github.com/srittau/rouver",
     packages=["rouver", "rouver_test"],
     package_data={"rouver": ["py.typed"]},
-    install_requires=["dectest >= 1.0.0, < 2", "werkzeug >= 0.16.0"],
+    install_requires=["dectest >= 1.0.0, < 2", "werkzeug >= 0.16.0, werkzeug < 3"],
     tests_require=["asserts >= 0.10.0, < 0.12"],
     python_requires=">= 3.7",
     license="MIT",
