@@ -254,7 +254,7 @@ class TestResponse:
     def assert_status(self, status: HTTPStatus) -> None:
         assert (
             status == self.status
-        ), f"unexpected HTTP status: {status} != {self.status}"
+        ), f"unexpected HTTP status: {status.value} != {self.status.value}"
 
     def assert_header_not_set(self, name: str) -> None:
         for n, v in self._headers:
@@ -487,7 +487,7 @@ def test_wsgi_arguments(
             )
         elif response.status.value >= 400:
             raise AssertionError(
-                f"status was: {response.status}, "
+                f"status was: {response.status.value}, "
                 f"but expected a successful result"
             )
 
