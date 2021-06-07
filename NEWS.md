@@ -2,6 +2,7 @@
 
 ## Improvements
 
+* Python 3.10 is now officially supported.
 * `rouver.test`: `TestRequest` now sets the `REMOTE_ADDR` environment
   variable by default.
 
