@@ -1,3 +1,10 @@
+# News in rouver 2.4.0
+
+## Improvements
+
+* `rouver.test`: `TestRequest` now sets the `REMOTE_ADDR` environment
+  variable by default.
+
 # News in rouver 2.3.0
 
 ## Improvements

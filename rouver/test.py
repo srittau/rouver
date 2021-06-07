@@ -130,6 +130,7 @@ class TestRequest:
             "SERVER_NAME": "www.example.com",
             "SERVER_PORT": "80",
             "SERVER_PROTOCOL": "HTTP/1.1",
+            "REMOTE_ADDR": "127.0.0.1",
             "wsgi.version": (1, 0),
             "wsgi.url_scheme": "http",
             "wsgi.errors": self.error_stream,
