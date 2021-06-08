@@ -1,4 +1,4 @@
-# News in rouver 2.4.0
+# News in rouver 2.4.1
 
 ## Improvements
 
