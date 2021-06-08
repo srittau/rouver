@@ -2,6 +2,13 @@
 
 ## Improvements
 
+* Don't call sub-routers inside an exception handler. This improves
+  confusing tracebacks when exceptions are raised from a sub-router.
+
+# News in rouver 2.4.0
+
+## Improvements
+
 * Python 3.10 is now officially supported.
 * `rouver.test`: `TestRequest` now sets the `REMOTE_ADDR` environment
   variable by default.

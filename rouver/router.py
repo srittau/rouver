@@ -192,16 +192,22 @@ def _dispatch(
         try:
             matcher = find_route()
         except NotFound:
-            try:
-                return find_and_call_sub_router()
-            except NotFound:
-                return _respond_not_found(environment, start_response)
+            pass
         except MethodNotAllowed as exc:
             return _respond_method_not_allowed(
                 start_response, request.method, exc.valid_methods
             )
         else:
             return call_handler(matcher)
+
+        try:
+            sub_matcher = find_sub_router()
+        except NotFound:
+            pass
+        else:
+            return call_sub_router(sub_matcher)
+
+        return _respond_not_found(environment, start_response)
 
     def find_route() -> _RouteMatcher:
         matchers = [_RouteMatcher(h, path, arguments) for h in handlers]
@@ -229,10 +235,6 @@ def _dispatch(
             return _respond_arguments_error(start_response, exc.arguments)
         except HTTPException as exc:
             return _respond_http_exception(start_response, exc)
-
-    def find_and_call_sub_router() -> Iterable[bytes]:
-        matcher = find_sub_router()
-        return call_sub_router(matcher)
 
     def find_sub_router() -> _SubRouterMatcher:
         matchers = [
