@@ -21,7 +21,7 @@ pep517==0.10.0
 pycodestyle==2.7.0
 pyflakes==2.3.1
 pyparsing==2.4.7
-regex==2021.4.4
+regex==2021.7.1
 toml==0.10.2
 typed-ast==1.4.3
 typing-extensions==3.10.0.0
