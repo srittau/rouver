@@ -1,3 +1,11 @@
+# News in rouver 2.4.2
+
+## Improvements
+
+* Template handlers are now guaranteed to be called with a `tuple` for
+  previous path arguments. Previously, only a `Sequence` was guaranteed,
+  and a mutable `list` was used.
+
 # News in rouver 2.4.1
 
 ## Improvements

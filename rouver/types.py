@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, Mapping, Tuple
 
 from werkzeug.wrappers import Request
 
@@ -21,6 +21,6 @@ WSGIApplication = Callable[[WSGIEnvironment, StartResponse], WSGIResponse]
 RouteDescription = Tuple[str, str, WSGIApplication]
 
 # (request, previous_args, path_part) -> result
-RouteTemplateHandler = Callable[[Request, Sequence[Any], str], Any]
+RouteTemplateHandler = Callable[[Request, Tuple[Any, ...], str], Any]
 
 BadArgumentsDict = Mapping[str, str]

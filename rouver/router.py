@@ -5,7 +5,7 @@ import re
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from enum import Enum
 from http import HTTPStatus
-from typing import Any, cast
+from typing import Any, cast, Tuple
 from urllib.parse import unquote
 
 from werkzeug.exceptions import HTTPException, MethodNotAllowed, NotFound
@@ -267,7 +267,7 @@ class _RouteArguments:
         self._cache: dict[tuple[str, str], Any] = {}
 
     def parse_argument(
-        self, paths: Sequence[Any], name: str, path: str
+        self, paths: Tuple[Any, ...], name: str, path: str
     ) -> Any:
         key = name, path
         if key not in self._cache:
@@ -322,7 +322,7 @@ class _MatcherBase:
             elif tmpl_type == _TemplatePartType.PATTERN:
                 try:
                     arg = self._arguments.parse_argument(
-                        path_args, text, decoded
+                        tuple(path_args), text, decoded
                     )
                 except ValueError:
                     return False, []
