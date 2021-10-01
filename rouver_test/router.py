@@ -291,7 +291,7 @@ class RouterTest(TestCase):
             request: Request, paths: Sequence[Any], path: str
         ) -> str:
             assert_is_instance(request, Request)
-            assert_equal([], paths)
+            assert_equal((), paths)
             return path * 2
 
         self.router.add_template_handler("handler", handle_path)
@@ -310,7 +310,7 @@ class RouterTest(TestCase):
             return [b""]
 
         def handle_path(_: Request, paths: Sequence[Any], __: str) -> int:
-            assert_equal(["xyz"], paths)
+            assert_equal(("xyz",), paths)
             return 123
 
         self.router.add_template_handler("handler1", lambda _, __, ___: "xyz")
@@ -610,7 +610,7 @@ class RouterTest(TestCase):
             return []
 
         def tmpl(_: Request, path: Sequence[str], v: str) -> str:
-            assert_equal([], path)
+            assert_equal((), path)
             return v * 2
 
         sub = Router()
@@ -632,7 +632,7 @@ class RouterTest(TestCase):
             return []
 
         def tmpl(_: Request, path: Sequence[str], v: str) -> str:
-            assert_equal([], path)
+            assert_equal((), path)
             return v * 2
 
         sub = Router()
