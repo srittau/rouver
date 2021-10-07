@@ -19,7 +19,7 @@ packaging==21.0
 pathspec==0.9.0
 pep517==0.11.0
 pycodestyle==2.7.0
-pyflakes==2.3.1
+pyflakes==2.4.0
 pyparsing==2.4.7
 regex==2021.9.30
 toml==0.10.2
