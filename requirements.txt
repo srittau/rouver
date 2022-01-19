@@ -20,7 +20,7 @@ platformdirs==2.4.1
 pycodestyle==2.8.0
 pyflakes==2.4.0
 pyparsing==2.4.7
-regex==2021.11.10
+regex==2022.1.18
 toml==0.10.2
 tomli==1.2.3
 typing-extensions==4.0.1
