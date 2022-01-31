@@ -17,17 +17,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - name: Install dependencies
-        run: |
-          pip install --disable-pip-version-check --upgrade pip
-          pip install --disable-pip-version-check -r requirements.txt
+      - name: Install poetry
+        run: pip --disable-pip-version-check install -U poetry
+      - name: Install Python packages
+        run: poetry install
       - name: Lint with flake8
         run: |
-          flake8 --version
-          flake8 --show-source --statistics rouver rouver_test
+          poetry run flake8 --version
+          poetry run flake8 --show-source --statistics rouver rouver_test
       - name: Type checking with mypy
         run: |
-          mypy --version
-          mypy rouver rouver_test
+          poetry run mypy --version
+          poetry run mypy rouver rouver_test
       - name: Test with unittest
-        run: python -Wall -m unittest discover -t . -s rouver_test -p "*.py"
+        run: poetry run python -Wall -m unittest discover -t . -s rouver_test -p "*.py"
