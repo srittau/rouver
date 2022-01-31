@@ -4,7 +4,6 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -12,27 +11,27 @@ jobs:
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Cache dependencies
-      uses: actions/cache@v1
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
-    - name: Install dependencies
-      run: |
-        pip install --disable-pip-version-check --upgrade pip
-        pip install --disable-pip-version-check -r requirements.txt
-    - name: Lint with flake8
-      run: |
-        flake8 --version
-        flake8 --show-source --statistics rouver rouver_test
-    - name: Type checking with mypy
-      run: |
-        mypy --version
-        mypy rouver rouver_test
-    - name: Test with unittest
-      run: python -Wall -m unittest discover -t . -s rouver_test -p "*.py"
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
+      - name: Install dependencies
+        run: |
+          pip install --disable-pip-version-check --upgrade pip
+          pip install --disable-pip-version-check -r requirements.txt
+      - name: Lint with flake8
+        run: |
+          flake8 --version
+          flake8 --show-source --statistics rouver rouver_test
+      - name: Type checking with mypy
+        run: |
+          mypy --version
+          mypy rouver rouver_test
+      - name: Test with unittest
+        run: python -Wall -m unittest discover -t . -s rouver_test -p "*.py"
