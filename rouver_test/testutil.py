@@ -13,7 +13,7 @@ from rouver.types import Header, StartResponseReturnType, WSGIEnvironment
 _status_re = re.compile(r"^(\d\d\d) (.*)$")
 
 
-class TestingStartResponse:
+class StubStartResponse:
     def __init__(self) -> None:
         self.was_called = False
         self.status = ""

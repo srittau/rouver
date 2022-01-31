@@ -25,11 +25,11 @@ from rouver.args import ArgumentTemplate, Multiplicity, parse_args
 from rouver.exceptions import ArgumentsError
 from rouver.test import (
     ArgumentToTest,
-    TestRequest,
-    TestResponse,
+    FakeRequest,
+    FakeResponse,
     create_request,
-    test_wsgi_app,
-    test_wsgi_arguments,
+    run_wsgi_test,
+    test_wsgi_arguments as run_wsgi_arguments_test,
 )
 from rouver.types import StartResponse, WSGIApplication, WSGIEnvironment
 
@@ -347,7 +347,7 @@ class TestRequestTest(TestCase):
             request.body = b"Body"
 
     def _assert_json_request(
-        self, request: TestRequest, expected_body: bytes
+        self, request: FakeRequest, expected_body: bytes
     ) -> None:
         assert_equal(expected_body, request.body)
         env = request.to_environment()
@@ -386,10 +386,10 @@ class TestRequestTest(TestCase):
         self._assert_json_request(request, b'["foo", "b\\u00e4r"]')
 
 
-class TestResponseTest(TestCase):
+class FakeResponseTest(TestCase):
     @test
     def attributes(self) -> None:
-        response = TestResponse("200 OK", [])
+        response = FakeResponse("200 OK", [])
         assert_equal("200 OK", response.status_line)
         assert_equal(HTTPStatus.OK, response.status)
         assert_equal(b"", response.body)
@@ -397,16 +397,16 @@ class TestResponseTest(TestCase):
     @test
     def unknown_status(self) -> None:
         with assert_raises(ValueError):
-            TestResponse("999 Unknown", [])
+            FakeResponse("999 Unknown", [])
 
     @test
     def invalid_status_line(self) -> None:
         with assert_raises(ValueError):
-            TestResponse("INVALID", [])
+            FakeResponse("INVALID", [])
 
     @test
     def get_header_value(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK",
             [
                 ("X-Header", "Foobar"),
@@ -421,7 +421,7 @@ class TestResponseTest(TestCase):
 
     @test
     def parse_json_body(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Content-Type", "application/json")]
         )
         response.body = b'{"foo": 5}'
@@ -430,14 +430,14 @@ class TestResponseTest(TestCase):
 
     @test
     def parse_json_body__wrong_content_type(self) -> None:
-        response = TestResponse("200 OK", [("Content-Type", "text/plain")])
+        response = FakeResponse("200 OK", [("Content-Type", "text/plain")])
         response.body = b"{}"
         with assert_raises(AssertionError):
             response.parse_json_body()
 
     @test
     def parse_json_body__wrong_content_encoding(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Content-Type", "application/json; charset=latin1")]
         )
         response.body = b"{}"
@@ -446,7 +446,7 @@ class TestResponseTest(TestCase):
 
     @test
     def parse_json_body__invalid_json(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Content-Type", "application/json")]
         )
         response.body = b'{"foo":'
@@ -455,7 +455,7 @@ class TestResponseTest(TestCase):
 
     @test
     def parse_json_body__invalid_encoding(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Content-Type", "application/json; charset=utf-8")]
         )
         response.body = '{"föo": 5}'.encode("iso-8859-1")
@@ -464,49 +464,49 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_status__ok(self) -> None:
-        response = TestResponse("404 Not Found", [])
+        response = FakeResponse("404 Not Found", [])
         with assert_succeeds(AssertionError):
             response.assert_status(HTTPStatus.NOT_FOUND)
 
     @test
     def assert_status__fail(self) -> None:
-        response = TestResponse("404 Not Found", [])
+        response = FakeResponse("404 Not Found", [])
         with assert_raises(AssertionError):
             response.assert_status(HTTPStatus.OK)
 
     @test
     def assert_header_not_set__is_set(self) -> None:
-        response = TestResponse("200 OK", [("X-Foo", "value")])
+        response = FakeResponse("200 OK", [("X-Foo", "value")])
         with assert_raises(AssertionError):
             response.assert_header_not_set("x-FOO")
 
     @test
     def assert_header_not_set__not_set(self) -> None:
-        response = TestResponse("200 OK", [])
+        response = FakeResponse("200 OK", [])
         with assert_succeeds(AssertionError):
             response.assert_header_not_set("X-Foo")
 
     @test
     def assert_header_equal__no_such_header(self) -> None:
-        response = TestResponse("200 OK", [("X-Other", "value")])
+        response = FakeResponse("200 OK", [("X-Other", "value")])
         with assert_raises(AssertionError):
             response.assert_header_equal("X-Header", "value")
 
     @test
     def assert_header_equal__ok(self) -> None:
-        response = TestResponse("200 OK", [("X-Header", "value")])
+        response = FakeResponse("200 OK", [("X-Header", "value")])
         with assert_succeeds(AssertionError):
             response.assert_header_equal("X-Header", "value")
 
     @test
     def assert_header_equal__differs(self) -> None:
-        response = TestResponse("200 OK", [("X-Header", "other")])
+        response = FakeResponse("200 OK", [("X-Header", "other")])
         with assert_raises(AssertionError):
             response.assert_header_equal("X-Header", "value")
 
     @test
     def assert_created_at__ok(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "201 Created", [("Location", "http://example.com/")]
         )
         with assert_succeeds(AssertionError):
@@ -514,7 +514,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_created_at__wrong_status(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Location", "http://example.com/")]
         )
         with assert_raises(AssertionError):
@@ -522,13 +522,13 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_created_at__no_location_header(self) -> None:
-        response = TestResponse("201 Created", [])
+        response = FakeResponse("201 Created", [])
         with assert_raises(AssertionError):
             response.assert_created_at("http://example.org/")
 
     @test
     def assert_created_at__wrong_location(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "201 Created", [("Location", "http://example.com/")]
         )
         with assert_raises(AssertionError):
@@ -536,7 +536,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_created_at__relative_location(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "201 Created", [("Location", "http://example.com/foo/bar")]
         )
         with assert_succeeds(AssertionError):
@@ -544,7 +544,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_created_at__keep_query_string(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "201 Created",
             [("Location", "http://example.com/foo?abc=def#frag")],
         )
@@ -553,7 +553,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_see_other__ok(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "303 See Other", [("Location", "http://example.com/")]
         )
         with assert_succeeds(AssertionError):
@@ -561,7 +561,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_see_other__wrong_status(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Location", "http://example.com/")]
         )
         with assert_raises(AssertionError):
@@ -569,13 +569,13 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_see_other__no_location_header(self) -> None:
-        response = TestResponse("303 See Other", [])
+        response = FakeResponse("303 See Other", [])
         with assert_raises(AssertionError):
             response.assert_see_other("http://example.org/")
 
     @test
     def assert_see_other__wrong_location(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "303 See Other", [("Location", "http://example.com/")]
         )
         with assert_raises(AssertionError):
@@ -583,7 +583,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_see_other__relative_location(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "303 See Other", [("Location", "http://example.com/foo/bar")]
         )
         with assert_succeeds(AssertionError):
@@ -591,7 +591,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_see_other__keep_query_string(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "303 See Other",
             [("Location", "http://example.com/foo?abc=def#frag")],
         )
@@ -600,7 +600,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_temporary_redirect__ok(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "307 Temporary Redirect", [("Location", "http://example.com/")]
         )
         with assert_succeeds(AssertionError):
@@ -608,7 +608,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_temporary_redirect__wrong_status(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Location", "http://example.com/")]
         )
         with assert_raises(AssertionError):
@@ -616,13 +616,13 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_temporary_redirect__no_location_header(self) -> None:
-        response = TestResponse("307 Temporary Redirect", [])
+        response = FakeResponse("307 Temporary Redirect", [])
         with assert_raises(AssertionError):
             response.assert_temporary_redirect("http://example.org/")
 
     @test
     def assert_temporary_redirect__wrong_location(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "307 Temporary Redirect", [("Location", "http://example.com/")]
         )
         with assert_raises(AssertionError):
@@ -630,7 +630,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_temporary_redirect__relative_location(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "307 Temporary Redirect",
             [("Location", "http://example.com/foo/bar")],
         )
@@ -639,7 +639,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_temporary_redirect__keep_query_string(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "307 Temporary Redirect",
             [("Location", "http://example.com/foo?abc=def#frag")],
         )
@@ -648,25 +648,25 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_content_type__no_such_header(self) -> None:
-        response = TestResponse("200 OK", [])
+        response = FakeResponse("200 OK", [])
         with assert_raises(AssertionError):
             response.assert_content_type("image/png")
 
     @test
     def assert_content_type__equal(self) -> None:
-        response = TestResponse("200 OK", [("Content-Type", "image/png")])
+        response = FakeResponse("200 OK", [("Content-Type", "image/png")])
         with assert_succeeds(AssertionError):
             response.assert_content_type("image/png")
 
     @test
     def assert_content_type__different(self) -> None:
-        response = TestResponse("200 OK", [("Content-Type", "image/png")])
+        response = FakeResponse("200 OK", [("Content-Type", "image/png")])
         with assert_raises(AssertionError):
             response.assert_content_type("image/jpeg")
 
     @test
     def assert_content_type__charset_matches(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Content-Type", "text/html; charset=us-ascii")]
         )
         with assert_succeeds(AssertionError):
@@ -674,7 +674,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_content_type__charset_list_matches(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Content-Type", "text/html; charset=us-ascii")]
         )
         with assert_succeeds(AssertionError):
@@ -684,7 +684,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_content_type__charset_list_matches__none(self) -> None:
-        response = TestResponse("200 OK", [("Content-Type", "text/html")])
+        response = FakeResponse("200 OK", [("Content-Type", "text/html")])
         with assert_succeeds(AssertionError):
             response.assert_content_type(
                 "text/html", charset=["us-ascii", "utf-8", None]
@@ -692,7 +692,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_content_type__charset_not_checked(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Content-Type", "text/html; charset=utf-8")]
         )
         with assert_succeeds(AssertionError):
@@ -700,13 +700,13 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_content_type__no_charset_in_response(self) -> None:
-        response = TestResponse("200 OK", [("Content-Type", "text/html")])
+        response = FakeResponse("200 OK", [("Content-Type", "text/html")])
         with assert_raises(AssertionError):
             response.assert_content_type("text/html", charset="us-ascii")
 
     @test
     def assert_content_type__wrong_charset(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Content-Type", "text/html; charset=utf-8")]
         )
         with assert_raises(AssertionError):
@@ -714,7 +714,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__simple_match(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Set-Cookie", "Foo=Bar; Secure; Max-Age=1234")]
         )
         with assert_succeeds(AssertionError):
@@ -722,31 +722,31 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__no_cookie_header(self) -> None:
-        response = TestResponse("200 OK", [])
+        response = FakeResponse("200 OK", [])
         with assert_raises(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
 
     @test
     def assert_set_cookie__no_cookie_value(self) -> None:
-        response = TestResponse("200 OK", [("Set-Cookie", "Foo")])
+        response = FakeResponse("200 OK", [("Set-Cookie", "Foo")])
         with assert_raises(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
 
     @test
     def assert_set_cookie__wrong_name(self) -> None:
-        response = TestResponse("200 OK", [("Set-Cookie", "Wrong=Bar")])
+        response = FakeResponse("200 OK", [("Set-Cookie", "Wrong=Bar")])
         with assert_raises(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
 
     @test
     def assert_set_cookie__wrong_value(self) -> None:
-        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Wrong")])
+        response = FakeResponse("200 OK", [("Set-Cookie", "Foo=Wrong")])
         with assert_raises(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
 
     @test
     def assert_set_cookie__has_secure(self) -> None:
-        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Bar; Secure")])
+        response = FakeResponse("200 OK", [("Set-Cookie", "Foo=Bar; Secure")])
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
         with assert_succeeds(AssertionError):
@@ -756,7 +756,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__no_secure(self) -> None:
-        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
+        response = FakeResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
         with assert_raises(AssertionError):
@@ -766,7 +766,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__has_http_only(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Set-Cookie", "Foo=Bar; HttpOnly")]
         )
         with assert_succeeds(AssertionError):
@@ -778,7 +778,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__no_http_only(self) -> None:
-        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
+        response = FakeResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
         with assert_raises(AssertionError):
@@ -788,7 +788,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__has_max_age(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Set-Cookie", "Foo=Bar; Max-Age=1234")]
         )
         with assert_succeeds(AssertionError):
@@ -800,7 +800,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__invalid_max_age(self) -> None:
-        response = TestResponse(
+        response = FakeResponse(
             "200 OK", [("Set-Cookie", "Foo=Bar; Max-Age=INVALID")]
         )
         with assert_succeeds(AssertionError):
@@ -810,7 +810,7 @@ class TestResponseTest(TestCase):
 
     @test
     def assert_set_cookie__no_max_age(self) -> None:
-        response = TestResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
+        response = FakeResponse("200 OK", [("Set-Cookie", "Foo=Bar")])
         with assert_succeeds(AssertionError):
             response.assert_set_cookie("Foo", "Bar")
         with assert_raises(AssertionError):
@@ -834,7 +834,7 @@ class TestWSGIAppTest(TestCase):
 
         request = create_request("GET", "/foo/bar")
         request.add_argument("foo", "bar")
-        test_wsgi_app(app, request)
+        run_wsgi_test(app, request)
         assert_true(app_run, "app not run")
         assert env is not None
         assert_equal("foo=bar", env.get("QUERY_STRING"))
@@ -846,7 +846,7 @@ class TestWSGIAppTest(TestCase):
             return []
 
         request = create_request("GET", "/foo/bar")
-        response = test_wsgi_app(app, request)
+        response = run_wsgi_test(app, request)
         response.assert_status(HTTPStatus.NOT_FOUND)
         response.assert_header_equal("X-Foo", "Bar")
 
@@ -859,7 +859,7 @@ class TestWSGIAppTest(TestCase):
             return [b"Foo", b"bar"]
 
         request = create_request("GET", "/foo/bar")
-        response = test_wsgi_app(app, request)
+        response = run_wsgi_test(app, request)
         assert_equal(b"AbcdefFoobar", response.body)
 
     @test
@@ -869,7 +869,7 @@ class TestWSGIAppTest(TestCase):
 
         request = create_request("GET", "/foo/bar")
         with assert_raises(AssertionError):
-            test_wsgi_app(app, request)
+            run_wsgi_test(app, request)
 
     @test
     def start_response_called_multiple_times(self) -> None:
@@ -885,7 +885,7 @@ class TestWSGIAppTest(TestCase):
             return []
 
         request = create_request("GET", "/foo/bar")
-        test_wsgi_app(app, request)
+        run_wsgi_test(app, request)
         assert_true(assert_raised)
 
     @test
@@ -902,7 +902,7 @@ class TestWSGIAppTest(TestCase):
             return []
 
         request = create_request("GET", "/foo/bar")
-        test_wsgi_app(app, request)
+        run_wsgi_test(app, request)
         assert_false(assert_raised)
 
     @test
@@ -915,7 +915,7 @@ class TestWSGIAppTest(TestCase):
 
         request = create_request("GET", "/foo/bar")
         with assert_raises(ValueError):
-            test_wsgi_app(app, request)
+            run_wsgi_test(app, request)
 
     @test
     def start_response_called_no_output_written(self) -> None:
@@ -926,7 +926,7 @@ class TestWSGIAppTest(TestCase):
             return []
 
         request = create_request("GET", "/foo/bar")
-        response = test_wsgi_app(app, request)
+        response = run_wsgi_test(app, request)
         response.assert_status(HTTPStatus.NOT_FOUND)
 
 
@@ -960,7 +960,7 @@ class TestWSGIArgumentsTest(TestCase):
         app = self._create_app(app_args)
         request = create_request("GET", "/")
         with assert_succeeds(AssertionError):
-            test_wsgi_arguments(app, request, expected_args)
+            run_wsgi_arguments_test(app, request, expected_args)
 
     def _failing_arg_test(
         self,
@@ -970,7 +970,7 @@ class TestWSGIArgumentsTest(TestCase):
         app = self._create_app(app_args)
         request = create_request("GET", "/")
         with assert_raises(AssertionError):
-            test_wsgi_arguments(app, request, expected_args)
+            run_wsgi_arguments_test(app, request, expected_args)
 
     @test
     def no_expected_args(self) -> None:
@@ -1064,11 +1064,11 @@ class TestWSGIArgumentsTest(TestCase):
 
         request = create_request("POST", "/")
         with assert_raises(AssertionError):
-            test_wsgi_arguments(app, request, [])
+            run_wsgi_arguments_test(app, request, [])
 
     @test
     def post_request__no_args(self) -> None:
         app = self._create_app([("arg", int, Multiplicity.OPTIONAL)])
         request = create_request("POST", "/")
         with assert_succeeds(AssertionError):
-            test_wsgi_arguments(app, request, [])
+            run_wsgi_arguments_test(app, request, [])

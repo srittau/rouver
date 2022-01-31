@@ -25,6 +25,7 @@ black = "^22.1.0"
 flake8 = "^4.0.1"
 isort = "^5.10.1"
 mypy = "0.931"
+pytest = "^6.2.5"
 
 [tool.black]
 line-length = 79
@@ -39,6 +40,10 @@ combine_as_imports = true
 line_length = 79
 known_zctest = "test_zcapi,test_zcbase,test_zcevents"
 sections = "FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER,ZCTEST"
+
+[tool.pytest.ini_options]
+python_files = "rouver_test/**.py"
+python_functions = "test_*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

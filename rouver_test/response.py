@@ -15,49 +15,49 @@ from rouver.response import (
     see_other,
     temporary_redirect,
 )
-from rouver_test.testutil import TestingStartResponse, default_environment
+from rouver_test.testutil import StubStartResponse, default_environment
 
 
 class RespondTest(TestCase):
     @test
     def default_status(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond(sr)
         sr.assert_status(HTTPStatus.OK)
 
     @test
     def custom_status(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond(sr, status=HTTPStatus.NOT_ACCEPTABLE)
         sr.assert_status(HTTPStatus.NOT_ACCEPTABLE)
 
     @test
     def extra_headers(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond(sr, extra_headers=[("X-Custom-Header", "Foobar")])
         sr.assert_header_equals("X-Custom-Header", "Foobar")
 
     @test
     def no_content_type(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond(sr)
         sr.assert_header_missing("Content-Type")
 
     @test
     def content_type(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond(sr, content_type="image/png")
         sr.assert_header_equals("Content-Type", "image/png")
 
     @test
     def content_type_in_extra_headers(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond(sr, extra_headers=[("Content-Type", "image/png")])
         sr.assert_header_equals("Content-Type", "image/png")
 
     @test
     def error_if_content_type_also_in_extra_headers(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         with assert_raises(ValueError):
             respond(
                 sr,
@@ -67,7 +67,7 @@ class RespondTest(TestCase):
 
     @test
     def response(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         response = respond(sr)
         assert_equal(b"", b"".join(response))
 
@@ -75,37 +75,37 @@ class RespondTest(TestCase):
 class RespondWithContentTest(TestCase):
     @test
     def default_status(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_content(sr, b"")
         sr.assert_status(HTTPStatus.OK)
 
     @test
     def custom_status(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_content(sr, b"", status=HTTPStatus.NOT_ACCEPTABLE)
         sr.assert_status(HTTPStatus.NOT_ACCEPTABLE)
 
     @test
     def default_content_type(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_content(sr, b"")
         sr.assert_header_equals("Content-Type", "application/octet-stream")
 
     @test
     def custom_content_type(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_content(sr, b"", content_type="text/plain")
         sr.assert_header_equals("Content-Type", "text/plain")
 
     @test
     def content_length(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_content(sr, b"foobar")
         sr.assert_header_equals("Content-Length", "6")
 
     @test
     def extra_headers(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_content(
             sr, b"", extra_headers=[("X-Custom-Header", "Foobar")]
         )
@@ -113,7 +113,7 @@ class RespondWithContentTest(TestCase):
 
     @test
     def return_value(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         response = respond_with_content(sr, b"foobar")
         assert_equal(b"foobar", b"".join(response))
 
@@ -121,19 +121,19 @@ class RespondWithContentTest(TestCase):
 class RespondWithJSONTest(TestCase):
     @test
     def default_status(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_json(sr, {})
         sr.assert_status(HTTPStatus.OK)
 
     @test
     def custom_status(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_json(sr, {}, status=HTTPStatus.NOT_ACCEPTABLE)
         sr.assert_status(HTTPStatus.NOT_ACCEPTABLE)
 
     @test
     def content_type(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_json(sr, {})
         sr.assert_header_equals(
             "Content-Type", "application/json; charset=utf-8"
@@ -141,13 +141,13 @@ class RespondWithJSONTest(TestCase):
 
     @test
     def content_length(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_json(sr, {"foo": 33})
         sr.assert_header_equals("Content-Length", "11")
 
     @test
     def extra_headers(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_json(
             sr, {}, extra_headers=[("X-Custom-Header", "Foobar")]
         )
@@ -155,19 +155,19 @@ class RespondWithJSONTest(TestCase):
 
     @test
     def json_as_bytes(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         response = respond_with_json(sr, b'{"foo": 3}')
         assert_equal(b'{"foo": 3}', b"".join(response))
 
     @test
     def json_as_str(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         response = respond_with_json(sr, '{"föo": 3}')
         assert_equal('{"föo": 3}'.encode("utf-8"), b"".join(response))
 
     @test
     def json_as_object(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         response = respond_with_json(sr, {"föo": 3})
         assert_equal(b'{"f\\u00f6o": 3}', b"".join(response))
 
@@ -175,13 +175,13 @@ class RespondWithJSONTest(TestCase):
 class RespondWithHTMLTest(TestCase):
     @test
     def default_status(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_html(sr, "<div>Test</div>")
         sr.assert_status(HTTPStatus.OK)
 
     @test
     def custom_status(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_html(
             sr, "<div>Test</div>", status=HTTPStatus.NOT_ACCEPTABLE
         )
@@ -189,19 +189,19 @@ class RespondWithHTMLTest(TestCase):
 
     @test
     def content_type(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_html(sr, "<div>Test</div>")
         sr.assert_header_equals("Content-Type", "text/html; charset=utf-8")
 
     @test
     def content_length(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_html(sr, "<div>Test</div>")
         sr.assert_header_equals("Content-Length", "15")
 
     @test
     def extra_headers(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         respond_with_html(
             sr,
             "<div>Täst</div>",
@@ -211,13 +211,13 @@ class RespondWithHTMLTest(TestCase):
 
     @test
     def return_value(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         response = respond_with_html(sr, "<div>Test</div>")
         assert_equal(b"<div>Test</div>", b"".join(response))
 
     @test
     def return_value_encoding(self) -> None:
-        sr = TestingStartResponse()
+        sr = StubStartResponse()
         response = respond_with_html(sr, "<div>Täst</div>")
         assert_equal("<div>Täst</div>".encode("utf-8"), b"".join(response))
 
@@ -226,7 +226,7 @@ class CreatedAtTest(TestCase):
     @before
     def setup_environment(self) -> None:
         self.environment = default_environment()
-        self.start_response = TestingStartResponse()
+        self.start_response = StubStartResponse()
 
     @test
     def headers(self) -> None:
@@ -290,7 +290,7 @@ class CreatedAsJSONTest(TestCase):
     @before
     def setup_environment(self) -> None:
         self.environment = default_environment()
-        self.start_response = TestingStartResponse()
+        self.start_response = StubStartResponse()
 
     @test
     def headers(self) -> None:
@@ -359,7 +359,7 @@ class TemporaryRedirectTest(TestCase):
     @before
     def setup_environment(self) -> None:
         self.environment = default_environment()
-        self.start_response = TestingStartResponse()
+        self.start_response = StubStartResponse()
 
     @test
     def headers(self) -> None:
@@ -437,7 +437,7 @@ class SeeOtherTest(TestCase):
     @before
     def setup_environment(self) -> None:
         self.environment = default_environment()
-        self.start_response = TestingStartResponse()
+        self.start_response = StubStartResponse()
 
     @test
     def headers(self) -> None:

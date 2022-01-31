@@ -26,7 +26,7 @@ from rouver.types import (
     WSGIEnvironment,
     WSGIResponse,
 )
-from rouver_test.testutil import TestingStartResponse, default_environment
+from rouver_test.testutil import StubStartResponse, default_environment
 
 
 def handle_success(
@@ -53,7 +53,7 @@ class RouterTest(TestCase):
     def setup_router(self) -> None:
         self.router = Router()
         self.router.error_handling = False
-        self.start_response = TestingStartResponse()
+        self.start_response = StubStartResponse()
         self.environment = default_environment()
         self.disable_logger()
 
