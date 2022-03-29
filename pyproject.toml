@@ -17,7 +17,7 @@ include = ["*/py.typed"]
 [tool.poetry.dependencies]
 python = "^3.7"
 dectest = "^1.0.0"
-werkzeug = ">=0.16.0,<3"
+werkzeug = ">=2.0,<3"
 
 [tool.poetry.dev-dependencies]
 asserts = ">=0.10.0,<0.12"
