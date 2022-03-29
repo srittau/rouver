@@ -1,3 +1,9 @@
+# News in rouver 2.4.3
+
+## Bug Fixes
+
+* Add `typing-extensions` to dependency list.
+
 # News in rouver 2.4.2
 
 ## Improvements
