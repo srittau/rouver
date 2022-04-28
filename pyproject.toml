@@ -25,7 +25,7 @@ asserts = ">=0.10.0,<0.12"
 black = "^22.3.0"
 flake8 = "^4.0.1"
 isort = "^5.10.1"
-mypy = "0.942"
+mypy = "0.950"
 pytest = ">=6.2.5, <8"
 
 [tool.black]
