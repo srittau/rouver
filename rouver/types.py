@@ -12,7 +12,7 @@ Header: TypeAlias = Tuple[str, str]
 WSGIEnvironment: TypeAlias = Dict[str, Any]
 
 # (body) -> None
-StartResponseReturnType: TypeAlias = Callable[[bytes], None]
+StartResponseReturnType: TypeAlias = Callable[[bytes], object]
 
 # (status: str, headers: List[Headers], exc_info) -> response
 StartResponse: TypeAlias = Callable[..., StartResponseReturnType]
