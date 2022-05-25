@@ -1,26 +1,33 @@
+from __future__ import annotations
+
 from typing import Any, Callable, Dict, Iterable, Mapping, Tuple
 
+from typing_extensions import TypeAlias
 from werkzeug.wrappers import Request
 
 # (name, value)
-Header = Tuple[str, str]
+Header: TypeAlias = Tuple[str, str]
 
-WSGIEnvironment = Dict[str, Any]
+WSGIEnvironment: TypeAlias = Dict[str, Any]
 
 # (body) -> None
-StartResponseReturnType = Callable[[bytes], None]
+StartResponseReturnType: TypeAlias = Callable[[bytes], None]
 
 # (status: str, headers: List[Headers], exc_info) -> response
-StartResponse = Callable[..., StartResponseReturnType]
+StartResponse: TypeAlias = Callable[..., StartResponseReturnType]
 
-WSGIResponse = Iterable[bytes]
+WSGIResponse: TypeAlias = Iterable[bytes]
 
-WSGIApplication = Callable[[WSGIEnvironment, StartResponse], WSGIResponse]
+WSGIApplication: TypeAlias = Callable[
+    [WSGIEnvironment, StartResponse], WSGIResponse
+]
 
 # (method, path, callback)
-RouteDescription = Tuple[str, str, WSGIApplication]
+RouteDescription: TypeAlias = Tuple[str, str, WSGIApplication]
 
 # (request, previous_args, path_part) -> result
-RouteTemplateHandler = Callable[[Request, Tuple[Any, ...], str], Any]
+RouteTemplateHandler: TypeAlias = Callable[
+    [Request, Tuple[Any, ...], str], Any
+]
 
-BadArgumentsDict = Mapping[str, str]
+BadArgumentsDict: TypeAlias = Mapping[str, str]
