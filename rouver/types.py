@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Iterable, Mapping, Tuple
 
 from typing_extensions import TypeAlias
 from werkzeug.wrappers import Request
