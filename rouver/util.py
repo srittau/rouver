@@ -1,9 +1,6 @@
-import re
 from urllib.parse import quote, urljoin
 
 from werkzeug import Request
-
-_url_scheme_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9.+-]*:")
 
 
 def absolute_url(request: Request, path: str) -> str:
