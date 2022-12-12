@@ -1,3 +1,7 @@
+# Unreleased Changes
+
+- Drop support for Python 3.7 and 3.8.
+
 # News in rouver 2.4.4
 
 ## Improvements

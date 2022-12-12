@@ -15,15 +15,15 @@ packages = [{ include = "rouver" }, { include = "rouver_test" }]
 include = ["*/py.typed"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.9"
 dectest = "^1.0.0"
-werkzeug = ">=2.0,<3"
+werkzeug = "^2.0"
 typing-extensions = "^4.1.1"
 
 [tool.poetry.dev-dependencies]
 asserts = ">=0.10.0,<0.13"
 black = "^22.6.0"
-flake8 = { version = "^6.0.0", python = ">=3.8.1" }
+flake8 = "^6.0.0"
 isort = "^5.10.1"
 mypy = "0.991"
 pytest = ">=6.2.5, <8"
