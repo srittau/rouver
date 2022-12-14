@@ -5,7 +5,7 @@ import re
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from enum import Enum
 from http import HTTPStatus
-from typing import Any, cast, Tuple
+from typing import Any, Tuple, cast
 from urllib.parse import unquote
 
 from werkzeug.exceptions import HTTPException, MethodNotAllowed, NotFound
