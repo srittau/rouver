@@ -5,7 +5,6 @@ from http import HTTPStatus
 from io import BytesIO
 
 import pytest
-from asserts import assert_equal, assert_is, assert_is_instance, assert_raises
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 
@@ -34,47 +33,47 @@ class TestRouteHandlerBase:
 
     def test_attributes(self) -> None:
         handler = StubHandler(self.environ, self.start_response)
-        assert_is(self.environ, handler.request.environ)
-        assert_is_instance(handler.request, Request)
-        assert_is(self.start_response, handler.start_response)
+        assert handler.request.environ is self.environ
+        assert isinstance(handler.request, Request)
+        assert handler.start_response is self.start_response
 
     def test_path_args__from_environment(self) -> None:
         self.environ["rouver.path_args"] = ["foo"]
         handler = StubHandler(self.environ, self.start_response)
-        assert_equal(["foo"], handler.path_args)
+        assert handler.path_args == ["foo"]
 
     def test_path_args__default(self) -> None:
         handler = StubHandler(self.environ, self.start_response)
-        assert_equal([], handler.path_args)
+        assert handler.path_args == []
 
     def test_path_args__not_a_list(self) -> None:
         self.environ["rouver.path_args"] = "not-a-list"
         handler = StubHandler(self.environ, self.start_response)
-        assert_equal([], handler.path_args)
+        assert handler.path_args == []
 
     def test_wildcard_path__from_environment(self) -> None:
         self.environ["rouver.wildcard_path"] = "/foo/bar"
         handler = StubHandler(self.environ, self.start_response)
-        assert_equal("/foo/bar", handler.wildcard_path)
+        assert handler.wildcard_path == "/foo/bar"
 
     def test_wildcard_path__decode(self) -> None:
         self.environ["rouver.wildcard_path"] = "/foo%2Fb%C3%A4r"
         handler = StubHandler(self.environ, self.start_response)
-        assert_equal("/foo/bär", handler.wildcard_path)
+        assert handler.wildcard_path == "/foo/bär"
 
     def test_wildcard_path__decode_errors(self) -> None:
         self.environ["rouver.wildcard_path"] = "/foo%2Fb%C3r"
         handler = StubHandler(self.environ, self.start_response)
-        assert_equal("/foo/b�r", handler.wildcard_path)
+        assert handler.wildcard_path == "/foo/b�r"
 
     def test_wildcard_path__default(self) -> None:
         handler = StubHandler(self.environ, self.start_response)
-        assert_equal("", handler.wildcard_path)
+        assert handler.wildcard_path == ""
 
     def test_wildcard_path__not_a_string(self) -> None:
         self.environ["rouver.wildcard_path"] = b"not-a-str"
         handler = StubHandler(self.environ, self.start_response)
-        assert_equal("", handler.wildcard_path)
+        assert handler.wildcard_path == ""
 
     def test_parse_args__post_twice(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b"foo=bar&abc=def")
@@ -83,14 +82,14 @@ class TestRouteHandlerBase:
         self.environ["CONTENT_TYPE"] = "application/x-www-form-urlencoded"
         handler = StubHandler(self.environ, self.start_response)
         args1 = handler.parse_args([("foo", str, Multiplicity.REQUIRED)])
-        assert_equal({"foo": "bar"}, args1)
+        assert args1 == {"foo": "bar"}
         args2 = handler.parse_args(
             [
                 ("foo", str, Multiplicity.REQUIRED),
                 ("abc", str, Multiplicity.REQUIRED),
             ]
         )
-        assert_equal({"foo": "bar", "abc": "def"}, args2)
+        assert args2 == {"foo": "bar", "abc": "def"}
 
     def test_parse_args__works_in_response_handler(self) -> None:
         class MyHandler(RouteHandlerBase):
@@ -111,7 +110,7 @@ class TestRouteHandlerBase:
         self.environ["CONTENT_TYPE"] = "application/json"
         handler = StubHandler(self.environ, self.start_response)
         j = handler.parse_json_request()
-        assert_equal({"föo": 42}, j)
+        assert j == {"föo": 42}
 
     def test_parse_json_request__explicit_encoding(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b'{ "f\xf6o": 42 }')
@@ -119,21 +118,21 @@ class TestRouteHandlerBase:
         self.environ["CONTENT_TYPE"] = "application/json; charset=iso-8859-1"
         handler = StubHandler(self.environ, self.start_response)
         j = handler.parse_json_request()
-        assert_equal({"föo": 42}, j)
+        assert j == {"föo": 42}
 
     def test_parse_json_request__unknown_encoding(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b"{}")
         self.environ["CONTENT_LENGTH"] = "2"
         self.environ["CONTENT_TYPE"] = "application/json; charset=unknown"
         handler = StubHandler(self.environ, self.start_response)
-        with assert_raises(UnsupportedMediaType):
+        with pytest.raises(UnsupportedMediaType):
             handler.parse_json_request()
 
     def test_parse_json_request__no_content_type(self) -> None:
         self.environ["wsgi.input"] = BytesIO(b"{}")
         self.environ["CONTENT_LENGTH"] = "2"
         handler = StubHandler(self.environ, self.start_response)
-        with assert_raises(UnsupportedMediaType):
+        with pytest.raises(UnsupportedMediaType):
             handler.parse_json_request()
 
     def test_parse_json_request__wrong_content_type(self) -> None:
@@ -141,7 +140,7 @@ class TestRouteHandlerBase:
         self.environ["CONTENT_LENGTH"] = "2"
         self.environ["CONTENT_TYPE"] = "application/octet-stream"
         handler = StubHandler(self.environ, self.start_response)
-        with assert_raises(UnsupportedMediaType):
+        with pytest.raises(UnsupportedMediaType):
             handler.parse_json_request()
 
     def test_parse_json_request__invalid_data(self) -> None:
@@ -149,11 +148,11 @@ class TestRouteHandlerBase:
         self.environ["CONTENT_LENGTH"] = "7"
         self.environ["CONTENT_TYPE"] = "application/json"
         handler = StubHandler(self.environ, self.start_response)
-        with assert_raises(UnsupportedMediaType):
+        with pytest.raises(UnsupportedMediaType):
             handler.parse_json_request()
 
     def test_respond(self) -> None:
         StubHandler.response = [b"foo", b"bar"]
         response = self.call_handler(StubHandler)
         self.start_response.assert_status(HTTPStatus.OK)
-        assert_equal(b"foobar", response)
+        assert response == b"foobar"
