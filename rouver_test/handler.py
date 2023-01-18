@@ -29,7 +29,9 @@ class TestRouteHandlerBase:
 
     def call_handler(self, handler_class: type[RouteHandlerBase]) -> bytes:
         handler = handler_class(self.environ, self.start_response)
-        return b"".join(handler)
+        response = b"".join(handler)
+        handler.close()
+        return response
 
     def test_attributes(self) -> None:
         handler = StubHandler(self.environ, self.start_response)
@@ -156,3 +158,10 @@ class TestRouteHandlerBase:
         response = self.call_handler(StubHandler)
         self.start_response.assert_status(HTTPStatus.OK)
         assert response == b"foobar"
+
+    def test_closeable_response(self) -> None:
+        StubHandler.response = BytesIO(b"foo")
+        response = self.call_handler(StubHandler)
+        self.start_response.assert_status(HTTPStatus.OK)
+        assert response == b"foo"
+        assert StubHandler.response.closed

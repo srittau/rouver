@@ -1,5 +1,8 @@
 # Unreleased Changes
 
+- `RouteHandlerBase`: If a closable stream is returned from
+  `prepare_response()`, it will be closed after the response has been sent.
+
 # News in rouver 2.5.0
 
 - Drop support for Python 3.7 and 3.8.

@@ -4,7 +4,7 @@ import collections.abc
 from collections.abc import Iterable, Iterator, Sequence
 from http import HTTPStatus
 from json import JSONDecodeError, loads as json_loads
-from typing import Any, cast
+from typing import Any, Protocol, cast
 from urllib.parse import unquote
 
 from werkzeug.exceptions import UnsupportedMediaType
@@ -22,6 +22,11 @@ from rouver.response import (
     temporary_redirect,
 )
 from rouver.types import Header, StartResponse, WSGIEnvironment
+
+
+class _Closeable(Protocol):
+    def close(self) -> object:
+        ...
 
 
 class RouteHandlerBase(collections.abc.Iterable):
@@ -55,6 +60,10 @@ class RouteHandlerBase(collections.abc.Iterable):
 
     def __iter__(self) -> Iterator[bytes]:
         return iter(self._response)
+
+    def close(self) -> None:
+        if hasattr(self._response, "close"):
+            cast(_Closeable, self._response).close()
 
     @property
     def _charset(self) -> str:
