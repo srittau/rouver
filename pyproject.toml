@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rouver"
-version = "2.5.0"
+version = "2.5.1dev0"
 description = "A microframework"
 readme = "README.md"
 authors = ["Sebastian Rittau <srittau@rittau.biz>"]
