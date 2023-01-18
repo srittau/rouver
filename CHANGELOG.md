@@ -1,6 +1,7 @@
 # Unreleased Changes
 
 - Drop support for Python 3.7 and 3.8.
+- `test_wsgi_app()`: A stream with a `close()` method is now closed.
 
 # News in rouver 2.4.4
 

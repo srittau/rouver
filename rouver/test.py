@@ -8,7 +8,7 @@ from http import HTTPStatus
 from io import BytesIO
 from json import JSONDecodeError
 from types import TracebackType
-from typing import Any, Union
+from typing import Any, Protocol, Union, cast
 from urllib.parse import quote_plus, urlparse
 
 from dectest import TestCase, before
@@ -414,6 +414,11 @@ class TestResponse:
             ), f"wrong max-age: {int_age!r} != {max_age!r}"
 
 
+class _Closeable(Protocol):
+    def close(self) -> object:
+        ...
+
+
 def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
     output_written = False
     response: TestResponse | None = None
@@ -441,11 +446,13 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
         return write
 
     env = request.to_environment()
-    body = app(env, start_response)
+    result = app(env, start_response)
     if response is None:
         raise AssertionError("start_response() was not called")
-    for item in body:
-        response.body += item
+    for data in result:
+        response.body += data
+    if hasattr(result, "close"):
+        cast(_Closeable, result).close()
     return response
 
 

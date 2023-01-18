@@ -704,7 +704,7 @@ class TestWSGIAppTest:
         response.assert_status(HTTPStatus.NOT_FOUND)
         response.assert_header_equal("X-Foo", "Bar")
 
-    def test_response_body(self) -> None:
+    def test_response_body_without_close(self) -> None:
         def app(_: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
             writer = sr("200 OK", [])
             writer(b"Abc")
@@ -714,6 +714,20 @@ class TestWSGIAppTest:
         request = create_request("GET", "/foo/bar")
         response = run_wsgi_test(app, request)
         assert response.body == b"AbcdefFoobar"
+
+    def test_response_body_with_close(self) -> None:
+        file = BytesIO(b"Foo")
+
+        def app(_: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
+            writer = sr("200 OK", [])
+            writer(b"Abc")
+            writer(b"def")
+            return file
+
+        request = create_request("GET", "/foo/bar")
+        response = run_wsgi_test(app, request)
+        assert response.body == b"AbcdefFoo"
+        assert file.closed
 
     def test_start_response_not_called(self) -> None:
         def app(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
