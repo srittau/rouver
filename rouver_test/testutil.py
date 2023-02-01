@@ -59,7 +59,7 @@ class StubStartResponse:
     def _find_header(self, name: str) -> str | None:
         self.assert_was_called()
         found = None
-        for (header_name, header_value) in self.headers:
+        for header_name, header_value in self.headers:
             if header_name.lower() == name.lower():
                 if not isinstance(header_value, str):
                     raise AssertionError("invalue header value")

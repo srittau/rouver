@@ -27,7 +27,6 @@ LOGGER_NAME = "rouver"
 
 
 class _TemplatePartType(Enum):
-
     STATIC = 1
     PATTERN = 2
 
@@ -183,7 +182,6 @@ def _dispatch(
     sub_routers: Sequence[_SubRouterHandler],
     template_handlers: Mapping[str, RouteTemplateHandler],
 ) -> Iterable[bytes]:
-
     request = Request(environment)
     path = _split_path(request.path[1:])
     arguments = _RouteArguments(request, template_handlers)

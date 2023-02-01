@@ -22,7 +22,7 @@ typing-extensions = "^4.1.1"
 
 [tool.poetry.dev-dependencies]
 asserts = ">=0.10.0,<0.13"
-black = "^22.6.0"
+black = "^23.1.0"
 flake8 = "^6.0.0"
 isort = "^5.11.4"
 mypy = "0.991"
