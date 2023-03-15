@@ -1,4 +1,4 @@
-# Unreleased Changes
+# News in rouver 2.6.0
 
 - `TestRequest`: Add script name handling:
     - Add field `script_name`.
