@@ -1,5 +1,10 @@
 # Unreleased Changes
 
+- `TestRequest`: Add script name handling:
+    - Add field `script_name`.
+    - Add read-only property `full_path`.
+    - Include `SCRIPT_NAME` item in WSGI dictionary.
+
 # News in rouver 2.5.1
 
 - `RouteHandlerBase`: If a closable stream is returned from

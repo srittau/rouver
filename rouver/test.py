@@ -33,6 +33,15 @@ class TestRequest:
         self._arguments: list[tuple[str, str]] = []
         self._file_arguments: list[tuple[str, bytes, str, str | None]] = []
         self._boundary: str | None = None
+        self.script_name = ""
+
+    @property
+    def full_path(self) -> str:
+        """Return the full path, without the query string.
+
+        This is the concatenation of the script name and the path.
+        """
+        return self.script_name + self.path
 
     @property
     def body(self) -> bytes:
@@ -127,6 +136,7 @@ class TestRequest:
         env = {
             "REQUEST_METHOD": self.method,
             "PATH_INFO": self.path,
+            "SCRIPT_NAME": self.script_name,
             "SERVER_NAME": "www.example.com",
             "SERVER_PORT": "80",
             "SERVER_PROTOCOL": "HTTP/1.1",

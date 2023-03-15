@@ -51,6 +51,7 @@ class TestRequestTest:
             "SERVER_PORT": "80",
             "SERVER_PROTOCOL": "HTTP/1.1",
             "REMOTE_ADDR": "127.0.0.1",
+            "SCRIPT_NAME": "",
             "wsgi.version": (1, 0),
             "wsgi.url_scheme": "http",
             "wsgi.multithread": False,
@@ -70,6 +71,7 @@ class TestRequestTest:
         assert {
             "REQUEST_METHOD": "POST",
             "PATH_INFO": "/foo/bar",
+            "SCRIPT_NAME": "",
             "SERVER_NAME": "www.example.com",
             "SERVER_PORT": "80",
             "SERVER_PROTOCOL": "HTTP/1.1",
@@ -99,6 +101,16 @@ class TestRequestTest:
         assert_wsgi_input_stream(environ["wsgi.input"])
         assert environ["wsgi.input"].read() == b"arg=value"
         assert "QUERY_STRING" not in environ
+
+    def test__explicit_script_name(self) -> None:
+        request = create_request("GET", "/baz/bar")
+        assert request.full_path == "/baz/bar"
+        request.script_name = "/foo"
+        assert request.full_path == "/foo/baz/bar"
+        assert {
+            "SCRIPT_NAME": "/foo",
+            "PATH_INFO": "/baz/bar",
+        }.items() <= request.to_environment().items()
 
     def test_set_env_var(self) -> None:
         request = create_request("GET", "/foo/bar")
