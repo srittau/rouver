@@ -71,10 +71,11 @@ class RouterTest(TestCase):
         return handle
 
     def handle_wsgi(
-        self, method: str = "GET", path: str = "/"
+        self, method: str = "GET", path: str = "/", *, script_name: str = ""
     ) -> Iterable[bytes]:
         self.environment["REQUEST_METHOD"] = method
         self.environment["PATH_INFO"] = path
+        self.environment["SCRIPT_NAME"] = script_name
         return self.router(self.environment, self.start_response)
 
     @test
@@ -577,13 +578,14 @@ class RouterTest(TestCase):
     def sub_router__path_info(self) -> None:
         def app(env: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
             assert_equal("/foo", env["PATH_INFO"])
+            assert_equal("script/sub", env["SCRIPT_NAME"])
             assert_equal("/sub/foo", env["rouver.original_path_info"])
             sr("200 OK", [])
             return []
 
         self.router.error_handling = False
         self.router.add_sub_router("sub", app)
-        self.handle_wsgi("GET", "/sub/foo")
+        self.handle_wsgi("GET", "/sub/foo", script_name="script")
         self.start_response.assert_status(HTTPStatus.OK)
 
     @test

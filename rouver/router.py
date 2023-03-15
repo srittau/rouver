@@ -244,11 +244,18 @@ def _dispatch(
         raise NotFound()
 
     def call_sub_router(matcher: _SubRouterMatcher) -> Iterable[bytes]:
+        old_path = environment.get("PATH_INFO", "")
+        remaining_path = matcher.remaining_path
+        assert isinstance(old_path, str)
         new_environ = environment.copy()
-        new_environ["rouver.original_path_info"] = environment["PATH_INFO"]
-        new_environ["PATH_INFO"] = matcher.remaining_path.encode(
-            "utf-8"
-        ).decode("latin-1")
+        new_environ["rouver.original_path_info"] = old_path
+        new_environ["SCRIPT_NAME"] = (
+            environment.get("SCRIPT_NAME", "")
+            + old_path[: -len(remaining_path)]
+        )
+        new_environ["PATH_INFO"] = remaining_path.encode("utf-8").decode(
+            "latin-1"
+        )
         return matcher.call(new_environ, start_response)
 
     return find_route_and_call_handler()

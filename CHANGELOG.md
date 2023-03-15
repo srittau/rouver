@@ -1,5 +1,7 @@
 # Unreleased Changes
 
+- Fix `SCRIPT_NAME` in sub routers to include the parent router paths.
+
 # News in rouver 2.6.0
 
 - `TestRequest`: Add script name handling:
