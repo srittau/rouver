@@ -22,7 +22,8 @@ include = ["*/py.typed"]
 [tool.poetry.dependencies]
 python = "^3.9"
 dectest = "^1.0.0"
-werkzeug = "^2.0"
+# Werkzeug 2.3 cuts off umlauts: https://github.com/srittau/rouver/issues/379
+werkzeug = "^2.0,<2.3"
 typing-extensions = "^4.1.1"
 
 [tool.poetry.dev-dependencies]
