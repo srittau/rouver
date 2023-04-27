@@ -73,8 +73,6 @@ class ArgumentParser:
         self.environ = environ
 
         method: str = environ.get("REQUEST_METHOD", "GET")
-        args: MultiDict[str, Any]
-        files: MultiDict[str, Any]
         if method in _GET_METHODS:
             qs: str = environ.get("QUERY_STRING", "")
             args = MultiDict(parse_qs(qs, keep_blank_values=True))
