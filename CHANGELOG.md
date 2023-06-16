@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased Changes
+
 ## Changes in rouver 2.6.2
 
 - Improve RFC 5987 compatibility in `rouver.test`. This also makes rouver
