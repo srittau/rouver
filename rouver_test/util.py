@@ -1,11 +1,9 @@
-from asserts import assert_equal
-from dectest import TestCase, test
 from werkzeug import Request
 
 from rouver.util import absolute_url
 
 
-class AbsoluteURLTest(TestCase):
+class TestAbsoluteURL:
     @staticmethod
     def _create_request(*, path_info: str = "/path") -> Request:
         return Request(
@@ -18,38 +16,36 @@ class AbsoluteURLTest(TestCase):
             }
         )
 
-    @test
-    def path_is_not_ascii(self) -> None:
+    def test_path_is_not_ascii(self) -> None:
         request = self._create_request()
-        url = absolute_url(request, "/~föo")
-        assert_equal("https://example.com/~f%C3%B6o", url)
+        assert (
+            absolute_url(request, "/~föo") == "https://example.com/~f%C3%B6o"
+        )
 
-    @test
-    def path_is_absolute(self) -> None:
+    def test_path_is_absolute(self) -> None:
         request = self._create_request()
-        url = absolute_url(request, "https://example.org/foo")
-        assert_equal("https://example.org/foo", url)
+        assert (
+            absolute_url(request, "https://example.org/foo")
+            == "https://example.org/foo"
+        )
 
-    @test
-    def path_is_root_relative(self) -> None:
+    def test_path_is_root_relative(self) -> None:
         request = self._create_request()
-        url = absolute_url(request, "/foo")
-        assert_equal("https://example.com/foo", url)
+        assert absolute_url(request, "/foo") == "https://example.com/foo"
 
-    @test
-    def path_is_relative__base_with_slash(self) -> None:
+    def test_path_is_relative__base_with_slash(self) -> None:
         request = self._create_request(path_info="/path/")
-        url = absolute_url(request, "foo")
-        assert_equal("https://example.com/base/path/foo", url)
+        assert (
+            absolute_url(request, "foo") == "https://example.com/base/path/foo"
+        )
 
-    @test
-    def path_is_relative__base_without_slash(self) -> None:
+    def test_path_is_relative__base_without_slash(self) -> None:
         request = self._create_request(path_info="/path")
-        url = absolute_url(request, "foo")
-        assert_equal("https://example.com/base/foo", url)
+        assert absolute_url(request, "foo") == "https://example.com/base/foo"
 
-    @test
-    def do_not_encode_special_characters(self) -> None:
+    def test_do_not_encode_special_characters(self) -> None:
         request = self._create_request()
-        url = absolute_url(request, "/foo?bar=baz&abc=%6A;+,@:$")
-        assert_equal("https://example.com/foo?bar=baz&abc=%6A;+,@:$", url)
+        assert (
+            absolute_url(request, "/foo?bar=baz&abc=%6A;+,@:$")
+            == "https://example.com/foo?bar=baz&abc=%6A;+,@:$"
+        )
