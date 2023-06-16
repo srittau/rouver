@@ -256,13 +256,13 @@ class TestRequestTest:
         )
         environ = request.to_environment()
         assert "QUERY_STRING" not in environ
-        content_type, boundary = environ["CONTENT_TYPE"].split(";")
+        content_type, _ = environ["CONTENT_TYPE"].split(";")
         assert content_type == "multipart/form-data"
         _, args, files = parse_form_data(environ)
         assert len(args) == 1
-        assert "bär" == args["f%22%C3%B6o"]
+        assert "bär" == args['f"%C3%B6o']
         assert len(files) == 1
-        file = files["f%22%C3%B6le"]
+        file = files['f"%C3%B6le']
         assert file.mimetype == "text/plain"
         assert file.filename == "ä\"'bc"
         assert file.stream.read() == b""

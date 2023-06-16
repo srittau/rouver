@@ -1,6 +1,7 @@
+import pytest
 from werkzeug import Request
 
-from rouver.util import absolute_url
+from rouver.util import absolute_url, rfc5987_encode
 
 
 class TestAbsoluteURL:
@@ -49,3 +50,16 @@ class TestAbsoluteURL:
             absolute_url(request, "/foo?bar=baz&abc=%6A;+,@:$")
             == "https://example.com/foo?bar=baz&abc=%6A;+,@:$"
         )
+
+
+@pytest.mark.parametrize(
+    "string, encoded",
+    [
+        ("", "key="),
+        ("foo", "key=foo"),
+        ("foo bar\tbaz", 'key="foo bar\\\tbaz"'),
+        ("föo bar", "key*=UTF-8''f%C3%B6o%20bar"),
+    ],
+)
+def test_rfc5987_encode(string: str, encoded: str) -> None:
+    assert encoded == rfc5987_encode("key", string)

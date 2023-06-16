@@ -17,6 +17,7 @@ from werkzeug.exceptions import BadRequest
 
 from rouver.args import ArgumentParser, Multiplicity, parse_args
 from rouver.exceptions import ArgumentsError
+from rouver.util import rfc5987_encode
 from rouver_test.testutil import default_environment
 
 MULTIPART_PART_TMPL = """--1234567890
@@ -26,7 +27,7 @@ Content-Disposition: form-data; name="{name}"
 """
 
 MULTIPART_FILE_BODY_TMPL = """--1234567890
-Content-Disposition: form-data; name="{name}"; filename={filename}
+Content-Disposition: form-data; name="{name}"; {filename_param}
 Content-Type: {type}
 
 {content}
@@ -78,9 +79,10 @@ class ParseArgsTest(TestCase):
         self, name: str, filename: str, file_content: str, content_type: str
     ) -> None:
         self.env["CONTENT_TYPE"] = "multipart/form-data; boundary=1234567890"
+        filename_param = rfc5987_encode("filename", filename)
         body = MULTIPART_FILE_BODY_TMPL.format(
             name=name,
-            filename=filename,
+            filename_param=filename_param,
             content=file_content,
             type=content_type,
         ).encode("utf-8")

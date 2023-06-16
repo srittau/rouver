@@ -1,5 +1,8 @@
 # Unreleased Changes
 
+- Improve RFC 5987 compatibility in `rouver.test`. This also makes rouver
+  work with Werkzeug 2.3.
+
 # News in rouver 2.6.1
 
 - Fix `SCRIPT_NAME` in sub routers to include the parent router paths.

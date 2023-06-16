@@ -17,6 +17,7 @@ from werkzeug.http import parse_options_header
 from rouver.args import Multiplicity
 from rouver.router import Router
 from rouver.types import Header, WSGIApplication, WSGIEnvironment
+from rouver.util import rfc5987_encode
 
 _STATUS_RE = re.compile(r"^(\d\d\d) [ -~]+$")
 
@@ -205,9 +206,7 @@ class TestRequest:
                 + quote_plus(name).encode("ascii")
             ) + b'"; '
             if filename:
-                body += b"filename*=UTF-8''" + quote_plus(filename).encode(
-                    "ascii"
-                )
+                body += rfc5987_encode("filename", filename).encode("ascii")
             else:
                 body += b'filename=""'
             body += b"\r\n"
