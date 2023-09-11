@@ -4,7 +4,7 @@ updates:
   - package-ecosystem: pip
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
       time: '04:00'
     versioning-strategy: lockfile-only
     groups:
