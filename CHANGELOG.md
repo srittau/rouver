@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased Changes
+
 ## Changes in rouver 2.6.3
 
 - Declare compability with werkzeug 3.
