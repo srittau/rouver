@@ -5,8 +5,8 @@ A microframework for Python 3, based on werkzeug.
 ![Supported Python Versions](https://img.shields.io/pypi/pyversions/rouver)]
 [![GitHub](https://img.shields.io/github/release/srittau/rouver/all.svg)](https://github.com/srittau/rouver/releases/)
 [![pypi](https://img.shields.io/pypi/v/rouver.svg)](https://pypi.python.org/pypi/rouver/)
-[![MIT License](https://img.shields.io/pypi/l/rouver.svg)](https://github.com/srittau/rouver/blob/main/LICENSE)
-[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/srittau/rouver/test-and-lint.yml)](https://github.com/srittau/rouver/actions/workflows/test-and-lint.yml)
+[![MIT License](https://img.shields.io/github/license/srittau/rouver)](https://github.com/srittau/rouver/blob/main/LICENSE)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/srittau/rouver/test-and-lint.yml)](https://github.com/srittau/rouver/actions/workflows/test-and-lint.yml)
 
 ## Routing
 
