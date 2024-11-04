@@ -1,116 +1,134 @@
 # Changelog
 
-## Unreleased Changes
+## [Unreleased] –
 
-## Changes in rouver 2.6.3
+## [2.6.3]
+
+### Added
 
 - Declare compability with werkzeug 3.
 
-## Changes in rouver 2.6.2
+## [2.6.2]
+
+### Fixed
 
 - Improve RFC 5987 compatibility in `rouver.test`. This also makes rouver
   work with Werkzeug 2.3.
 
-## Changes in rouver 2.6.1
+## [2.6.1]
+
+### Fixed
 
 - Fix `SCRIPT_NAME` in sub routers to include the parent router paths.
 
-## Changes in rouver 2.6.0
+## [2.6.0]
+
+### Added
 
 - `TestRequest`: Add script name handling:
     - Add field `script_name`.
     - Add read-only property `full_path`.
     - Include `SCRIPT_NAME` item in WSGI dictionary.
 
-## Changes in rouver 2.5.1
+## [2.5.1]
+
+### Fixed
 
 - `RouteHandlerBase`: If a closable stream is returned from
   `prepare_response()`, it will be closed after the response has been sent.
 
-## Changes in rouver 2.5.0
+## [2.5.0]
+
+### Removed
 
 - Drop support for Python 3.7 and 3.8.
+
+### Changed
+
 - `test_wsgi_app()`: A stream with a `close()` method is now closed.
 
-## Changes in rouver 2.4.4
+## [2.4.4]
 
-### Improvements
+### Changed
 
 - Change the return type of `StartResponseReturnType` to `None` to be more
   flexible and match the definition in typeshed and Python 3.11+.
 
-## Changes in rouver 2.4.3
+## [2.4.3]
 
-### Bug Fixes
+### Fixed
 
 - Add `typing-extensions` to dependency list.
 
-## Changes in rouver 2.4.2
+## [2.4.2]
 
-### Improvements
+### Changed
 
 - Template handlers are now guaranteed to be called with a `tuple` for
   previous path arguments. Previously, only a `Sequence` was guaranteed,
   and a mutable `list` was used.
 
-## Changes in rouver 2.4.1
+## [2.4.1]
 
-### Improvements
+### Changed
 
 - Don't call sub-routers inside an exception handler. This improves
   confusing tracebacks when exceptions are raised from a sub-router.
 
-## Changes in rouver 2.4.0
+## [2.4.0]
 
-### Improvements
+### Added
 
 - Python 3.10 is now officially supported.
 - `rouver.test`: `TestRequest` now sets the `REMOTE_ADDR` environment
   variable by default.
 
-## Changes in rouver 2.3.0
+## [2.3.0]
 
-### Improvements
+### Added
 
 - `rouver.test`: `test_wsgi_arguments()` now accepts all multiplicities.
 
-## Changes in rouver 2.2.2
+## [2.2.2]
 
-### Bug Fixes
+### Fixed
 
 - Import ABCs from `collections.abc` instead of `collections`. Fixes
   a `DeprecationWarning`.
 
-## Changes in rouver 2.2.1
+## [2.2.1]
 
-### Improvements
+### Changed
 
 - `rouver.test`: Use build-in `assert` statements instead of assertions
   from the `asserts` package.
 
-## Changes in rouver 2.2.0
+## [2.2.0]
 
-### API Additions
+### Added
 
 - Sub-routers now have access to WSGI environment variable
   called `rouver.original_path_info` that contains the original
   `PATH_INFO` value.
 
-## Changes in rouver 2.1.0
+## [2.1.0]
 
-### API Additions
+### Added
 
 - `rouver.args`: Add `"file-or-str"` argument value type.
 
-### Improvements
+### Changed
 
 - `rouver.args`: Use `Literal`s for `ArgumentValueType`.
 
-## Changes in rouver 2.0.0
+## [2.0.0]
 
-### Incompatible Changes
+### Added
 
-- Drop support for Python 3.5 and 3.6.
+- Add `TestRequest.add_file_argument()`.
+
+### Changed
+
 - Rework `TestRequest` argument handling.
   - Remove `TestRequest.prepare_for_arguments()`.
   - `TestRequest.content_type` will not be set when calling
@@ -119,117 +137,116 @@
   `BadRequest` if request has wrong content type. Instead,
   they will treat it as if no arguments were given.
 
-### API Additions
+### Removed
 
-- Add `TestRequest.add_file_argument()`.
+- Drop support for Python 3.5 and 3.6.
 
-## Changes in rouver 1.1.0
+## [1.1.0]
 
-### API Additions
+### Added
 
 - Add `absolute_url()` utility function.
 
-### Improvements
+### Changed
 
 - URL constructing functions, such as `created_as_json()` now encode
   special characters in the path instead of throwing a `ValueError`.
 
-## Changes in rouver 1.0.0
+## [1.0.0]
 
-### Bug Fixes
+### Fixed
 
 - `rouver.router`: Include extra headers from `HTTPException` sub-classes
   in responses.
 
-## Changes in rouver 0.99.2
+## [0.99.2]
 
-### API Additions
+### Added
 
 - `rouver.test`: Add pytest-friendly aliases:
   - `run_wsgi_test()` for `test_wsgi_app()`
   - `FakeRequest` for `TestRequest`
   - `FakeResponse` for `TestResponse`
 
-## Changes in rouver 0.99.1
+## [0.99.1]
 
-### Bug Fixes
+### Fixed
 
 - `rouver.test`: Include `Content-Length` header when sending CGI
   arguments in request body (content type `application/x-www-form-urlencoded`).
 
-## Changes in rouver 0.99.0
+## [0.99.0]
 
-### Incompatible Changes
+### Added
+
+- `rouver.args`: Add `exhaustive` keyword-only argument to `parse_args()`,
+  `ArgumentParser.parse_args()`, and `RouteHandlerBase.parse_args()`.
+
+### Changed
 
 - `parse_args()` is now implemented using werkzeug. While this does not
   change rouver's API, it may have incompatible side-effects or change the
   way CGI arguments are parsed slightly.
 - Remove `CGIFileArgument`.
 
-### API Additions
+## [0.10.9]
 
-- `rouver.args`: Add `exhaustive` keyword-only argument to `parse_args()`,
-  `ArgumentParser.parse_args()`, and `RouteHandlerBase.parse_args()`.
-
-## Changes in rouver 0.10.9
-
-### Bug Fixes
+### Fixed
 
 - Import ABCs from `collections.abc` instead of `collections`. Fixes
   a `DeprecationWarning`.
 
-## Changes in rouver 0.10.8
+## [0.10.8]
 
-### Bug Fixes
+### Fixed
 
 - Handle escaped URLs correctly.
 - Path arguments are now decoded before being passed to the template handler.
-  <
 
-## Changes in rouver 0.10.7
+## [0.10.7]
 
-### API Additions
+### Added
 
 - `rouver.test`: Add `TestRequest.prepare_for_arguments()`.
 
-## Changes in rouver 0.10.6
+## [0.10.6]
 
-### Improvements
+### Changed
 
 - `rouver.test`: Include `CONTENT_LENGTH` in WSGI environment if body
   is set.
 
-## Changes in rouver 0.10.5
+## [0.10.5]
 
-### API Additions
+### Added
 
 - `rouver.test`: Add `TestRequest.body`.
 - `rouver.test`: Add `TestRequest.set_json_body()`.
 
-## Changes in rouver 0.10.4
+## [0.10.4]
 
-### API Additions
+### Added
 
 - `rouver.test`: Add `TestResponse.parse_json_body()`.
 - `rouver.test`: `TestResponse.assert_content_type()` now accepts a
   list of character sets.
 
-## Changes in rouver 0.10.3
+## [0.10.3]
 
-### API Additions
+### Added
 
 - `rouver.test`: Add `TestResponse.assert_set_cookie()`.
 
-## Changes in rouver 0.10.2
+## [0.10.2]
 
-### Bug Fixes
+### Fixed
 
 - `rouver.test`: `assert_temporary_redirect()` et al. now work
   correctly with query strings and fragments.
 
-## Changes in rouver 0.10.1
+## [0.10.1]
 
-### API Additions
+### Added
 
 - `rouver.test`: Add `TestRequest.set_env_var()` and
   `TestRequest.set_header()`.
@@ -237,82 +254,84 @@
   `assert_content_type()`, `assert_see_other()`, and
   `assert_temporary_redirect()`.
 
-## Changes in rouver 0.10.0
+## [0.10.0]
 
-### API Additions
+### Added
 
 - `rouver.test`: New WSGI testing module.
 - `rouver.response`: `created_at()`, `created_as_json()`,
   `temporary_redirect()`, and `see_also()` now take an optional
   `extra_headers` argument.
 
-### Improvements
+### Changed
 
 - `rouver.types`: Replace `StartResponse`'s argument types with `...`
   `start_response()` takes either two or three arguments. This can not
   be modelled using type hints.
 
-## Changes in rouver 0.9.0
+## [0.9.0]
 
-### API-Incompatible Changes
+### Added
+
+- `rouver.response`: `created_at()`, `created_as_json()`,
+  `temporary_redirect()`, and `see_other()` now support absolute URLs.
+
+### Changed
 
 - `rouver.response`: `created_at()`, `created_as_json()`,
   `temporary_redirect()`, and `see_other()` now treat URLs without a
   leading slash as relative to the request path.
 
-### Improvements
+### Fixed
 
 - `rouver.html`: Replace `&mdash;` with `&#x2014;` for improved
   compatibility with XML parsers.
-- `rouver.response`: `created_at()`, `created_as_json()`,
-  `temporary_redirect()`, and `see_other()` now support absolute URLs.
 
-## Changes in rouver 0.8.4
+## [0.8.4]
 
-Add `py.typed` file to package `rouver` to enable type checking.
+### Added
 
-## Changes in rouver 0.8.3
+- Add `py.typed` file to package `rouver` to enable type checking.
 
-### API Additions
+## [0.8.3]
+
+### Added
 
 - `rouver.handler`: Add `content_type` argument to
   `RouteHandlerBase.respond()`.
 
-## Changes in rouver 0.8.2
+## [0.8.2]
 
-### API Additions
+### Added
 
 - `rouver.response`: Add `content_type` argument to `respond()`.
 
-### Bug Fixes
+### Fixed
 
 - `rouver.args`: Raise `BadRequest` when a PATCH request has a wrong
   content type.
 
-## Changes in rouver 0.8.1
+## [0.8.1]
 
-### Bug Fixes
+### Fixed
 
 - Fix sub-routers with non-ASCII paths.
 
-## Changes in rouver 0.8.0
+## [0.8.0]
 
 This release includes improvements against HTML injection attacks.
 
-### API-Incompatible Changes
+### Security
 
 - `rouver.html`: `http_status_page()`: The `message` argument will now
   be HTML-escaped. Instead, an `html_message` argument was added.
   `content` was renamed to `html_content`.
-
-### Bug Fixes
-
 - `rouver.html`: Harden all functions against malicious input.
 - `rouver.router`: Correctly HTML-escape error messages.
 
-## Changes in rouver 0.7.0
+## [0.7.0]
 
-### API-Incompatible Changes
+### Changed
 
 - `rouver.response`: The following functions now only accept already
   URL-encoded partial URLs:
@@ -323,75 +342,84 @@ This release includes improvements against HTML injection attacks.
     Non-ASCII URLs with raise a `ValueError`.
 - `rouver.handler`: See above.
 
-## Changes in rouver 0.6.1
+## [0.6.1]
 
-### Bug Fixes
+### Fixed
 
 - `rouver.response`: Partial URLs in `temporary_redirect()` etc. were
   URL-encoded by accident.
 
-## Changes in rouver 0.6.0
+## [0.6.0]
 
-### API-Incompatible Changes
+### Added
+
+- `rouver.handler`: `RouteHandlerBase.respond`: Add `status` argument.
+
+### Changed
 
 - `rouver.handler`: `RouteHandlerBase.respond`: `extra_headers` is now a
   keyword-only argument.
 
-### API Additions
+## [0.5.5]
 
-- `rouver.handler`: `RouteHandlerBase.respond`: Add `status` argument.
-
-## Changes in rouver 0.5.5
-
-### Bug Fixes
+### Fixed
 
 - `rouver.args`: `parse_args()` will now work for all methods, even if
   no arguments are supplied.
 
-## Changes in rouver 0.5.4
+## [0.5.4]
 
-### Bug Fixes
+### Fixed
 
 - `rouver.handler`: `RouteHandlerBase.parse_args()` can now be called
   inside `prepare_response()`.
 
-## Changes in rouver 0.5.3
+## [0.5.3]
 
-### API Additions
+### Added
 
 - `rouver.args`: Add `ArgumentParser`.
 
-### Improvements
+### Changed
 
 - `rouver.handler`: `RouteHandlerBase.parse_args()` can now be called
   multiple times.
 
-## Changes in rouver 0.5.2
+## [0.5.2]
 
-### API Additions
+### Added
 
 - `rouver.handler`: Add `RouteHandlerBase.parse_json_request()`.
 - `rouver.handler`: Add `RouteHandlerBase.respond_with_content()`.
 - `rouver.response`: Add `respond_with_content()`.
 
-### Improvements
+### Changed
 
 - Include Content-Length header in JSON and HTML responses.
 
-### Bug Fixes
+### Fixed
 
 - Use first matching route handler, instead of crashing when multiple routes
   match.
 
-## Changes in rouver 0.5.1
+## [0.5.1]
 
-### Bug Fixes
+### Fixed
 
 - `rouver.router`: Ignore trailing slashes.
 
-## Changes in rouver 0.5.0
+## [0.5.0]
 
-### API-Incompatible Changes
+### Added
+
+- `rouver.handler`: Add `RouterHandlerBase.wildcard_path`.
+- `rouver.router`: Add a field `rouver.path_args` to the WSGI environment
+  that contains the path arguments formerly passed to route handlers as the
+  second argument. The wildcard path is not added to this field.
+- `rouver.router`: Add a field `rouver.wildcard_path` to the WSGI
+  environment that contains the wildcard path or the empty string.
+
+### Changed
 
 - `rouver.handler`: RouteHandlerBase is now an ordinary WSGI application.
   It takes an WSGI environment and a start response handler as constructor
@@ -409,125 +437,113 @@ This release includes improvements against HTML injection attacks.
 - `rouver.types`: Remove `RouteHandler`. `RouteDescription` now expects
   an `WSGIApplication` in the third field.
 
-### API Additions
+## [0.4.5]
 
-- `rouver.handler`: Add `RouterHandlerBase.wildcard_path`.
-- `rouver.router`: Add a field `rouver.path_args` to the WSGI environment
-  that contains the path arguments formerly passed to route handlers as the
-  second argument. The wildcard path is not added to this field.
-- `rouver.router`: Add a field `rouver.wildcard_path` to the WSGI
-  environment that contains the wildcard path or the empty string.
-
-## Changes in rouver 0.4.5
-
-### API Additions
+### Added
 
 - `rouver.router`: Support sub-routers.
 
-## Changes in rouver 0.4.4
+## [0.4.4]
 
-### API Additions
+### Added
 
 - `rouver.router`: Support wildcard paths.
 
-## Changes in rouver 0.4.3
+## [0.4.3]
 
-### Bug Fixes
+### Fixed
 
 - `rouver.response`: Quote non-UTF-8 URLs correctly in Location headers.
 
-## Changes in rouver 0.4.2
+## [0.4.2]
 
-### API Additions
+### Added
 
 - `rouver.handler`: Add `RouteHandlerBase.temporary_redirect()` and
   `created_as_json()`.
 - `rouver.html`: Add `temporary_redirect_page()`.
 - `rouver.response`: Add `temporary_redirect` and `created_as_json()`.
 
-### Bug Fixes
+### Fixed
 
 - `rouver.router`: Fix nested <p> element in error pages.
 
-## Changes in rouver 0.4.1
+## [0.4.1]
 
-### Bug Fixes
+### Fixed
 
 - `rouvers.args`: `parse_args()` will now throw a `BadRequest` if
   the Content-Type is incorrect for POST and PUT requests.
 
-## Changes in rouver 0.4.0
+## [0.4.0]
 
-### API-Incompatible Changes
+### Added
+
+- `rouver.types`: Add `WSGIApplication` and `WSGIResponse`.
+
+### Changed
 
 - `rouver.types`: Rename `HeaderType` to `Header`.
 - `rouver.types`: Rename `EnvironmentType` to `WSGIEnvironment`.
 - `rouver.types`: Rename `StartResponseType` to `StartResponse`.
 - `rouver.types`: Rename `RouteType` to `RouteDescription`.
 
-### API Additions
+## [0.3.1]
 
-- `rouver.types`: Add `WSGIApplication` and `WSGIResponse`.
-
-## Changes in rouver 0.3.1
-
-### Improvements
+### Changed
 
 - Type hinting: Use `Sequence` over `List` and `Mapping` over `Dict` in
   function/method arguments.
 
-### Bug Fixes
+### Fixed
 
 - `rouver.html`: Fix argument types of `bad_arguments_page()` and
   `bad_arguments_list()`.
 
-## Changes in rouver 0.3.0
+## [0.3.0]
 
-### API-Incompatible Changes
-
-- `rouver.html`: `http_status_page()`: `message` argument is now an
-  optional, keyword-only argument.
-- `rouver.router`: Template handlers must now be installed before calling
-  `add_routes()`.
-
-### API Additions
+### Added
 
 - `rouver.html`: `http_status_page()`: Add new optional argument
   `content`.
 - `rouver.html`: Add `bad_arguments_list()`.
 - `rouver.types`: Add `BadArgumentsDict`.
 
-### Improvements
+### Changed
 
+- `rouver.html`: `http_status_page()`: `message` argument is now an
+  optional, keyword-only argument.
+- `rouver.router`: Template handlers must now be installed before calling
+  `add_routes()`.
 - `rouver.router`: Router now returns a custom error page when
   `ArgumentsError` is raised.
 
-## Changes in rouver 0.2.1
+## [0.2.1]
 
-### Bug Fixes
+### Fixed
 
 - `rouver.handler`: Derive `RouteHandlerBase` from `Iterable`.
 - `rouver.response`/`rouver.handler`: Fix return types of response methods.
 
-## Changes in rouver 0.2.0
+## [0.2.0]
 
-### API Additions
+### Added
 
 - `rouver.handler`: Add `RouteHandlerBase`.
 - `rouver.html`: Add `created_at_page()`.
 - `rouver.response`: Add `respond_ok()`, `respond_with_json()`, and
   `created_at()`.
 
-## Changes in rouver 0.1.1
+## [0.1.1]
 
-### Improvements
+### Changed
 
 - `rouver.response`: Responses now return an iterator so they can be used as
   return values from `__iter__()` methods.
 
-## Changes in rouver 0.1.0
+## [0.1.0]
 
-### API Additions
+### Added
 
 - `rouver.args`: Add `parse_args()`, `Multiplicity`, `FileArgument`,
   and `CGIFileArgument`.
