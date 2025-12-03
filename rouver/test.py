@@ -7,8 +7,7 @@ from collections.abc import Callable, Iterable, Sequence
 from http import HTTPStatus
 from io import BytesIO
 from json import JSONDecodeError
-from types import TracebackType
-from typing import Any, Protocol, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, cast
 from urllib.parse import quote_plus, urlparse
 
 from dectest import TestCase, before
@@ -18,6 +17,9 @@ from rouver.args import Multiplicity
 from rouver.router import Router
 from rouver.types import Header, WSGIApplication, WSGIEnvironment
 from rouver.util import rfc5987_encode
+
+if TYPE_CHECKING:
+    from _typeshed import OptExcInfo
 
 _STATUS_RE = re.compile(r"^(\d\d\d) [ -~]+$")
 
@@ -441,14 +443,13 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
     def start_response(
         status: str,
         response_headers: list[Header],
-        exc_info: tuple[type[BaseException], BaseException, TracebackType]
-        | None = None,
+        exc_info: OptExcInfo | None = None,
     ) -> Callable[[bytes], None]:
         nonlocal response
         if response and not exc_info:
             raise AssertionError("start_response called multiple times")
         if output_written:
-            assert exc_info is not None
+            assert exc_info is not None and exc_info[1] is not None
             raise exc_info[1].with_traceback(exc_info[2])
         response = TestResponse(status, response_headers)
         return write
