@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable, Sequence
 from http import HTTPStatus
-from typing import Any
 
 from asserts import (
     assert_equal,
@@ -289,10 +288,10 @@ class RouterTest(TestCase):
             return [b""]
 
         def handle_path(
-            request: Request, paths: Sequence[Any], path: str
+            request: Request, paths: tuple[object, ...], path: str
         ) -> str:
             assert_is_instance(request, Request)
-            assert_equal((), paths)
+            assert paths == ()
             return path * 2
 
         self.router.add_template_handler("handler", handle_path)
@@ -310,8 +309,8 @@ class RouterTest(TestCase):
             start_response("200 OK", [])
             return [b""]
 
-        def handle_path(_: Request, paths: Sequence[Any], __: str) -> int:
-            assert_equal(("xyz",), paths)
+        def handle_path(_: Request, paths: tuple[object, ...], __: str) -> int:
+            assert paths == ("xyz",)
             return 123
 
         self.router.add_template_handler("handler1", lambda _, __, ___: "xyz")
@@ -325,7 +324,7 @@ class RouterTest(TestCase):
 
     @test
     def template_handler_is_passed_decoded_value(self) -> None:
-        def handle_path(_: Request, __: Any, v: str) -> None:
+        def handle_path(_: Request, __: object, v: str) -> None:
             assert_equal("foo/bar", v)
 
         self.router.add_template_handler("handler", handle_path)
@@ -336,7 +335,7 @@ class RouterTest(TestCase):
 
     @test
     def template_handler_is_not_passed_an_invalid_value(self) -> None:
-        def handle_path(_: Request, __: Any, v: str) -> None:
+        def handle_path(_: Request, __: object, v: str) -> None:
             fail("template handler should not have been called")
 
         self.router.add_template_handler("handler", handle_path)

@@ -5,7 +5,7 @@ import re
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from enum import Enum
 from http import HTTPStatus
-from typing import Any, Tuple, cast
+from typing import Any
 from urllib.parse import unquote
 
 from werkzeug.exceptions import HTTPException, MethodNotAllowed, NotFound
@@ -272,7 +272,7 @@ class _RouteArguments:
         self._cache: dict[tuple[str, str], Any] = {}
 
     def parse_argument(
-        self, paths: Tuple[Any, ...], name: str, path: str
+        self, paths: tuple[Any, ...], name: str, path: str
     ) -> Any:
         key = name, path
         if key not in self._cache:
@@ -390,8 +390,9 @@ class _SubRouterMatcher(_MatcherBase):
 def _respond_not_found(
     environment: WSGIEnvironment, start_response: StartResponse
 ) -> Iterable[bytes]:
-    path = cast(str, environment.get("PATH_INFO", ""))
-    message = "Path '{}' not found.".format(path)
+    path = environment.get("PATH_INFO", "")
+    assert isinstance(path, str)
+    message = f"Path '{path}' not found."
     page = http_status_page(HTTPStatus.NOT_FOUND, message=message)
     return respond_with_html(start_response, page, status=HTTPStatus.NOT_FOUND)
 

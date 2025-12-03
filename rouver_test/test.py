@@ -4,7 +4,7 @@ import sys
 from collections.abc import Iterable, Sequence
 from http import HTTPStatus
 from io import BytesIO
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pytest
 from werkzeug.formparser import parse_form_data
@@ -20,6 +20,9 @@ from rouver.test import (
     test_wsgi_arguments as run_wsgi_arguments_test,
 )
 from rouver.types import StartResponse, WSGIApplication, WSGIEnvironment
+
+if TYPE_CHECKING:
+    from _typeshed import OptExcInfo
 
 
 def assert_wsgi_input_stream(stream: object) -> None:
@@ -804,7 +807,7 @@ class TestWSGIAppTest:
         response.assert_status(HTTPStatus.NOT_FOUND)
 
 
-def _get_exc_info() -> tuple[Any, Any, Any]:
+def _get_exc_info() -> OptExcInfo:
     try:
         raise ValueError()
     except:  # noqa

@@ -13,7 +13,6 @@ classifiers = [
 dependencies = [
     "dectest >= 1.0.0, < 2",
     "werkzeug >= 2.0, < 4",
-    "typing-extensions >= 4.1.1, < 5",
 ]
 
 [dependency-groups]

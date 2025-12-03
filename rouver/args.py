@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from enum import Enum
 from io import BytesIO
-from typing import IO, Any, Callable, Dict, Tuple, Union
+from typing import IO, TYPE_CHECKING, Any, Literal, TypeAlias
 from urllib.parse import parse_qs
 
-from typing_extensions import Literal
 from werkzeug.datastructures import FileStorage, MultiDict
 from werkzeug.formparser import parse_form_data
 
 from rouver.exceptions import ArgumentsError
 from rouver.types import WSGIEnvironment
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRead
 
 
 class Multiplicity(Enum):
@@ -21,10 +23,12 @@ class Multiplicity(Enum):
     OPTIONAL = "0-1"
 
 
-ArgumentValueParser = Callable[[str], Any]
-ArgumentValueType = Union[ArgumentValueParser, Literal["file", "file-or-str"]]
-ArgumentTemplate = Tuple[str, ArgumentValueType, Multiplicity]
-ArgumentDict = Dict[str, Any]
+ArgumentValueParser: TypeAlias = Callable[[str], Any]
+ArgumentValueType: TypeAlias = (
+    ArgumentValueParser | Literal["file", "file-or-str"]
+)
+ArgumentTemplate: TypeAlias = tuple[str, ArgumentValueType, Multiplicity]
+ArgumentDict: TypeAlias = dict[str, Any]
 
 _GET_METHODS = ["GET", "HEAD"]
 _FORM_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
@@ -73,8 +77,8 @@ class ArgumentParser:
         self.environ = environ
 
         method: str = environ.get("REQUEST_METHOD", "GET")
-        args: MultiDict[str, Any]
-        files: MultiDict[str, Any]
+        args: MultiDict[str, str]
+        files: MultiDict[str, FileStorage]
         if method in _GET_METHODS:
             qs: str = environ.get("QUERY_STRING", "")
             args = MultiDict(parse_qs(qs, keep_blank_values=True))
@@ -82,7 +86,7 @@ class ArgumentParser:
         elif method in _FORM_METHODS:
             _, args, files = parse_form_data(environ)
         else:
-            raise ValueError("unsupported method: '{}'".format(method))
+            raise ValueError(f"unsupported method: '{method}'")
         self._arguments = _create_arg_dict(args, files)
         self._not_found = {a for a in self._arguments}
 
@@ -285,11 +289,11 @@ def parse_args(
 
 
 class _ValueParserWrapper:
-    def parse_from_string(self, s: str) -> Any:
+    def parse_from_string(self, s: str, /) -> Any:
         raise NotImplementedError()
 
     def parse_from_file(
-        self, stream: IO[bytes], filename: str, content_type: str
+        self, stream: IO[bytes], filename: str, content_type: str, /
     ) -> Any:
         raise NotImplementedError()
 
@@ -306,7 +310,7 @@ class _FunctionValueParser(_ValueParserWrapper):
             raise _ArgumentError(str(exc)) from exc
 
     def parse_from_file(
-        self, stream: IO[bytes], filename: str, content_type: str
+        self, stream: SupportsRead[bytes], filename: str, content_type: str
     ) -> Any:
         return self.parse_from_string(stream.read().decode("utf-8"))
 

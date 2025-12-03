@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, Mapping, Tuple
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any, TypeAlias
 
-from typing_extensions import TypeAlias
 from werkzeug.wrappers import Request
 
 # (name, value)
-Header: TypeAlias = Tuple[str, str]
+Header: TypeAlias = tuple[str, str]
 
-WSGIEnvironment: TypeAlias = Dict[str, Any]
+WSGIEnvironment: TypeAlias = dict[str, Any]
 
 # (body) -> None
 StartResponseReturnType: TypeAlias = Callable[[bytes], object]
@@ -23,11 +23,11 @@ WSGIApplication: TypeAlias = Callable[
 ]
 
 # (method, path, callback)
-RouteDescription: TypeAlias = Tuple[str, str, WSGIApplication]
+RouteDescription: TypeAlias = tuple[str, str, WSGIApplication]
 
 # (request, previous_args, path_part) -> result
 RouteTemplateHandler: TypeAlias = Callable[
-    [Request, Tuple[Any, ...], str], Any
+    [Request, tuple[Any, ...], str], Any
 ]
 
 BadArgumentsDict: TypeAlias = Mapping[str, str]

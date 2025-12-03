@@ -8,7 +8,7 @@ from http import HTTPStatus
 from io import BytesIO
 from json import JSONDecodeError
 from types import TracebackType
-from typing import Any, Protocol, Union, cast
+from typing import Any, Protocol, TypeAlias, cast
 from urllib.parse import quote_plus, urlparse
 
 from dectest import TestCase, before
@@ -443,7 +443,7 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
         response_headers: list[Header],
         exc_info: tuple[type[BaseException], BaseException, TracebackType]
         | None = None,
-    ) -> Callable[[bytes], Any]:
+    ) -> Callable[[bytes], None]:
         nonlocal response
         if response and not exc_info:
             raise AssertionError("start_response called multiple times")
@@ -464,9 +464,9 @@ def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:
     return response
 
 
-ArgumentToTest = Union[
-    "tuple[str, Multiplicity, str]", "tuple[str, Multiplicity, str, str]"
-]
+ArgumentToTest: TypeAlias = (
+    tuple[str, Multiplicity, str] | tuple[str, Multiplicity, str, str]
+)
 
 
 def test_wsgi_arguments(

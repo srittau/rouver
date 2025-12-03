@@ -4,7 +4,6 @@ import re
 from collections.abc import Iterable
 from http import HTTPStatus
 from io import BytesIO, StringIO
-from typing import Any
 
 from asserts import assert_equal, assert_false, assert_regex, assert_true
 
@@ -20,7 +19,7 @@ class StubStartResponse:
         self.headers: list[Header] = []
 
     def __call__(
-        self, status: str, headers: Iterable[Header], exc_info: Any = None
+        self, status: str, headers: Iterable[Header], exc_info: object = None
     ) -> StartResponseReturnType:
         assert_false(self.was_called, "start_response() called twice")
         assert_regex(status, _status_re)
