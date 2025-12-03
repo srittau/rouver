@@ -1,11 +1,11 @@
 [project]
 name = "rouver"
-version = "2.6.4.dev0"
+version = "2.7.0.dev0"
 description = "A microframework"
 readme = "README.md"
 authors = [{ name = "Sebastian Rittau", email = "srittau@rittau.biz" }]
 license = { text = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Internet :: WWW/HTTP :: WSGI",
@@ -39,7 +39,7 @@ include = ["*/py.typed"]
 
 [tool.black]
 line-length = 79
-target-version = ["py39"]
+target-version = ["py310"]
 
 [tool.isort]
 multi_line_output = 3
