@@ -68,7 +68,7 @@ class RouteHandlerBase(Iterable[bytes]):
         return self.request.mimetype_params.get("charset", "utf-8")
 
     @property
-    def path_args(self) -> list[Any]:  # type: ignore[misc]
+    def path_args(self) -> list[Any]:
         path_args = self.request.environ.get("rouver.path_args")
         if not isinstance(path_args, list):
             return []

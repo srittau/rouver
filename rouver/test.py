@@ -533,7 +533,7 @@ def test_wsgi_arguments(
     def assert_failure_if_argument_invalid(argument: ArgumentToTest) -> None:
         if len(argument) != 4:  # argument has no invalid value
             return
-        name, _, __, invalid_value = argument  # type: ignore
+        name, _, __, invalid_value = argument
         setup_required_args_except(name)
         request.add_argument(name, invalid_value)
         call_expect_bad_request(
