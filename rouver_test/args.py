@@ -4,19 +4,12 @@ from collections.abc import Iterable
 from io import BytesIO
 from urllib.parse import quote_plus
 
-from asserts import (
-    assert_equal,
-    assert_in,
-    assert_not_in,
-    assert_raises,
-    assert_succeeds,
-    fail,
-)
-from dectest import TestCase, before, test
+import pytest
 from werkzeug.exceptions import BadRequest
 
 from rouver.args import ArgumentParser, Multiplicity, parse_args
 from rouver.exceptions import ArgumentsError
+from rouver.types import WSGIEnvironment
 from rouver.util import rfc5987_encode
 from rouver_test.testutil import default_environment
 
@@ -35,35 +28,35 @@ Content-Type: {type}
 """
 
 
-class ParseArgsTest(TestCase):
-    @before
-    def setup_environment(self) -> None:
-        self.env = default_environment()
-
-    def add_path_argument(self, name: str, value: str) -> None:
-        if "QUERY_STRING" not in self.env:
-            self.env["QUERY_STRING"] = ""
-        if self.env["QUERY_STRING"]:
-            self.env["QUERY_STRING"] += "&"
-        self.env["QUERY_STRING"] += "{}={}".format(
+class TestParseArgs:
+    def add_path_argument(
+        self, env: WSGIEnvironment, name: str, value: str
+    ) -> None:
+        if "QUERY_STRING" not in env:
+            env["QUERY_STRING"] = ""
+        if env["QUERY_STRING"]:
+            env["QUERY_STRING"] += "&"
+        env["QUERY_STRING"] += "{}={}".format(
             quote_plus(name), quote_plus(value)
         )
 
-    def setup_empty_urlencoded_request(self) -> None:
-        self.env["CONTENT_TYPE"] = (
+    def setup_empty_urlencoded_request(self, env: WSGIEnvironment) -> None:
+        env["CONTENT_TYPE"] = (
             "application/x-www-form-urlencoded; charset=utf-8"
         )
 
-    def setup_urlencoded_request(self, name: str, value: str) -> None:
-        self.setup_empty_urlencoded_request()
+    def setup_urlencoded_request(
+        self, env: WSGIEnvironment, name: str, value: str
+    ) -> None:
+        self.setup_empty_urlencoded_request(env)
         body = "{}={}".format(name, value).encode("utf-8")
-        self.env["CONTENT_LENGTH"] = str(len(body))
-        self.env["wsgi.input"] = BytesIO(body)
+        env["CONTENT_LENGTH"] = str(len(body))
+        env["wsgi.input"] = BytesIO(body)
 
     def setup_multipart_request(
-        self, name: str, value: str | Iterable[str]
+        self, env: WSGIEnvironment, name: str, value: str | Iterable[str]
     ) -> None:
-        self.env["CONTENT_TYPE"] = "multipart/form-data; boundary=1234567890"
+        env["CONTENT_TYPE"] = "multipart/form-data; boundary=1234567890"
         if isinstance(value, str):
             value = [value]
         body = (
@@ -72,13 +65,18 @@ class ParseArgsTest(TestCase):
             )
             + "--1234567890--"
         ).encode("utf-8")
-        self.env["CONTENT_LENGTH"] = str(len(body))
-        self.env["wsgi.input"] = BytesIO(body)
+        env["CONTENT_LENGTH"] = str(len(body))
+        env["wsgi.input"] = BytesIO(body)
 
     def setup_multipart_file_request(
-        self, name: str, filename: str, file_content: str, content_type: str
+        self,
+        env: WSGIEnvironment,
+        name: str,
+        filename: str,
+        file_content: str,
+        content_type: str,
     ) -> None:
-        self.env["CONTENT_TYPE"] = "multipart/form-data; boundary=1234567890"
+        env["CONTENT_TYPE"] = "multipart/form-data; boundary=1234567890"
         filename_param = rfc5987_encode("filename", filename)
         body = MULTIPART_FILE_BODY_TMPL.format(
             name=name,
@@ -86,19 +84,19 @@ class ParseArgsTest(TestCase):
             content=file_content,
             type=content_type,
         ).encode("utf-8")
-        self.env["CONTENT_LENGTH"] = str(len(body))
-        self.env["wsgi.input"] = BytesIO(body)
+        env["CONTENT_LENGTH"] = str(len(body))
+        env["wsgi.input"] = BytesIO(body)
 
-    @test
-    def parse_nothing(self) -> None:
-        args = parse_args(self.env, [])
-        assert_equal({}, args)
+    def test_parse_nothing(self) -> None:
+        env = default_environment()
+        args = parse_args(env, [])
+        assert args == {}
 
-    @test
-    def invalid_value_parser(self) -> None:
-        with assert_raises(TypeError):
+    def test_invalid_value_parser(self) -> None:
+        env = default_environment()
+        with pytest.raises(TypeError):
             parse_args(
-                self.env,
+                env,
                 [
                     (
                         "foo",  # type: ignore
@@ -108,385 +106,387 @@ class ParseArgsTest(TestCase):
                 ],
             )
 
-    @test
-    def parse_str_arg(self) -> None:
-        self.add_path_argument("foo", "bar")
-        args = parse_args(self.env, [("foo", str, Multiplicity.REQUIRED)])
-        assert_equal({"foo": "bar"}, args)
+    def test_parse_str_arg(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "bar")
+        args = parse_args(env, [("foo", str, Multiplicity.REQUIRED)])
+        assert args == {"foo": "bar"}
 
-    @test
-    def parse_unicode_arg(self) -> None:
-        self.add_path_argument("föo", "bär")
-        args = parse_args(self.env, [("föo", str, Multiplicity.REQUIRED)])
-        assert_equal({"föo": "bär"}, args)
+    def test_parse_unicode_arg(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "föo", "bär")
+        args = parse_args(env, [("föo", str, Multiplicity.REQUIRED)])
+        assert args == {"föo": "bär"}
 
-    @test
-    def parse_int_arg(self) -> None:
-        self.add_path_argument("foo", "123")
-        args = parse_args(self.env, [("foo", int, Multiplicity.REQUIRED)])
-        assert_equal({"foo": 123}, args)
+    def test_parse_int_arg(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "123")
+        args = parse_args(env, [("foo", int, Multiplicity.REQUIRED)])
+        assert args == {"foo": 123}
 
-    @test
-    def parse_invalid_int_arg(self) -> None:
-        self.add_path_argument("foo", "bar")
+    def test_parse_invalid_int_arg(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "bar")
         try:
-            parse_args(self.env, [("foo", int, Multiplicity.REQUIRED)])
+            parse_args(env, [("foo", int, Multiplicity.REQUIRED)])
         except ArgumentsError as exc:
-            assert_equal(
-                {"foo": "invalid literal for int() with base 10: 'bar'"},
-                exc.arguments,
-            )
+            assert exc.arguments == {
+                "foo": "invalid literal for int() with base 10: 'bar'"
+            }
         else:
-            fail("ArgumentsError not raised")
+            pytest.fail("ArgumentsError not raised")
 
-    @test
-    def required_argument_missing(self) -> None:
+    def test_required_argument_missing(self) -> None:
+        env = default_environment()
         try:
-            parse_args(self.env, [("foo", str, Multiplicity.REQUIRED)])
+            parse_args(env, [("foo", str, Multiplicity.REQUIRED)])
         except ArgumentsError as exc:
-            assert_equal({"foo": "mandatory argument missing"}, exc.arguments)
+            assert exc.arguments == {"foo": "mandatory argument missing"}
         else:
-            fail("ArgumentsError not raised")
+            pytest.fail("ArgumentsError not raised")
 
-    @test
-    def optional_argument(self) -> None:
-        self.add_path_argument("foo", "bar")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": "bar"}, args)
+    def test_optional_argument(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "bar")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": "bar"}
 
-    @test
-    def optional_argument_missing(self) -> None:
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({}, args)
+    def test_optional_argument_missing(self) -> None:
+        env = default_environment()
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {}
 
-    @test
-    def optional_argument_empty(self) -> None:
-        self.add_path_argument("foo", "")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": ""}, args)
+    def test_optional_argument_empty(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": ""}
 
-    @test
-    def any_argument_empty(self) -> None:
-        args = parse_args(self.env, [("foo", int, Multiplicity.ANY)])
-        assert_equal({"foo": []}, args)
+    def test_any_argument_empty(self) -> None:
+        env = default_environment()
+        args = parse_args(env, [("foo", int, Multiplicity.ANY)])
+        assert args == {"foo": []}
 
-    @test
-    def any_argument(self) -> None:
-        self.add_path_argument("foo", "123")
-        self.add_path_argument("foo", "456")
-        self.add_path_argument("foo", "789")
-        args = parse_args(self.env, [("foo", int, Multiplicity.ANY)])
-        assert_equal({"foo": [123, 456, 789]}, args)
+    def test_any_argument(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "123")
+        self.add_path_argument(env, "foo", "456")
+        self.add_path_argument(env, "foo", "789")
+        args = parse_args(env, [("foo", int, Multiplicity.ANY)])
+        assert args == {"foo": [123, 456, 789]}
 
-    @test
-    def required_any_argument(self) -> None:
-        self.add_path_argument("foo", "123")
-        self.add_path_argument("foo", "456")
-        self.add_path_argument("foo", "789")
-        args = parse_args(self.env, [("foo", int, Multiplicity.REQUIRED_ANY)])
-        assert_equal({"foo": [123, 456, 789]}, args)
+    def test_required_any_argument(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "123")
+        self.add_path_argument(env, "foo", "456")
+        self.add_path_argument(env, "foo", "789")
+        args = parse_args(env, [("foo", int, Multiplicity.REQUIRED_ANY)])
+        assert args == {"foo": [123, 456, 789]}
 
-    @test
-    def required_any_argument_missing(self) -> None:
+    def test_required_any_argument_missing(self) -> None:
+        env = default_environment()
         try:
-            parse_args(self.env, [("foo", int, Multiplicity.REQUIRED_ANY)])
+            parse_args(env, [("foo", int, Multiplicity.REQUIRED_ANY)])
         except ArgumentsError as exc:
-            assert_equal({"foo": "mandatory argument missing"}, exc.arguments)
+            assert exc.arguments == {"foo": "mandatory argument missing"}
         else:
-            fail("ArgumentsError not raised")
+            pytest.fail("ArgumentsError not raised")
 
-    @test
-    def urlencoded_post_request(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
-        self.setup_urlencoded_request("foo", "bar")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": "bar"}, args)
+    def test_urlencoded_post_request(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
+        self.setup_urlencoded_request(env, "foo", "bar")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": "bar"}
 
-    @test
-    def urlencoded_post_request_with_umlauts(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
-        self.setup_urlencoded_request("föo", "bär")
-        args = parse_args(self.env, [("föo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"föo": "bär"}, args)
+    def test_urlencoded_post_request_with_umlauts(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
+        self.setup_urlencoded_request(env, "föo", "bär")
+        args = parse_args(env, [("föo", str, Multiplicity.OPTIONAL)])
+        assert args == {"föo": "bär"}
 
-    @test
-    def urlencoded_patch_request(self) -> None:
-        self.env["REQUEST_METHOD"] = "PATCH"
-        self.setup_urlencoded_request("foo", "bar")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": "bar"}, args)
+    def test_urlencoded_patch_request(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PATCH"
+        self.setup_urlencoded_request(env, "foo", "bar")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": "bar"}
 
-    @test
-    def urlencoded_delete_request(self) -> None:
-        self.env["REQUEST_METHOD"] = "DELETE"
-        self.setup_urlencoded_request("foo", "bar")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": "bar"}, args)
+    def test_urlencoded_delete_request(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "DELETE"
+        self.setup_urlencoded_request(env, "foo", "bar")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": "bar"}
 
-    @test
-    def empty_delete__optional(self) -> None:
-        self.env["REQUEST_METHOD"] = "DELETE"
-        self.setup_empty_urlencoded_request()
+    def test_empty_delete__optional(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "DELETE"
+        self.setup_empty_urlencoded_request(env)
         args = parse_args(
-            self.env,
+            env,
             [
                 ("opt", str, Multiplicity.OPTIONAL),
                 ("any", str, Multiplicity.ANY),
             ],
         )
-        assert_not_in("opt", args)
-        assert_equal([], args["any"])
+        assert "opt" not in args
+        assert args["any"] == []
 
-    @test
-    def empty_delete__required_not_supplied(self) -> None:
-        self.env["REQUEST_METHOD"] = "DELETE"
-        self.setup_empty_urlencoded_request()
-        with assert_raises(ArgumentsError):
+    def test_empty_delete__required_not_supplied(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "DELETE"
+        self.setup_empty_urlencoded_request(env)
+        with pytest.raises(ArgumentsError):
             parse_args(
-                self.env,
+                env,
                 [
                     ("req", str, Multiplicity.REQUIRED),
                     ("once", str, Multiplicity.REQUIRED_ANY),
                 ],
             )
 
-    @test
-    def urlencoded_put_request(self) -> None:
-        self.env["REQUEST_METHOD"] = "PUT"
-        self.setup_urlencoded_request("foo", "bar")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": "bar"}, args)
+    def test_urlencoded_put_request(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PUT"
+        self.setup_urlencoded_request(env, "foo", "bar")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": "bar"}
 
-    @test
-    def urlencoded_put_request_with_umlauts(self) -> None:
-        self.env["REQUEST_METHOD"] = "PUT"
-        self.setup_urlencoded_request("föo", "bär")
-        args = parse_args(self.env, [("föo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"föo": "bär"}, args)
+    def test_urlencoded_put_request_with_umlauts(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PUT"
+        self.setup_urlencoded_request(env, "föo", "bär")
+        args = parse_args(env, [("föo", str, Multiplicity.OPTIONAL)])
+        assert args == {"föo": "bär"}
 
-    @test
-    def multipart_post_request(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
-        self.setup_multipart_request("foo", "bar")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": "bar"}, args)
+    def test_multipart_post_request(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
+        self.setup_multipart_request(env, "foo", "bar")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": "bar"}
 
-    @test
-    def multipart_post_request_with_umlauts(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
-        self.setup_multipart_request("föo", "bär")
-        args = parse_args(self.env, [("föo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"föo": "bär"}, args)
+    def test_multipart_post_request_with_umlauts(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
+        self.setup_multipart_request(env, "föo", "bär")
+        args = parse_args(env, [("föo", str, Multiplicity.OPTIONAL)])
+        assert args == {"föo": "bär"}
 
-    @test
-    def multipart_put_request(self) -> None:
-        self.env["REQUEST_METHOD"] = "PUT"
-        self.setup_multipart_request("foo", "bar")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": "bar"}, args)
+    def test_multipart_put_request(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PUT"
+        self.setup_multipart_request(env, "foo", "bar")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": "bar"}
 
-    @test
-    def multipart_put_request_with_umlauts(self) -> None:
-        self.env["REQUEST_METHOD"] = "PUT"
-        self.setup_multipart_request("föo", "bär")
-        args = parse_args(self.env, [("föo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"föo": "bär"}, args)
+    def test_multipart_put_request_with_umlauts(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PUT"
+        self.setup_multipart_request(env, "föo", "bär")
+        args = parse_args(env, [("föo", str, Multiplicity.OPTIONAL)])
+        assert args == {"föo": "bär"}
 
-    @test
-    def multipart_multiple_arguments(self) -> None:
-        self.env["REQUEST_METHOD"] = "PUT"
-        self.setup_multipart_request("foo", ["bar", "baz"])
-        args = parse_args(self.env, [("foo", str, Multiplicity.ANY)])
-        assert_equal({"foo": ["bar", "baz"]}, args)
+    def test_multipart_multiple_arguments(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PUT"
+        self.setup_multipart_request(env, "foo", ["bar", "baz"])
+        args = parse_args(env, [("foo", str, Multiplicity.ANY)])
+        assert args == {"foo": ["bar", "baz"]}
 
-    @test
-    def multipart__optional_argument_empty(self) -> None:
-        self.env["REQUEST_METHOD"] = "PUT"
-        self.setup_multipart_request("foo", "")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({"foo": ""}, args)
+    def test_multipart__optional_argument_empty(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PUT"
+        self.setup_multipart_request(env, "foo", "")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {"foo": ""}
 
-    @test
-    def multipart_post_request_with_file(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
+    def test_multipart_post_request_with_file(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request(
-            "my-file", "my-file.txt", "content", "text/plain; charset=us-ascii"
+            env,
+            "my-file",
+            "my-file.txt",
+            "content",
+            "text/plain; charset=us-ascii",
         )
-        args = parse_args(
-            self.env, [("my-file", "file", Multiplicity.REQUIRED)]
-        )
-        assert_in("my-file", args)
+        args = parse_args(env, [("my-file", "file", Multiplicity.REQUIRED)])
+        assert "my-file" in args
         f = args["my-file"]
-        assert_equal("my-file.txt", f.filename)
-        assert_equal("text/plain", f.content_type)
-        assert_equal(b"content", f.read())
+        assert f.filename == "my-file.txt"
+        assert f.content_type == "text/plain"
+        assert f.read() == b"content"
 
-    @test
-    def multipart_post_request_with_optional_file(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
+    def test_multipart_post_request_with_optional_file(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request(
-            "my-file", "my-file.txt", "content", "text/plain; charset=us-ascii"
+            env,
+            "my-file",
+            "my-file.txt",
+            "content",
+            "text/plain; charset=us-ascii",
         )
         args = parse_args(
-            self.env, [("my-file", "file-or-str", Multiplicity.REQUIRED)]
+            env, [("my-file", "file-or-str", Multiplicity.REQUIRED)]
         )
-        assert_in("my-file", args)
+        assert "my-file" in args
         f = args["my-file"]
-        assert_equal("my-file.txt", f.filename)
-        assert_equal("text/plain", f.content_type)
-        assert_equal(b"content", f.read())
+        assert f.filename == "my-file.txt"
+        assert f.content_type == "text/plain"
+        assert f.read() == b"content"
 
-    @test
-    def multipart_post_request_with_empty_file(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
-        self.setup_multipart_request("my-file", "test")
+    def test_multipart_post_request_with_empty_file(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
+        self.setup_multipart_request(env, "my-file", "test")
         args = parse_args(
-            self.env, [("my-file", "file-or-str", Multiplicity.REQUIRED)]
+            env, [("my-file", "file-or-str", Multiplicity.REQUIRED)]
         )
-        assert_in("my-file", args)
-        assert_equal("test", args["my-file"])
+        assert "my-file" in args
+        assert args["my-file"] == "test"
 
-    @test
-    def multipart_post_request_with_file_and_umlauts(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
+    def test_multipart_post_request_with_file_and_umlauts(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request(
-            "föo", "my-filé.txt", "cöntent", "text/plain; charset=utf-8"
+            env, "föo", "my-filé.txt", "cöntent", "text/plain; charset=utf-8"
         )
-        args = parse_args(self.env, [("föo", "file", Multiplicity.REQUIRED)])
-        assert_in("föo", args)
+        args = parse_args(env, [("föo", "file", Multiplicity.REQUIRED)])
+        assert "föo" in args
         f = args["föo"]
-        assert_equal("my-filé.txt", f.filename)
-        assert_equal("text/plain", f.content_type)
-        assert_equal("cöntent".encode("utf-8"), f.read())
+        assert f.filename == "my-filé.txt"
+        assert f.content_type == "text/plain"
+        assert f.read() == "cöntent".encode("utf-8")
 
-    @test
-    def multipart_put_request_with_file(self) -> None:
-        self.env["REQUEST_METHOD"] = "PUT"
+    def test_multipart_put_request_with_file(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PUT"
         self.setup_multipart_file_request(
-            "my-file", "my-file.txt", "content", "text/plain"
+            env, "my-file", "my-file.txt", "content", "text/plain"
         )
-        args = parse_args(
-            self.env, [("my-file", "file", Multiplicity.REQUIRED)]
-        )
-        assert_in("my-file", args)
+        args = parse_args(env, [("my-file", "file", Multiplicity.REQUIRED)])
+        assert "my-file" in args
         f = args["my-file"]
-        assert_equal("my-file.txt", f.filename)
-        assert_equal("text/plain", f.content_type)
-        assert_equal(b"content", f.read())
+        assert f.filename == "my-file.txt"
+        assert f.content_type == "text/plain"
+        assert f.read() == b"content"
 
-    @test
-    def read_file_as_value(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
+    def test_read_file_as_value(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
         self.setup_multipart_file_request(
-            "foo", "my-file.txt", "123", "text/plain"
+            env, "foo", "my-file.txt", "123", "text/plain"
         )
-        args = parse_args(self.env, [("foo", int, Multiplicity.REQUIRED)])
-        assert_equal(123, args["foo"])
+        args = parse_args(env, [("foo", int, Multiplicity.REQUIRED)])
+        assert args["foo"] == 123
 
-    @test
-    def read_value_as_file(self) -> None:
-        self.env["REQUEST_METHOD"] = "GET"
-        self.add_path_argument("foo", "bar")
-        args = parse_args(self.env, [("foo", "file", Multiplicity.REQUIRED)])
-        assert_in("foo", args)
+    def test_read_value_as_file(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "GET"
+        self.add_path_argument(env, "foo", "bar")
+        args = parse_args(env, [("foo", "file", Multiplicity.REQUIRED)])
+        assert "foo" in args
         f = args["foo"]
-        assert_equal("", f.filename)
-        assert_equal("application/octet-stream", f.content_type)
-        assert_equal(b"bar", f.read())
+        assert f.filename == ""
+        assert f.content_type == "application/octet-stream"
+        assert f.read() == b"bar"
 
-    @test
-    def read_value_as_file_with_umlauts(self) -> None:
-        self.env["REQUEST_METHOD"] = "GET"
-        self.add_path_argument("foo", "bär")
-        args = parse_args(self.env, [("foo", "file", Multiplicity.REQUIRED)])
-        assert_in("foo", args)
+    def test_read_value_as_file_with_umlauts(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "GET"
+        self.add_path_argument(env, "foo", "bär")
+        args = parse_args(env, [("foo", "file", Multiplicity.REQUIRED)])
+        assert "foo" in args
         f = args["foo"]
-        assert_equal("", f.filename)
-        assert_equal("application/octet-stream", f.content_type)
-        assert_equal("bär".encode("utf-8"), f.read())
+        assert f.filename == ""
+        assert f.content_type == "application/octet-stream"
+        assert f.read() == "bär".encode("utf-8")
 
-    @test
-    def post_wrong_content_type__optional_args(self) -> None:
+    def test_post_wrong_content_type__optional_args(self) -> None:
         """This exposes a bug in Python's cgi module that will raise a
         TypeError when no request string was provided. See
-        <https://bugs.python.org/issue32029>.
+        <https://github.com/python/cpython/issues/76210>.
         """
-        self.env["REQUEST_METHOD"] = "POST"
-        self.env["CONTENT_TYPE"] = "application/octet-stream"
-        self.env["CONTENT_LENGTH"] = "2"
-        self.env["wsgi.input"] = BytesIO(b"AB")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({}, args)
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
+        env["CONTENT_TYPE"] = "application/octet-stream"
+        env["CONTENT_LENGTH"] = "2"
+        env["wsgi.input"] = BytesIO(b"AB")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {}
 
-    @test
-    def post_wrong_content_type__required_args(self) -> None:
-        self.env["REQUEST_METHOD"] = "POST"
-        self.env["CONTENT_TYPE"] = "application/octet-stream"
-        self.env["CONTENT_LENGTH"] = "2"
-        self.env["wsgi.input"] = BytesIO(b"AB")
-        with assert_raises(BadRequest):
-            parse_args(self.env, [("foo", str, Multiplicity.REQUIRED)])
+    def test_post_wrong_content_type__required_args(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "POST"
+        env["CONTENT_TYPE"] = "application/octet-stream"
+        env["CONTENT_LENGTH"] = "2"
+        env["wsgi.input"] = BytesIO(b"AB")
+        with pytest.raises(BadRequest):
+            parse_args(env, [("foo", str, Multiplicity.REQUIRED)])
 
-    @test
-    def patch_wrong_content_type__optional_args(self) -> None:
-        self.env["REQUEST_METHOD"] = "PATCH"
-        self.env["CONTENT_TYPE"] = "application/octet-stream"
-        self.env["CONTENT_LENGTH"] = "2"
-        self.env["wsgi.input"] = BytesIO(b"AB")
-        args = parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
-        assert_equal({}, args)
+    def test_patch_wrong_content_type__optional_args(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PATCH"
+        env["CONTENT_TYPE"] = "application/octet-stream"
+        env["CONTENT_LENGTH"] = "2"
+        env["wsgi.input"] = BytesIO(b"AB")
+        args = parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
+        assert args == {}
 
-    @test
-    def patch_wrong_content_type__required_args(self) -> None:
-        self.env["REQUEST_METHOD"] = "PATCH"
-        self.env["CONTENT_TYPE"] = "application/octet-stream"
-        self.env["CONTENT_LENGTH"] = "2"
-        self.env["wsgi.input"] = BytesIO(b"AB")
-        with assert_raises(BadRequest):
-            parse_args(self.env, [("foo", str, Multiplicity.REQUIRED)])
+    def test_patch_wrong_content_type__required_args(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "PATCH"
+        env["CONTENT_TYPE"] = "application/octet-stream"
+        env["CONTENT_LENGTH"] = "2"
+        env["wsgi.input"] = BytesIO(b"AB")
+        with pytest.raises(BadRequest):
+            parse_args(env, [("foo", str, Multiplicity.REQUIRED)])
 
-    @test
-    def no_exhaustive_check(self) -> None:
-        self.add_path_argument("foo", "v")
-        self.add_path_argument("unknown", "v")
-        with assert_succeeds(ArgumentsError):
-            parse_args(self.env, [("foo", str, Multiplicity.OPTIONAL)])
+    def test_no_exhaustive_check(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "v")
+        self.add_path_argument(env, "unknown", "v")
+        # does not raise ArgumentsError
+        parse_args(env, [("foo", str, Multiplicity.OPTIONAL)])
 
-    @test
-    def exhaustive_check__succeeds(self) -> None:
-        self.add_path_argument("foo", "v")
-        with assert_succeeds(ArgumentsError):
-            parse_args(
-                self.env,
-                [("foo", str, Multiplicity.OPTIONAL)],
-                exhaustive=True,
-            )
+    def test_exhaustive_check__succeeds(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "v")
+        # does not raise ArgumentsError
+        parse_args(
+            env,
+            [("foo", str, Multiplicity.OPTIONAL)],
+            exhaustive=True,
+        )
 
-    @test
-    def exhaustive_check__fails(self) -> None:
-        self.add_path_argument("foo", "v")
-        self.add_path_argument("unknown", "v")
+    def test_exhaustive_check__fails(self) -> None:
+        env = default_environment()
+        self.add_path_argument(env, "foo", "v")
+        self.add_path_argument(env, "unknown", "v")
         try:
             parse_args(
-                self.env,
+                env,
                 [("foo", str, Multiplicity.OPTIONAL)],
                 exhaustive=True,
             )
         except ArgumentsError as exc:
-            assert_equal({"unknown": "unknown argument"}, exc.arguments)
+            assert exc.arguments == {"unknown": "unknown argument"}
         else:
-            fail("ArgumentsError not raised")
+            pytest.fail("ArgumentsError not raised")
 
-    @test
-    def unsupported_method(self) -> None:
-        self.env["REQUEST_METHOD"] = "UNKNOWN"
-        with assert_raises(ValueError):
-            parse_args(self.env, [])
+    def test_unsupported_method(self) -> None:
+        env = default_environment()
+        env["REQUEST_METHOD"] = "UNKNOWN"
+        with pytest.raises(ValueError):
+            parse_args(env, [])
 
 
-class ArgumentParserTest(TestCase):
-    @test
-    def parse_args__post_twice(self) -> None:
+class TestArgumentParser:
+    def test_parse_args__post_twice(self) -> None:
         environ = {
             "wsgi.input": BytesIO(b"foo=bar&abc=def"),
             "REQUEST_METHOD": "POST",
@@ -495,17 +495,16 @@ class ArgumentParserTest(TestCase):
         }
         parser = ArgumentParser(environ)
         args1 = parser.parse_args([("foo", str, Multiplicity.REQUIRED)])
-        assert_equal({"foo": "bar"}, args1)
+        assert args1 == {"foo": "bar"}
         args2 = parser.parse_args(
             [
                 ("foo", str, Multiplicity.REQUIRED),
                 ("abc", str, Multiplicity.REQUIRED),
             ]
         )
-        assert_equal({"foo": "bar", "abc": "def"}, args2)
+        assert args2 == {"foo": "bar", "abc": "def"}
 
-    @test
-    def exhaustive_with_previous_calls(self) -> None:
+    def test_exhaustive_with_previous_calls(self) -> None:
         environ = {
             "wsgi.input": BytesIO(b"foo=bar&abc=def"),
             "REQUEST_METHOD": "POST",
@@ -516,7 +515,7 @@ class ArgumentParserTest(TestCase):
         parser.parse_args(
             [("foo", str, Multiplicity.REQUIRED)], exhaustive=False
         )
-        with assert_succeeds(ArgumentsError):
-            parser.parse_args(
-                [("abc", str, Multiplicity.REQUIRED)], exhaustive=True
-            )
+        # does not raise ArgumentsError
+        parser.parse_args(
+            [("abc", str, Multiplicity.REQUIRED)], exhaustive=True
+        )

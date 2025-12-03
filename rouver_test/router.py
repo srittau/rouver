@@ -1,18 +1,11 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Iterable, Sequence
 from http import HTTPStatus
 
-from asserts import (
-    assert_equal,
-    assert_in,
-    assert_is_instance,
-    assert_raises,
-    assert_regex,
-    fail,
-)
-from dectest import TestCase, before, test
+import pytest
 from werkzeug.datastructures import WWWAuthenticate
 from werkzeug.exceptions import Unauthorized
 from werkzeug.wrappers import Request
@@ -38,7 +31,7 @@ def handle_success(
 def handle_empty_path(
     environ: WSGIEnvironment, start_response: StartResponse
 ) -> Iterable[bytes]:
-    assert_equal([], environ["rouver.path_args"])
+    assert environ["rouver.path_args"] == []
     start_response("200 OK", [])
     return [b""]
 
@@ -47,41 +40,52 @@ def fail_if_called(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
     raise AssertionError("handler should not be called")
 
 
-class RouterTest(TestCase):
-    @before
-    def setup_router(self) -> None:
-        self.router = Router()
-        self.router.error_handling = False
-        self.start_response = StubStartResponse()
-        self.environment = default_environment()
-        self.disable_logger()
+@pytest.fixture(autouse=True)
+def disable_logging() -> Iterable[None]:
+    logging.getLogger(LOGGER_NAME).disabled = True
+    yield
+    logging.getLogger(LOGGER_NAME).disabled = False
 
-    def disable_logger(self) -> None:
-        logging.getLogger(LOGGER_NAME).disabled = True
 
+def setup_router() -> Router:
+    router = Router()
+    router.error_handling = False
+    return router
+
+
+class TestRouter:
     def _create_path_checker(self, expected_path: str) -> WSGIApplication:
         def handle(
             environ: WSGIEnvironment, sr: StartResponse
         ) -> Sequence[bytes]:
-            assert_equal(expected_path, environ["PATH_INFO"])
+            assert environ["PATH_INFO"] == expected_path
             sr("200 OK", [])
             return []
 
         return handle
 
     def handle_wsgi(
-        self, method: str = "GET", path: str = "/", *, script_name: str = ""
+        self,
+        router: Router,
+        env: WSGIEnvironment,
+        method: str = "GET",
+        path: str = "/",
+        st: StubStartResponse | None = None,
+        *,
+        script_name: str = "",
     ) -> Iterable[bytes]:
-        self.environment["REQUEST_METHOD"] = method
-        self.environment["PATH_INFO"] = path
-        self.environment["SCRIPT_NAME"] = script_name
-        return self.router(self.environment, self.start_response)
+        if st is None:
+            st = StubStartResponse()
+        env["REQUEST_METHOD"] = method
+        env["PATH_INFO"] = path
+        env["SCRIPT_NAME"] = script_name
+        return router(env, st)
 
-    @test
-    def not_found_response_page(self) -> None:
-        response = self.handle_wsgi("GET", "/foo/bar")
+    def test_not_found_response_page(self) -> None:
+        env = default_environment()
+        response = self.handle_wsgi(setup_router(), env, "GET", "/foo/bar")
         html = b"".join(response).decode("utf-8")
-        assert_equal(
+        assert html == (
             """<!DOCTYPE html>
 <html>
     <head>
@@ -92,116 +96,135 @@ class RouterTest(TestCase):
         <p>Path &#x27;/foo/bar&#x27; not found.</p>
     </body>
 </html>
-""",
-            html,
+"""
         )
 
-    @test
-    def not_found_escape_path(self) -> None:
-        response = self.handle_wsgi("GET", "/foo/<bar")
+    def test_not_found_escape_path(self) -> None:
+        env = default_environment()
+        response = self.handle_wsgi(setup_router(), env, "GET", "/foo/<bar")
         html = b"".join(response).decode("utf-8")
-        assert_in("<p>Path &#x27;/foo/&lt;bar&#x27; not found.</p>", html)
+        assert "<p>Path &#x27;/foo/&lt;bar&#x27; not found.</p>" in html
 
-    @test
-    def no_routes(self) -> None:
-        self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
-        self.start_response.assert_header_equals(
-            "Content-Type", "text/html; charset=utf-8"
-        )
+    def test_no_routes(self) -> None:
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(setup_router(), env, "GET", "/foo/bar", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
+        sr.assert_header_equals("Content-Type", "text/html; charset=utf-8")
 
-    @test
-    def handler_request(self) -> None:
+    def test_handler_request(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal("test.example.com", environ["SERVER_NAME"])
+            assert environ["SERVER_NAME"] == "test.example.com"
             start_response("200 OK", [])
             return [b""]
 
-        self.router.add_routes([("", "GET", handle)])
-        self.environment["SERVER_NAME"] = "test.example.com"
-        self.handle_wsgi("GET", "")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
+        router.add_routes([("", "GET", handle)])
+        env["SERVER_NAME"] = "test.example.com"
+        self.handle_wsgi(router, env, "GET", "", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def empty_route(self) -> None:
-        self.router.add_routes([("", "GET", handle_empty_path)])
-        self.handle_wsgi("GET", "")
-        self.start_response.assert_status(HTTPStatus.OK)
+    def test_empty_route(self) -> None:
+        router = setup_router()
+        router.add_routes([("", "GET", handle_empty_path)])
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def root_route(self) -> None:
-        self.router.add_routes([("", "GET", handle_empty_path)])
-        self.handle_wsgi("GET", "/")
-        self.start_response.assert_status(HTTPStatus.OK)
+    def test_root_route(self) -> None:
+        router = setup_router()
+        router.add_routes([("", "GET", handle_empty_path)])
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def first_level(self) -> None:
+    def test_first_level(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal("", environ["rouver.wildcard_path"])
+            assert environ["rouver.wildcard_path"] == ""
             start_response("200 OK", [])
             return []
 
-        self.router.add_routes([("foo", "GET", handle)])
-        self.handle_wsgi("GET", "/foo")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        sr = StubStartResponse()
+        router = setup_router()
+        router.add_routes([("foo", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def first_level__trailing_slash(self) -> None:
+    def test_first_level__trailing_slash(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal("/", environ["rouver.wildcard_path"])
+            assert environ["rouver.wildcard_path"] == "/"
             start_response("200 OK", [])
             return []
 
-        self.router.add_routes([("foo", "GET", handle)])
-        self.handle_wsgi("GET", "/foo/")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        sr = StubStartResponse()
+        router = setup_router()
+        router.add_routes([("foo", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def first_level_wrong_path(self) -> None:
-        self.router.add_routes([("foo", "GET", handle_empty_path)])
-        self.handle_wsgi("GET", "/bar")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+    def test_first_level_wrong_path(self) -> None:
+        router = setup_router()
+        router.add_routes([("foo", "GET", handle_empty_path)])
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/bar", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
-    @test
-    def level_mismatch_1(self) -> None:
-        self.router.add_routes([("foo/bar", "GET", handle_empty_path)])
-        self.handle_wsgi("GET", "/foo")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+    def test_level_mismatch_1(self) -> None:
+        sr = StubStartResponse()
+        router = setup_router()
+        router.add_routes([("foo/bar", "GET", handle_empty_path)])
+        env = default_environment()
+        self.handle_wsgi(router, env, "GET", "/foo", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
-    @test
-    def level_mismatch_2(self) -> None:
-        self.router.add_routes([("foo", "GET", handle_empty_path)])
-        self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+    def test_level_mismatch_2(self) -> None:
+        sr = StubStartResponse()
+        router = setup_router()
+        router.add_routes([("foo", "GET", handle_empty_path)])
+        env = default_environment()
+        self.handle_wsgi(router, env, "GET", "/foo/bar", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
-    @test
-    def decode_path(self) -> None:
-        self.router.add_routes([("foo/bär", "GET", handle_success)])
-        self.handle_wsgi("GET", "/foo/b%c3%a4r")
-        self.start_response.assert_status(HTTPStatus.OK)
+    def test_decode_path(self) -> None:
+        sr = StubStartResponse()
+        router = setup_router()
+        router.add_routes([("foo/bär", "GET", handle_success)])
+        env = default_environment()
+        self.handle_wsgi(router, env, "GET", "/foo/b%c3%a4r", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def invalid_path_encoding(self) -> None:
-        self.router.add_routes([("foo/bar", "GET", handle_success)])
-        self.handle_wsgi("GET", "/foo/b%c3r")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+    def test_invalid_path_encoding(self) -> None:
+        sr = StubStartResponse()
+        router = setup_router()
+        router.add_routes([("foo/bar", "GET", handle_success)])
+        env = default_environment()
+        self.handle_wsgi(router, env, "GET", "/foo/b%c3r", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
     # Method Handling
 
-    @test
-    def wrong_method_response_page(self) -> None:
-        self.router.add_routes(
+    def test_wrong_method_response_page(self) -> None:
+        router = setup_router()
+        env = default_environment()
+        router.add_routes(
             [("foo", "GET", fail_if_called), ("foo", "PUT", fail_if_called)]
         )
-        response = self.handle_wsgi("POST", "/foo")
+        response = self.handle_wsgi(router, env, "POST", "/foo")
         html = b"".join(response).decode("utf-8")
-        assert_equal(
+        assert html == (
             """<!DOCTYPE html>
 <html>
     <head>
@@ -212,100 +235,108 @@ class RouterTest(TestCase):
         <p>Method &#x27;POST&#x27; not allowed. Please try GET or PUT.</p>
     </body>
 </html>
-""",
-            html,
+"""
         )
 
-    @test
-    def wrong_method_escape_method(self) -> None:
-        self.router.add_routes([("foo", "GET", fail_if_called)])
-        response = self.handle_wsgi("G<T", "/foo")
+    def test_wrong_method_escape_method(self) -> None:
+        env = default_environment()
+        router = setup_router()
+        router.add_routes([("foo", "GET", fail_if_called)])
+        response = self.handle_wsgi(router, env, "G<T", "/foo")
         html = b"".join(response).decode("utf-8")
-        assert_in(
-            "<p>Method &#x27;G&lt;T&#x27; not allowed. Please try GET.</p>",
-            html,
+        assert (
+            "<p>Method &#x27;G&lt;T&#x27; not allowed. Please try GET.</p>"
+            in html
         )
 
-    @test
-    def wrong_method(self) -> None:
-        self.router.add_routes(
+    def test_wrong_method(self) -> None:
+        router = setup_router()
+        router.add_routes(
             [("foo", "GET", fail_if_called), ("foo", "PUT", fail_if_called)]
         )
-        self.handle_wsgi("POST", "/foo")
-        self.start_response.assert_status(HTTPStatus.METHOD_NOT_ALLOWED)
-        self.start_response.assert_header_equals("Allow", "GET, PUT")
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "POST", "/foo", sr)
+        sr.assert_status(HTTPStatus.METHOD_NOT_ALLOWED)
+        sr.assert_header_equals("Allow", "GET, PUT")
 
-    @test
-    def wrong_method__multiple_matches(self) -> None:
-        self.router.add_routes(
+    def test_wrong_method__multiple_matches(self) -> None:
+        router = setup_router()
+        router.add_routes(
             [("foo", "GET", fail_if_called), ("foo", "GET", fail_if_called)]
         )
-        self.handle_wsgi("POST", "/foo")
-        self.start_response.assert_status(HTTPStatus.METHOD_NOT_ALLOWED)
-        self.start_response.assert_header_equals("Allow", "GET")
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "POST", "/foo", sr)
+        sr.assert_status(HTTPStatus.METHOD_NOT_ALLOWED)
+        sr.assert_header_equals("Allow", "GET")
 
-    @test
-    def call_right_method(self) -> None:
-        self.router.add_routes(
+    def test_call_right_method(self) -> None:
+        router = setup_router()
+        env = default_environment()
+        sr = StubStartResponse()
+        router.add_routes(
             [
                 ("foo", "GET", fail_if_called),
                 ("foo", "POST", handle_success),
                 ("foo", "PUT", fail_if_called),
             ]
         )
-        self.handle_wsgi("POST", "/foo")
-        self.start_response.assert_status(HTTPStatus.OK)
+        self.handle_wsgi(router, env, "POST", "/foo", sr)
+        sr.assert_status(HTTPStatus.OK)
 
     # Path Templates
 
-    @test
-    def unknown_template(self) -> None:
-        with assert_raises(KeyError):
-            self.router.add_routes(
-                [("foo/{unknown}/bar", "GET", fail_if_called)]
-            )
+    def test_unknown_template(self) -> None:
+        router = setup_router()
+        with pytest.raises(KeyError):
+            router.add_routes([("foo/{unknown}/bar", "GET", fail_if_called)])
 
-    @test
-    def no_template(self) -> None:
+    def test_no_template(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal([], environ["rouver.path_args"])
+            assert environ["rouver.path_args"] == []
             start_response("200 OK", [])
             return [b""]
 
-        self.router.add_routes([("foo/bar", "GET", handle)])
-        self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
+        router.add_routes([("foo/bar", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def template(self) -> None:
+    def test_template(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal(["xyzxyz"], environ["rouver.path_args"])
+            assert environ["rouver.path_args"] == ["xyzxyz"]
             start_response("200 OK", [])
             return [b""]
 
         def handle_path(
             request: Request, paths: tuple[object, ...], path: str
         ) -> str:
-            assert_is_instance(request, Request)
+            assert isinstance(request, Request)
             assert paths == ()
             return path * 2
 
-        self.router.add_template_handler("handler", handle_path)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
 
-        self.router.add_routes([("foo/{handler}/bar", "GET", handle)])
-        self.handle_wsgi("GET", "/foo/xyz/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router.add_template_handler("handler", handle_path)
 
-    @test
-    def multiple_templates(self) -> None:
+        router.add_routes([("foo/{handler}/bar", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/xyz/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_multiple_templates(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal(["xyz", 123], environ["rouver.path_args"])
+            assert environ["rouver.path_args"] == ["xyz", 123]
             start_response("200 OK", [])
             return [b""]
 
@@ -313,388 +344,465 @@ class RouterTest(TestCase):
             assert paths == ("xyz",)
             return 123
 
-        self.router.add_template_handler("handler1", lambda _, __, ___: "xyz")
-        self.router.add_template_handler("handler2", handle_path)
+        env = default_environment()
+        sr = StubStartResponse()
 
-        self.router.add_routes(
-            [("foo/{handler1}/bar/{handler2}", "GET", handle)]
-        )
-        self.handle_wsgi("GET", "/foo/xyz/bar/abc")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_template_handler("handler1", lambda _, __, ___: "xyz")
+        router.add_template_handler("handler2", handle_path)
 
-    @test
-    def template_handler_is_passed_decoded_value(self) -> None:
+        router.add_routes([("foo/{handler1}/bar/{handler2}", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/xyz/bar/abc", sr)
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_template_handler_is_passed_decoded_value(self) -> None:
         def handle_path(_: Request, __: object, v: str) -> None:
-            assert_equal("foo/bar", v)
+            assert v == "foo/bar"
 
-        self.router.add_template_handler("handler", handle_path)
+        env = default_environment()
 
-        self.router.add_routes([("foo/{handler}", "GET", handle_success)])
-        self.handle_wsgi("GET", "/foo/foo%2Fbar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_template_handler("handler", handle_path)
+        sr = StubStartResponse()
 
-    @test
-    def template_handler_is_not_passed_an_invalid_value(self) -> None:
+        router.add_routes([("foo/{handler}", "GET", handle_success)])
+        self.handle_wsgi(router, env, "GET", "/foo/foo%2Fbar", sr)
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_template_handler_is_not_passed_an_invalid_value(self) -> None:
         def handle_path(_: Request, __: object, v: str) -> None:
-            fail("template handler should not have been called")
+            pytest.fail("template handler should not have been called")
 
-        self.router.add_template_handler("handler", handle_path)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
 
-        self.router.add_routes([("foo/{handler}", "GET", handle_success)])
-        self.handle_wsgi("GET", "/foo/foo%C3bar")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+        router.add_template_handler("handler", handle_path)
+        router.add_routes([("foo/{handler}", "GET", handle_success)])
+        self.handle_wsgi(router, env, "GET", "/foo/foo%C3bar", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
-    @test
-    def template_value_error(self) -> None:
+    def test_template_value_error(self) -> None:
         def raise_value_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise ValueError()
 
-        self.router.add_template_handler("handler", raise_value_error)
+        env = default_environment()
+        sr = StubStartResponse()
+        router = setup_router()
 
-        self.router.add_routes([("foo/{handler}/bar", "GET", fail_if_called)])
-        self.handle_wsgi("GET", "/foo/xyz/bar")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+        router.add_template_handler("handler", raise_value_error)
 
-    @test
-    def template_multiple_matches(self) -> None:
+        router.add_routes([("foo/{handler}/bar", "GET", fail_if_called)])
+        self.handle_wsgi(router, env, "GET", "/foo/xyz/bar", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
+
+    def test_template_multiple_matches(self) -> None:
         def raise_value_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise ValueError()
 
-        self.router.add_template_handler("handler1", raise_value_error)
-        self.router.add_template_handler("handler2", lambda _, __, ___: None)
+        env = default_environment()
+        sr = StubStartResponse()
+        router = setup_router()
 
-        self.router.add_routes(
+        router.add_template_handler("handler1", raise_value_error)
+        router.add_template_handler("handler2", lambda _, __, ___: None)
+
+        router.add_routes(
             [
                 ("foo/{handler1}/bar", "GET", fail_if_called),
                 ("foo/{handler2}/bar", "GET", handle_success),
             ]
         )
-        self.handle_wsgi("GET", "/foo/xyz/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        self.handle_wsgi(router, env, "GET", "/foo/xyz/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def template_multiple_matches__match_first(self) -> None:
-        self.router.add_template_handler("handler1", lambda _, __, ___: None)
-        self.router.add_template_handler("handler2", lambda _, __, ___: None)
+    def test_template_multiple_matches__match_first(self) -> None:
+        env = default_environment()
+        sr = StubStartResponse()
+        router = setup_router()
 
-        self.router.add_routes(
+        router.add_template_handler("handler1", lambda _, __, ___: None)
+        router.add_template_handler("handler2", lambda _, __, ___: None)
+
+        router.add_routes(
             [
                 ("foo/{handler1}/bar", "GET", handle_success),
                 ("foo/{handler2}/bar", "GET", fail_if_called),
             ]
         )
-        self.handle_wsgi("GET", "/foo/xyz/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        self.handle_wsgi(router, env, "GET", "/foo/xyz/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def template_call_once_per_value(self) -> None:
+    def test_template_call_once_per_value(self) -> None:
         calls = 0
 
         def increase_count(_: Request, __: Sequence[str], ___: str) -> None:
             nonlocal calls
             calls += 1
 
-        self.router.add_template_handler("handler", increase_count)
+        env = default_environment()
+        router = setup_router()
 
-        self.router.add_routes(
+        router.add_template_handler("handler", increase_count)
+
+        router.add_routes(
             [
                 ("foo/{handler}/bar", "GET", fail_if_called),
                 ("foo/{handler}/baz", "GET", handle_success),
             ]
         )
-        self.handle_wsgi("GET", "/foo/xyz/baz")
-        assert_equal(1, calls)
+        self.handle_wsgi(router, env, "GET", "/foo/xyz/baz")
+        assert calls == 1
 
-    @test
-    def template_call_twice_for_differing_values(self) -> None:
+    def test_template_call_twice_for_differing_values(self) -> None:
         calls = 0
 
         def increase_count(_: Request, __: Sequence[str], ___: str) -> None:
             nonlocal calls
             calls += 1
 
-        self.router.add_template_handler("handler", increase_count)
+        env = default_environment()
+        router = setup_router()
 
-        self.router.add_routes(
+        router.add_template_handler("handler", increase_count)
+
+        router.add_routes(
             [
                 ("foo/{handler}/bar", "GET", fail_if_called),
                 ("foo/xyz/{handler}", "GET", handle_success),
             ]
         )
-        self.handle_wsgi("GET", "/foo/xyz/baz")
-        assert_equal(2, calls)
+        self.handle_wsgi(router, env, "GET", "/foo/xyz/baz")
+        assert calls == 2
 
     # Wildcard Paths
 
-    @test
-    def no_wildcard_path(self) -> None:
+    def test_no_wildcard_path(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal("", environ["rouver.wildcard_path"])
+            assert environ["rouver.wildcard_path"] == ""
             start_response("200 OK", [])
             return [b""]
 
-        self.router.add_routes([("foo/bar", "GET", handle)])
-        self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
 
-    @test
-    def wildcard_path__no_trailing_slash(self) -> None:
+        router.add_routes([("foo/bar", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_wildcard_path__no_trailing_slash(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal([], environ["rouver.path_args"])
-            assert_equal("", environ["rouver.wildcard_path"])
+            assert environ["rouver.path_args"] == []
+            assert environ["rouver.wildcard_path"] == ""
             start_response("200 OK", [])
             return [b""]
 
-        self.router.add_routes([("foo/bar/*", "GET", handle)])
-        self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
 
-    @test
-    def wildcard_path__with_trailing_slash(self) -> None:
+        router.add_routes([("foo/bar/*", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_wildcard_path__with_trailing_slash(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal([], environ["rouver.path_args"])
-            assert_equal("/", environ["rouver.wildcard_path"])
+            assert environ["rouver.path_args"] == []
+            assert environ["rouver.wildcard_path"] == "/"
             start_response("200 OK", [])
             return [b""]
 
-        self.router.add_routes([("foo/bar/*", "GET", handle)])
-        self.handle_wsgi("GET", "/foo/bar/")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
 
-    @test
-    def wildcard_path__additional_path(self) -> None:
+        router.add_routes([("foo/bar/*", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/bar/", sr)
+        sr.assert_status(HTTPStatus.OK)
+
+    def test_wildcard_path__additional_path(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal([], environ["rouver.path_args"])
-            assert_equal("/abc/def", environ["rouver.wildcard_path"])
+            assert environ["rouver.path_args"] == []
+            assert environ["rouver.wildcard_path"] == "/abc/def"
             start_response("200 OK", [])
             return [b""]
 
-        self.router.add_routes([("foo/bar/*", "GET", handle)])
-        self.handle_wsgi("GET", "/foo/bar/abc/def")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
+        router.add_routes([("foo/bar/*", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/bar/abc/def", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def wildcard_path__with_template(self) -> None:
+    def test_wildcard_path__with_template(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal(["value"], environ["rouver.path_args"])
-            assert_equal("/abc/def", environ["rouver.wildcard_path"])
+            assert environ["rouver.path_args"] == ["value"]
+            assert environ["rouver.wildcard_path"] == "/abc/def"
             start_response("200 OK", [])
             return [b""]
 
-        self.router.add_template_handler("bar", lambda *args: "value")
-        self.router.add_routes([("foo/{bar}/*", "GET", handle)])
-        self.handle_wsgi("GET", "/foo/unknown/abc/def")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        router = setup_router()
+        sr = StubStartResponse()
+        router.add_template_handler("bar", lambda *args: "value")
+        router.add_routes([("foo/{bar}/*", "GET", handle)])
+        self.handle_wsgi(router, env, "GET", "/foo/unknown/abc/def", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def wildcard_path__too_short(self) -> None:
-        self.router.add_routes([("foo/bar/*", "GET", handle_success)])
-        self.handle_wsgi("GET", "/foo")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+    def test_wildcard_path__too_short(self) -> None:
+        router = setup_router()
+        sr = StubStartResponse()
+        router.add_routes([("foo/bar/*", "GET", handle_success)])
+        env = default_environment()
+        self.handle_wsgi(router, env, "GET", "/foo", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
-    @test
-    def wildcard_path__does_not_match(self) -> None:
-        self.router.add_routes([("foo/bar/*", "GET", handle_success)])
-        self.handle_wsgi("GET", "/foo/wrong")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+    def test_wildcard_path__does_not_match(self) -> None:
+        router = setup_router()
+        router.add_routes([("foo/bar/*", "GET", handle_success)])
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/wrong", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
-    @test
-    def wildcard_path__not_at_end(self) -> None:
-        with assert_raises(ValueError):
-            self.router.add_routes([("foo/*/bar", "GET", handle_success)])
+    def test_wildcard_path__not_at_end(self) -> None:
+        router = setup_router()
+        with pytest.raises(ValueError):
+            router.add_routes([("foo/*/bar", "GET", handle_success)])
 
-    @test
-    def wildcard__before_more_specific(self) -> None:
-        self.router.add_routes(
+    def test_wildcard__before_more_specific(self) -> None:
+        router = setup_router()
+        router.add_routes(
             [
                 ("foo/*", "GET", handle_success),
                 ("foo/bar", "GET", fail_if_called),
             ]
         )
-        self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def wildcard__after_more_specific(self) -> None:
-        self.router.add_routes(
+    def test_wildcard__after_more_specific(self) -> None:
+        router = setup_router()
+        router.add_routes(
             [
                 ("foo/bar", "GET", handle_success),
                 ("foo/*", "GET", fail_if_called),
             ]
         )
-        self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
 
     # Sub routers
 
-    @test
-    def sub_router(self) -> None:
+    def test_sub_router(self) -> None:
         sub = Router()
         sub.error_handling = False
         sub.add_routes([("sub", "GET", self._create_path_checker("/sub"))])
-        self.router.add_sub_router("foo/bar", sub)
-        self.handle_wsgi("GET", "/foo/bar/sub")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_sub_router("foo/bar", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar/sub", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def sub_router__no_match(self) -> None:
+    def test_sub_router__no_match(self) -> None:
         sub = Router()
         sub.error_handling = False
         sub.add_routes([("sub", "GET", fail_if_called)])
-        self.router.add_sub_router("foo", sub)
-        self.handle_wsgi("GET", "/wrong/sub")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+        router = setup_router()
+        router.add_sub_router("foo", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/wrong/sub", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
-    @test
-    def sub_router__base_with_slash(self) -> None:
+    def test_sub_router__base_with_slash(self) -> None:
         sub = Router()
         sub.error_handling = False
         sub.add_routes([("", "GET", self._create_path_checker("/"))])
-        self.router.add_sub_router("foo/bar", sub)
-        self.handle_wsgi("GET", "/foo/bar/")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_sub_router("foo/bar", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar/", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def sub_router__base_without_slash(self) -> None:
+    def test_sub_router__base_without_slash(self) -> None:
         sub = Router()
         sub.error_handling = False
         sub.add_routes([("", "GET", self._create_path_checker(""))])
-        self.router.add_sub_router("foo/bar", sub)
-        self.handle_wsgi("GET", "/foo/bar")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_sub_router("foo/bar", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def sub_router__path_info(self) -> None:
-        def app(env: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
-            assert_equal("/foo", env["PATH_INFO"])
-            assert_equal("script/sub", env["SCRIPT_NAME"])
-            assert_equal("/sub/foo", env["rouver.original_path_info"])
+    def test_sub_router__path_info(self) -> None:
+        def app(
+            environ: WSGIEnvironment, sr: StartResponse
+        ) -> Iterable[bytes]:
+            assert environ["PATH_INFO"] == "/foo"
+            assert environ["SCRIPT_NAME"] == "script/sub"
+            assert environ["rouver.original_path_info"] == "/sub/foo"
             sr("200 OK", [])
             return []
 
-        self.router.error_handling = False
-        self.router.add_sub_router("sub", app)
-        self.handle_wsgi("GET", "/sub/foo", script_name="script")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        env = default_environment()
+        sr = StubStartResponse()
+        router.error_handling = False
+        router.add_sub_router("sub", app)
+        self.handle_wsgi(
+            router, env, "GET", "/sub/foo", sr, script_name="script"
+        )
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def sub_router__path_info_encoding(self) -> None:
+    def test_sub_router__path_info_encoding(self) -> None:
         expected_path = "/föo".encode("utf-8").decode("latin-1")
 
         def app(env: WSGIEnvironment, sr: StartResponse) -> Iterable[bytes]:
-            assert_equal(expected_path, env["PATH_INFO"])
+            assert env["PATH_INFO"] == expected_path
             sr("200 OK", [])
             return []
 
-        self.router.error_handling = False
-        self.router.add_sub_router("sub", app)
-        self.handle_wsgi("GET", "/sub/föo".encode("utf-8").decode("latin-1"))
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.error_handling = False
+        router.add_sub_router("sub", app)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(
+            router,
+            env,
+            "GET",
+            "/sub/föo".encode("utf-8").decode("latin-1"),
+            sr,
+        )
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def sub_router__template_in_super_router(self) -> None:
+    def test_sub_router__template_in_super_router(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal([], environ["rouver.path_args"])
+            assert environ["rouver.path_args"] == []
             start_response("200 OK", [])
             return []
 
         def tmpl(_: Request, path: Sequence[str], v: str) -> str:
-            assert_equal((), path)
+            assert path == ()
             return v * 2
+
+        env = default_environment()
 
         sub = Router()
         sub.error_handling = False
         sub.add_template_handler("tmpl", tmpl)
         sub.add_routes([("sub", "GET", handle)])
-        self.router.add_template_handler("tmpl", tmpl)
-        self.router.add_sub_router("foo/{tmpl}", sub)
-        self.handle_wsgi("GET", "/foo/bar/sub")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_template_handler("tmpl", tmpl)
+        router.add_sub_router("foo/{tmpl}", sub)
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar/sub", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def sub_router__template_in_sub_router(self) -> None:
+    def test_sub_router__template_in_sub_router(self) -> None:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert_equal(["xyzxyz"], environ["rouver.path_args"])
+            assert environ["rouver.path_args"] == ["xyzxyz"]
             start_response("200 OK", [])
             return []
 
         def tmpl(_: Request, path: Sequence[str], v: str) -> str:
-            assert_equal((), path)
+            assert path == ()
             return v * 2
 
         sub = Router()
         sub.error_handling = False
         sub.add_template_handler("tmpl", tmpl)
         sub.add_routes([("{tmpl}", "GET", handle)])
-        self.router.add_sub_router("foo/bar", sub)
-        self.handle_wsgi("GET", "/foo/bar/xyz")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_sub_router("foo/bar", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar/xyz", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def sub_router__path_component(self) -> None:
+    def test_sub_router__path_component(self) -> None:
         sub = Router()
         sub.error_handling = False
         sub.add_routes([("sub", "GET", handle_success)])
-        self.router.add_sub_router("foo/bar", sub)
-        self.handle_wsgi("GET", "/foo/barsub")
-        self.start_response.assert_status(HTTPStatus.NOT_FOUND)
+        router = setup_router()
+        router.add_sub_router("foo/bar", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/barsub", sr)
+        sr.assert_status(HTTPStatus.NOT_FOUND)
 
-    @test
-    def sub_router__match_after_other_routes(self) -> None:
+    def test_sub_router__match_after_other_routes(self) -> None:
         sub = Router()
         sub.error_handling = False
         sub.add_routes([("sub", "GET", fail_if_called)])
-        self.router.add_routes([("foo/bar/sub", "GET", handle_success)])
-        self.router.add_sub_router("foo/bar", sub)
-        self.handle_wsgi("GET", "/foo/bar/sub")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_routes([("foo/bar/sub", "GET", handle_success)])
+        router.add_sub_router("foo/bar", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar/sub", sr)
+        sr.assert_status(HTTPStatus.OK)
 
-    @test
-    def sub_router__accepts_any_wsgi_app(self) -> None:
+    def test_sub_router__accepts_any_wsgi_app(self) -> None:
         def sub(environ: WSGIEnvironment, sr: StartResponse) -> WSGIResponse:
-            assert_equal("/sub", environ["PATH_INFO"])
+            assert environ["PATH_INFO"] == "/sub"
             sr("204 No Content", [])
             return []
 
-        self.router.add_sub_router("foo/bar", sub)
-        self.handle_wsgi("GET", "/foo/bar/sub")
-        self.start_response.assert_status(HTTPStatus.NO_CONTENT)
+        router = setup_router()
+        router.add_sub_router("foo/bar", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/bar/sub", sr)
+        sr.assert_status(HTTPStatus.NO_CONTENT)
 
-    @test
-    def sub_router__escaped_path(self) -> None:
+    def test_sub_router__escaped_path(self) -> None:
         sub = Router()
         sub.error_handling = False
         sub.add_routes([("sub", "GET", self._create_path_checker("/s%75b"))])
-        self.router.add_sub_router("foo/bar", sub)
-        self.handle_wsgi("GET", "/foo/b%61r/s%75b")
-        self.start_response.assert_status(HTTPStatus.OK)
+        router = setup_router()
+        router.add_sub_router("foo/bar", sub)
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/b%61r/s%75b", sr)
+        sr.assert_status(HTTPStatus.OK)
 
     # Error Handling
 
-    @test
-    def internal_error_page(self) -> None:
+    def test_internal_error_page(self) -> None:
         def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise KeyError("Custom < error")
 
-        self.router.error_handling = True
-        self.router.add_routes([("foo", "GET", handle)])
-        response = self.handle_wsgi("GET", "/foo")
+        router = setup_router()
+        router.error_handling = True
+        router.add_routes([("foo", "GET", handle)])
+        env = default_environment()
+        response = self.handle_wsgi(router, env, "GET", "/foo")
         html = b"".join(response).decode("utf-8")
-        assert_equal(
+        assert html == (
             """<!DOCTYPE html>
 <html>
     <head>
@@ -705,71 +813,77 @@ class RouterTest(TestCase):
         <p>Internal server error.</p>
     </body>
 </html>
-""",
-            html,
+"""
         )
 
-    @test
-    def template_key_error_with_error_handling(self) -> None:
+    def test_template_key_error_with_error_handling(self) -> None:
         def raise_key_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise KeyError()
 
-        self.router.add_template_handler("handler", raise_key_error)
+        router = setup_router()
+        router.add_template_handler("handler", raise_key_error)
 
-        self.router.add_routes([("foo/{handler}/bar", "GET", fail_if_called)])
-        self.router.error_handling = True
-        self.handle_wsgi("GET", "/foo/xyz/bar")
-        self.start_response.assert_status(HTTPStatus.INTERNAL_SERVER_ERROR)
+        router.add_routes([("foo/{handler}/bar", "GET", fail_if_called)])
+        router.error_handling = True
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo/xyz/bar", sr)
+        sr.assert_status(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-    @test
-    def template_key_error_without_error_handling(self) -> None:
+    def test_template_key_error_without_error_handling(self) -> None:
         def raise_key_error(_: Request, __: Sequence[str], ___: str) -> None:
             raise KeyError()
 
-        self.router.add_template_handler("handler", raise_key_error)
+        env = default_environment()
+        router = setup_router()
+        router.add_template_handler("handler", raise_key_error)
 
-        self.router.add_routes([("foo/{handler}/bar", "GET", fail_if_called)])
-        self.router.error_handling = False
-        with assert_raises(KeyError):
-            self.handle_wsgi("GET", "/foo/xyz/bar")
+        router.add_routes([("foo/{handler}/bar", "GET", fail_if_called)])
+        router.error_handling = False
+        with pytest.raises(KeyError):
+            self.handle_wsgi(router, env, "GET", "/foo/xyz/bar")
 
-    @test
-    def handler_key_error_with_error_handling(self) -> None:
+    def test_handler_key_error_with_error_handling(self) -> None:
         def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise KeyError()
 
-        self.router.error_handling = True
-        self.router.add_routes([("foo", "GET", handle)])
-        self.handle_wsgi("GET", "/foo")
-        self.start_response.assert_status(HTTPStatus.INTERNAL_SERVER_ERROR)
+        router = setup_router()
+        router.error_handling = True
+        router.add_routes([("foo", "GET", handle)])
+        env = default_environment()
+        sr = StubStartResponse()
+        self.handle_wsgi(router, env, "GET", "/foo", sr)
+        sr.assert_status(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-    @test
-    def handler_key_error_without_error_handling(self) -> None:
+    def test_handler_key_error_without_error_handling(self) -> None:
         def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise KeyError()
 
-        self.router.add_routes([("foo", "GET", handle)])
-        self.router.error_handling = False
-        with assert_raises(KeyError):
-            self.handle_wsgi("GET", "/foo")
+        env = default_environment()
+        router = setup_router()
 
-    @test
-    def http_error(self) -> None:
+        router.add_routes([("foo", "GET", handle)])
+        router.error_handling = False
+        with pytest.raises(KeyError):
+            self.handle_wsgi(router, env, "GET", "/foo")
+
+    def test_http_error(self) -> None:
         def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise Unauthorized(
                 "Foo < Bar", www_authenticate=WWWAuthenticate("Test")
             )
 
-        self.router.error_handling = False
-        self.router.add_routes([("foo", "GET", handle)])
-        response = self.handle_wsgi("GET", "/foo")
-        self.start_response.assert_status(HTTPStatus.UNAUTHORIZED)
-        self.start_response.assert_header_equals(
-            "Content-Type", "text/html; charset=utf-8"
-        )
-        self.start_response.assert_header_equals("WWW-Authenticate", "Test ")
+        router = setup_router()
+        router.error_handling = False
+        router.add_routes([("foo", "GET", handle)])
+        env = default_environment()
+        sr = StubStartResponse()
+        response = self.handle_wsgi(router, env, "GET", "/foo", sr)
+        sr.assert_status(HTTPStatus.UNAUTHORIZED)
+        sr.assert_header_equals("Content-Type", "text/html; charset=utf-8")
+        sr.assert_header_equals("WWW-Authenticate", "Test ")
         html = b"".join(response).decode("utf-8")
-        assert_equal(
+        assert html == (
             """<!DOCTYPE html>
 <html>
     <head>
@@ -780,24 +894,25 @@ class RouterTest(TestCase):
         <p>Foo &lt; Bar</p>
     </body>
 </html>
-""",
-            html,
+"""
         )
 
-    @test
-    def arguments_error(self) -> None:
+    def test_arguments_error(self) -> None:
         def handle(_: WSGIEnvironment, __: StartResponse) -> Iterable[bytes]:
             raise ArgumentsError({"foo": "bar"})
 
-        self.router.add_routes([("foo", "GET", handle)])
-        response = self.handle_wsgi("GET", "/foo")
-        self.start_response.assert_status(HTTPStatus.BAD_REQUEST)
+        router = setup_router()
+        router.add_routes([("foo", "GET", handle)])
+        env = default_environment()
+        sr = StubStartResponse()
+        response = self.handle_wsgi(router, env, "GET", "/foo", sr)
+        sr.assert_status(HTTPStatus.BAD_REQUEST)
         html = b"".join(response).decode("utf-8")
         assert html.startswith("<!DOCTYPE html>")
-        assert_regex(
-            html,
+        assert re.search(
             r'<li class="argument">\s*'
             r'<span class="argument-name">foo</span>:\s*'
             r'<span class="error-message">bar</span>\s*'
             r"</li>",
-        )
+            html,
+        ), f"argument error not found in response:\n{html}"

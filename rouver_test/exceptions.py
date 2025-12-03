@@ -1,16 +1,11 @@
-from asserts import assert_equal
-from dectest import TestCase, test
-
 from rouver.exceptions import ArgumentsError
 
 
-class ArgumentsErrorTest(TestCase):
-    @test
-    def message(self) -> None:
+class TestArgumentsError:
+    def test_message(self) -> None:
         error = ArgumentsError({"foo": "bar"})
-        assert_equal("400 Bad Request: invalid arguments", str(error))
+        assert str(error) == "400 Bad Request: invalid arguments"
 
-    @test
-    def arguments(self) -> None:
+    def test_arguments(self) -> None:
         error = ArgumentsError({"foo": "bar"})
-        assert_equal({"foo": "bar"}, error.arguments)
+        assert error.arguments == {"foo": "bar"}

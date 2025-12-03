@@ -5,8 +5,6 @@ from collections.abc import Iterable
 from http import HTTPStatus
 from io import BytesIO, StringIO
 
-from asserts import assert_equal, assert_false, assert_regex, assert_true
-
 from rouver.types import Header, StartResponseReturnType, WSGIEnvironment
 
 _status_re = re.compile(r"^(\d\d\d) (.*)$")
@@ -21,8 +19,8 @@ class StubStartResponse:
     def __call__(
         self, status: str, headers: Iterable[Header], exc_info: object = None
     ) -> StartResponseReturnType:
-        assert_false(self.was_called, "start_response() called twice")
-        assert_regex(status, _status_re)
+        assert not self.was_called, "start_response() called twice"
+        assert _status_re.match(status)
         self.was_called = True
         self.status = status
         self.headers = list(headers)
@@ -35,10 +33,10 @@ class StubStartResponse:
         return int(self.status[:3])
 
     def assert_was_called(self) -> None:
-        assert_true(self.was_called, "start_response() was not called")
+        assert self.was_called, "start_response() was not called"
 
     def assert_status(self, status: HTTPStatus) -> None:
-        assert_equal(status.value, self.status_code)
+        assert status.value == self.status_code
 
     def assert_header_missing(self, name: str) -> None:
         value = self._find_header(name)
@@ -49,10 +47,8 @@ class StubStartResponse:
         header_value = self._find_header(name)
         if header_value is None:
             raise AssertionError("missing header '{}'".format(name))
-        assert_equal(
-            value,
-            header_value,
-            "'{}': '{}' != '{}".format(name, value, header_value),
+        assert header_value == value, (
+            f"'{name}': '{value}' != '{header_value}'"
         )
 
     def _find_header(self, name: str) -> str | None:
