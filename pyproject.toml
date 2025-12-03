@@ -1,6 +1,6 @@
 [project]
 name = "rouver"
-version = "2.7.0"
+version = "2.7.1-dev"
 description = "A microframework"
 readme = "README.md"
 authors = [{ name = "Sebastian Rittau", email = "srittau@rittau.biz" }]
