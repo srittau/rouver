@@ -21,7 +21,7 @@ class StartResponse(Protocol):
     def __call__(
         self,
         status: str,
-        headers: list[tuple[str, str]],
+        headers: list[Header],
         exc_info: OptExcInfo | None = ...,
         /,
     ) -> StartResponseReturnType: ...
