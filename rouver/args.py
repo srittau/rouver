@@ -191,13 +191,13 @@ class _Argument:
 
 
 def _create_arg_dict(
-    args: MultiDict, files: MultiDict
+    args: MultiDict[str, str], files: MultiDict[str, FileStorage]
 ) -> dict[str, _Argument]:
     _all_args: dict[str, _Argument] = {}
     for name, v in args.lists():
         _all_args[name] = _Argument(v)
-    for name, v in files.items():
-        _all_args[name] = _Argument(v, is_file=True)
+    for name, f in files.items():
+        _all_args[name] = _Argument(f, is_file=True)
     return _all_args
 
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import collections.abc
 from collections.abc import Iterable, Iterator, Sequence
 from http import HTTPStatus
 from json import JSONDecodeError, loads as json_loads
@@ -28,7 +27,7 @@ class _Closeable(Protocol):
     def close(self) -> object: ...
 
 
-class RouteHandlerBase(collections.abc.Iterable):
+class RouteHandlerBase(Iterable[bytes]):
     """Base class for rouver route handlers.
 
     Sub-classes of RouteHandlerBase can act as route handlers. They provide
@@ -66,10 +65,10 @@ class RouteHandlerBase(collections.abc.Iterable):
 
     @property
     def _charset(self) -> str:
-        return cast(str, self.request.mimetype_params.get("charset", "utf-8"))
+        return self.request.mimetype_params.get("charset", "utf-8")
 
     @property
-    def path_args(self) -> list[Any]:
+    def path_args(self) -> list[Any]:  # type: ignore[misc]
         path_args = self.request.environ.get("rouver.path_args")
         if not isinstance(path_args, list):
             return []
