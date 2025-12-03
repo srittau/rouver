@@ -50,9 +50,9 @@ class ParseArgsTest(TestCase):
         )
 
     def setup_empty_urlencoded_request(self) -> None:
-        self.env[
-            "CONTENT_TYPE"
-        ] = "application/x-www-form-urlencoded; charset=utf-8"
+        self.env["CONTENT_TYPE"] = (
+            "application/x-www-form-urlencoded; charset=utf-8"
+        )
 
     def setup_urlencoded_request(self, name: str, value: str) -> None:
         self.setup_empty_urlencoded_request()

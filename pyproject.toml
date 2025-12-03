@@ -19,11 +19,9 @@ dependencies = [
 [dependency-groups]
 dev = [
     "asserts >= 0.10.0, < 0.13",
-    "black >= 23.1.0, < 24",
-    "flake8 >= 6.0.0, < 7",
-    "isort >= 5.11.4, < 6",
     "mypy ~= 1.5.0",
     "pytest >= 6.2.5, < 8",
+    "ruff >= 0.14.7 , < 0.15.0",
 ]
 
 [project.urls]
@@ -37,19 +35,17 @@ Changes = "https://github.com/srittau/rouver/blob/main/CHANGELOG.md"
 packages = [{ include = "rouver" }, { include = "rouver_test" }]
 include = ["*/py.typed"]
 
-[tool.black]
+[tool.ruff]
 line-length = 79
-target-version = ["py310"]
+target-version = "py310"
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-combine_as_imports = true
-line_length = 79
-known_zctest = "test_zcapi,test_zcbase,test_zcevents"
-sections = "FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER,ZCTEST"
+[tool.ruff.lint]
+select = ["A", "B", "E", "F", "I", "W"]
+# B904: "Raise with from err" (FIXME)
+ignore = ["B904"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
 
 [tool.pytest.ini_options]
 python_files = "rouver_test/**.py"

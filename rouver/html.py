@@ -39,9 +39,7 @@ def http_status_page(
         <h1>{0.value} &#x2014; {0.phrase}</h1>{1}
 {2}    </body>
 </html>
-""".format(
-        status, paragraph, content
-    )
+""".format(status, paragraph, content)
 
 
 def created_at_page(url: str) -> str:
@@ -79,9 +77,7 @@ def bad_arguments_list(arguments: BadArgumentsDict) -> str:
         <span class="argument-name">{name}</span>:
         <span class="error-message">{error}</span>
     </li>
-""".format(
-            name=html_escape(name), error=html_escape(error)
-        )
+""".format(name=html_escape(name), error=html_escape(error))
 
     items = [format_item(k, arguments[k]) for k in sorted(arguments)]
 

@@ -49,7 +49,9 @@ class RouteHandlerBase(collections.abc.Iterable):
     ...         ])
     """
 
-    def __init__(self, environ: WSGIEnvironment, start_response: StartResponse) -> None:
+    def __init__(
+        self, environ: WSGIEnvironment, start_response: StartResponse
+    ) -> None:
         self.request = Request(environ)
         self.start_response = start_response
         self._argument_parser: ArgumentParser | None = None
@@ -182,7 +184,9 @@ class RouteHandlerBase(collections.abc.Iterable):
     def created_as_json(
         self, url_part: str, json: str | bytes | Any
     ) -> Iterable[bytes]:
-        return created_as_json(self.request, self.start_response, url_part, json)
+        return created_as_json(
+            self.request, self.start_response, url_part, json
+        )
 
     def temporary_redirect(self, url_part: str) -> Iterable[bytes]:
         return temporary_redirect(self.request, self.start_response, url_part)

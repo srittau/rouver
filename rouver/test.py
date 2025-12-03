@@ -261,12 +261,12 @@ class TestResponse:
             raise AssertionError(str(exc)) from exc
 
     def assert_status(self, status: HTTPStatus) -> None:
-        assert (
-            status == self.status
-        ), f"unexpected HTTP status: {status.value} != {self.status.value}"
+        assert status == self.status, (
+            f"unexpected HTTP status: {status.value} != {self.status.value}"
+        )
 
     def assert_header_not_set(self, name: str) -> None:
-        for n, v in self._headers:
+        for n, _ in self._headers:
             if n.lower() == name.lower():
                 raise AssertionError(f"header '{name}' unexpectedly set")
 
@@ -343,9 +343,9 @@ class TestResponse:
         except ValueError:
             raise AssertionError("missing header 'Content-Type'")
         type_, options = parse_options_header(value)
-        assert (
-            type_ == content_type
-        ), f"unexpected content type: {type_!r} != {content_type!r}"
+        assert type_ == content_type, (
+            f"unexpected content type: {type_!r} != {content_type!r}"
+        )
         if charset is not None:
             cs_list = [charset] if isinstance(charset, str) else charset
             try:
@@ -404,12 +404,12 @@ class TestResponse:
         if len(args[0]) < 2:
             raise AssertionError("invalid Set-Cookie header")
         name, value = args[0]
-        assert (
-            name == expected_name
-        ), f"wrong cookie name, {name!r} != {expected_name!r}"
-        assert (
-            value == expected_value
-        ), f"wrong cookie value, {value!r} != {expected_value!r}"
+        assert name == expected_name, (
+            f"wrong cookie name, {name!r} != {expected_name!r}"
+        )
+        assert value == expected_value, (
+            f"wrong cookie value, {value!r} != {expected_value!r}"
+        )
         assert_flag(secure, "Secure")
         assert_flag(http_only, "HttpOnly")
         if max_age is not None:
@@ -418,14 +418,13 @@ class TestResponse:
                 int_age = int(age)
             except ValueError:
                 raise AssertionError("Set-Cookie max-age is not numeric")
-            assert (
-                int_age == max_age
-            ), f"wrong max-age: {int_age!r} != {max_age!r}"
+            assert int_age == max_age, (
+                f"wrong max-age: {int_age!r} != {max_age!r}"
+            )
 
 
 class _Closeable(Protocol):
-    def close(self) -> object:
-        ...
+    def close(self) -> object: ...
 
 
 def test_wsgi_app(app: WSGIApplication, request: TestRequest) -> TestResponse:

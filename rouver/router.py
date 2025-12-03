@@ -339,7 +339,7 @@ class _MatcherBase:
     def _path_compare_iter(
         self,
     ) -> Iterator[tuple[tuple[_TemplatePartType, str], str]]:
-        return zip(self._match_path, self._request_path)
+        return zip(self._match_path, self._request_path, strict=False)
 
     @property
     def remaining_path(self) -> str:
