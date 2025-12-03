@@ -6,7 +6,7 @@ from http import HTTPStatus
 from json import JSONDecodeError, loads as json_loads
 from typing import Any, Protocol, cast
 from urllib.parse import unquote
-
+ 
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 

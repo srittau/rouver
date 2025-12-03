@@ -1,37 +1,41 @@
-[tool.poetry]
+[project]
 name = "rouver"
 version = "2.6.4.dev0"
 description = "A microframework"
 readme = "README.md"
-authors = ["Sebastian Rittau <srittau@rittau.biz>"]
-license = "MIT"
-homepage = "https://github.com/srittau/rouver"
-repository = "https://github.com/srittau/rouver"
+authors = [{ name = "Sebastian Rittau", email = "srittau@rittau.biz" }]
+license = { text = "MIT" }
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Internet :: WWW/HTTP :: WSGI",
 ]
+dependencies = [
+    "dectest >= 1.0.0, < 2",
+    "werkzeug >= 2.0, < 4",
+    "typing-extensions >= 4.1.1, < 5",
+]
+
+[dependency-groups]
+dev = [
+    "asserts >= 0.10.0, < 0.13",
+    "black >= 23.1.0, < 24",
+    "flake8 >= 6.0.0, < 7",
+    "isort >= 5.11.4, < 6",
+    "mypy ~= 1.5.0",
+    "pytest >= 6.2.5, < 8",
+]
+
+[project.urls]
+Homepage = "https://github.com/srittau/rouver"
+Repository = "https://github.com/srittau/rouver"
+GitHub = "https://github.com/srittau/rouver"
+"Bug Tracker" = "https://github.com/srittau/rouver/issues"
+Changes = "https://github.com/srittau/rouver/blob/main/CHANGELOG.md"
+
+[tool.poetry]
 packages = [{ include = "rouver" }, { include = "rouver_test" }]
 include = ["*/py.typed"]
-
-[tool.poetry.urls]
-"GitHub" = "https://github.com/srittau/rouver"
-"Bug Tracker" = "https://github.com/srittau/rouver/issues"
-"Changes" = "https://github.com/srittau/rouver/blob/main/CHANGELOG.md"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-dectest = "^1.0.0"
-werkzeug = ">=2.0,<4"
-typing-extensions = "^4.1.1"
-
-[tool.poetry.dev-dependencies]
-asserts = ">=0.10.0,<0.13"
-black = "^23.1.0"
-flake8 = "^6.0.0"
-isort = "^5.11.4"
-mypy = "~1.5.0"
-pytest = ">=6.2.5, <8"
 
 [tool.black]
 line-length = 79
