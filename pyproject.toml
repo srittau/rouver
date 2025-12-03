@@ -1,6 +1,6 @@
 [project]
 name = "rouver"
-version = "2.7.0.dev0"
+version = "2.7.0"
 description = "A microframework"
 readme = "README.md"
 authors = [{ name = "Sebastian Rittau", email = "srittau@rittau.biz" }]
@@ -10,17 +10,10 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Internet :: WWW/HTTP :: WSGI",
 ]
-dependencies = [
-    "dectest >= 1.0.0, < 2",
-    "werkzeug >= 2.0, < 4",
-]
+dependencies = ["dectest >= 1.0.0, < 2", "werkzeug >= 2.0, < 4"]
 
 [dependency-groups]
-dev = [
-    "mypy ~= 1.19.0",
-    "pytest",
-    "ruff >= 0.14.7 , < 0.15.0",
-]
+dev = ["mypy ~= 1.19.0", "pytest", "ruff >= 0.14.7 , < 0.15.0"]
 
 [project.urls]
 Homepage = "https://github.com/srittau/rouver"
