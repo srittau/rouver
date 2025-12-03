@@ -2,6 +2,10 @@
 
 ## [Unreleased] –
 
+### Added
+
+- Add support for Python 3.12 through 3.14.
+
 ### Removed
 
 - Remove support for Python 3.9 and earlier.
