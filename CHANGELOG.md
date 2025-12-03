@@ -6,6 +6,10 @@
 
 - Add support for Python 3.12 through 3.14.
 
+### Changes
+
+- `StartResponse` is now a protocol instead of a callable type alias.
+
 ### Removed
 
 - Remove support for Python 3.9 and earlier.

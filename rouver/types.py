@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, TypeAlias
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 from werkzeug.wrappers import Request
+
+if TYPE_CHECKING:
+    from _typeshed import OptExcInfo
 
 # (name, value)
 Header: TypeAlias = tuple[str, str]
@@ -13,8 +16,16 @@ WSGIEnvironment: TypeAlias = dict[str, Any]
 # (body) -> None
 StartResponseReturnType: TypeAlias = Callable[[bytes], object]
 
-# (status: str, headers: List[Headers], exc_info) -> response
-StartResponse: TypeAlias = Callable[..., StartResponseReturnType]
+
+class StartResponse(Protocol):
+    def __call__(
+        self,
+        status: str,
+        headers: list[tuple[str, str]],
+        exc_info: OptExcInfo | None = ...,
+        /,
+    ) -> StartResponseReturnType: ...
+
 
 WSGIResponse: TypeAlias = Iterable[bytes]
 
