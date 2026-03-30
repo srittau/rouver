@@ -275,8 +275,8 @@ class TestResponse:
     def assert_header_equal(self, name: str, expected_value: str) -> None:
         try:
             real_value = self.get_header_value(name)
-        except ValueError:
-            raise AssertionError("missing header '{}'".format(name))
+        except ValueError as exc:
+            raise AssertionError("missing header '{}'".format(name)) from exc
         assert real_value == expected_value, (
             f"header value of '{name}' differs: "
             f"{real_value!r} != {expected_value!r}"
@@ -342,8 +342,8 @@ class TestResponse:
         """
         try:
             value = self.get_header_value("Content-Type")
-        except ValueError:
-            raise AssertionError("missing header 'Content-Type'")
+        except ValueError as exc:
+            raise AssertionError("missing header 'Content-Type'") from exc
         type_, options = parse_options_header(value)
         assert type_ == content_type, (
             f"unexpected content type: {type_!r} != {content_type!r}"
@@ -352,10 +352,12 @@ class TestResponse:
             cs_list = [charset] if isinstance(charset, str) else charset
             try:
                 got_charset = options["charset"]
-            except KeyError:
+            except KeyError as exc:
                 if None in cs_list:
                     return
-                raise AssertionError("no charset in Content-Type header")
+                raise AssertionError(
+                    "no charset in Content-Type header"
+                ) from exc
             assert got_charset in cs_list, (
                 f"unexpected content type charset: "
                 f"{got_charset!r} not in {cs_list!r}"
@@ -400,8 +402,8 @@ class TestResponse:
 
         try:
             header_value = self.get_header_value("Set-Cookie")
-        except ValueError:
-            raise AssertionError("missing header 'Set-Cookie'")
+        except ValueError as exc:
+            raise AssertionError("missing header 'Set-Cookie'") from exc
         args = [s.strip().split("=", 1) for s in header_value.split(";")]
         if len(args[0]) < 2:
             raise AssertionError("invalid Set-Cookie header")
@@ -418,8 +420,10 @@ class TestResponse:
             age = expect_arg("Max-Age")
             try:
                 int_age = int(age)
-            except ValueError:
-                raise AssertionError("Set-Cookie max-age is not numeric")
+            except ValueError as exc:
+                raise AssertionError(
+                    "Set-Cookie max-age is not numeric"
+                ) from exc
             assert int_age == max_age, (
                 f"wrong max-age: {int_age!r} != {max_age!r}"
             )

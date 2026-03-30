@@ -26,7 +26,6 @@ Changes = "https://github.com/srittau/rouver/blob/main/CHANGELOG.md"
 [tool.uv.build-backend]
 module-root = ""
 module-name = ["rouver", "rouver_test"]
-# packages = [{ include = "rouver" }, { include = "rouver_test" }]
 
 [tool.mypy]
 disallow_any_decorated = true
@@ -54,8 +53,6 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["A", "B", "E", "F", "I", "W"]
-# B904: "Raise with from err" (FIXME)
-ignore = ["B904"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
