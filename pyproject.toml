@@ -4,8 +4,9 @@ version = "2.7.1-dev"
 description = "A microframework"
 readme = "README.md"
 authors = [{ name = "Sebastian Rittau", email = "srittau@rittau.biz" }]
-license = { text = "MIT" }
-requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">= 3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Internet :: WWW/HTTP :: WSGI",
@@ -22,9 +23,10 @@ GitHub = "https://github.com/srittau/rouver"
 "Bug Tracker" = "https://github.com/srittau/rouver/issues"
 Changes = "https://github.com/srittau/rouver/blob/main/CHANGELOG.md"
 
-[tool.poetry]
-packages = [{ include = "rouver" }, { include = "rouver_test" }]
-include = ["*/py.typed"]
+[tool.uv.build-backend]
+module-root = ""
+module-name = ["rouver", "rouver_test"]
+# packages = [{ include = "rouver" }, { include = "rouver_test" }]
 
 [tool.mypy]
 disallow_any_decorated = true
@@ -63,5 +65,5 @@ python_files = "rouver_test/**.py"
 python_functions = "test_*"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build >= 0.11.2, < 0.12"]
+build-backend = "uv_build"
