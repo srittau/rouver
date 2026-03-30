@@ -881,7 +881,7 @@ class TestRouter:
         response = self.handle_wsgi(router, env, "GET", "/foo", sr)
         sr.assert_status(HTTPStatus.UNAUTHORIZED)
         sr.assert_header_equals("Content-Type", "text/html; charset=utf-8")
-        sr.assert_header_equals("WWW-Authenticate", "Test ")
+        sr.assert_header_equals("WWW-Authenticate", "Test")
         html = b"".join(response).decode("utf-8")
         assert html == (
             """<!DOCTYPE html>
