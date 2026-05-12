@@ -14,7 +14,12 @@ classifiers = [
 dependencies = ["dectest >= 1.0.0, < 2", "werkzeug >= 2, < 4"]
 
 [dependency-groups]
-dev = ["mypy ~= 1.20.0", "pytest", "ruff ~= 0.15.8", "werkzeug >= 3.1.7, < 4"]
+dev = [
+    "mypy ~= 1.20.0",
+    "pytest >= 9.0.3",
+    "ruff ~= 0.15.8",
+    "werkzeug >= 3.1.7, < 4",
+]
 
 [project.urls]
 Homepage = "https://github.com/srittau/rouver"
@@ -56,9 +61,8 @@ select = ["A", "B", "E", "F", "I", "W"]
 [tool.ruff.lint.isort]
 combine-as-imports = true
 
-[tool.pytest.ini_options]
-python_files = "rouver_test/**.py"
-python_functions = "test_*"
+[tool.pytest]
+python_files = ["rouver_test/**.py"]
 
 [build-system]
 requires = ["uv_build >= 0.11.2, < 0.12"]
