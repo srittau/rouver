@@ -15,7 +15,7 @@ dependencies = ["dectest >= 1.0.0, < 2", "werkzeug >= 2, < 4"]
 
 [dependency-groups]
 dev = [
-    "mypy ~= 1.20.0",
+    "mypy ~= 2.1.0",
     "pytest >= 9.0.3",
     "ruff ~= 0.15.8",
     "werkzeug >= 3.1.7, < 4",
@@ -41,11 +41,9 @@ disallow_subclassing_any = true
 disallow_untyped_calls = true
 disallow_untyped_decorators = true
 disallow_untyped_defs = true
-no_implicit_optional = true
 no_implicit_reexport = true
 strict_equality = true
 strict_equality_for_none = true
-strict_bytes = true
 warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
