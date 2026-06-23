@@ -28,6 +28,9 @@ GitHub = "https://github.com/srittau/rouver"
 "Bug Tracker" = "https://github.com/srittau/rouver/issues"
 Changes = "https://github.com/srittau/rouver/blob/main/CHANGELOG.md"
 
+[tool.uv]
+exclude-newer = "5 days"
+
 [tool.uv.build-backend]
 module-root = ""
 module-name = ["rouver", "rouver_test"]
