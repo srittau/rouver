@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator, Sequence
 from http import HTTPStatus
 from json import JSONDecodeError, loads as json_loads
-from typing import Any, Protocol, cast
+from typing import Any, Generic, Protocol, TypeVar, cast
 from urllib.parse import unquote
 
 from werkzeug.exceptions import UnsupportedMediaType
@@ -22,12 +22,14 @@ from rouver.response import (
 )
 from rouver.types import Header, StartResponse, WSGIEnvironment
 
+_PA = TypeVar("_PA", bound=tuple[Any, ...], default=tuple[Any, ...])
+
 
 class _Closeable(Protocol):
     def close(self) -> object: ...
 
 
-class RouteHandlerBase(Iterable[bytes]):
+class RouteHandlerBase(Iterable[bytes], Generic[_PA]):
     """Base class for rouver route handlers.
 
     Sub-classes of RouteHandlerBase can act as route handlers. They provide
@@ -46,6 +48,25 @@ class RouteHandlerBase(Iterable[bytes]):
     ...         self.add_routes([
     ...             ("my-route", "GET", MyRouteHandler),
     ...         ])
+
+    The parsed route template arguments are available via the path_args
+    attribute:
+
+    >>> class MyArgumentRouteHandler(RouteHandlerBase[tuple[int, str]]):
+    ...     def prepare_response(self):
+    ...         i, s = self.path_args
+    ...         return self.respond_with_html("<div>int: {i}, str: {s}</div>")
+
+    >>> class MyArgumentRouter(Router):
+    ...     def __init__(self):
+    ...         super().__init__()
+    ...         self.add_routes([
+    ...             ("route/{int}/{str}", "GET", MyArgumentRouteHandler),
+    ...         ])
+
+    RouteHandlerBase is generic over the path_args tuple. It's not enforced
+    that the path template and template handlers match the generic arguments,
+    though. The types are also not enforced at runtime.
     """
 
     def __init__(
@@ -68,11 +89,15 @@ class RouteHandlerBase(Iterable[bytes]):
         return self.request.mimetype_params.get("charset", "utf-8")
 
     @property
-    def path_args(self) -> list[Any]:
-        path_args = self.request.environ.get("rouver.path_args")
-        if not isinstance(path_args, list):
-            return []
-        return path_args
+    def path_args(self) -> _PA:
+        """Return the parsed path arguments for this route handler.
+
+        Raise TypeError if "rouver.path_args" is not a tuple.
+        """
+        path_args = self.request.environ.get("rouver.path_args", ())
+        if not isinstance(path_args, tuple):
+            raise TypeError("expected rouver.path_arg to be a tuple")
+        return cast(_PA, path_args)
 
     @property
     def wildcard_path(self) -> str:

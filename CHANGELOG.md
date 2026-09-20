@@ -6,6 +6,15 @@
 
 - Add support for Python 3.15.
 
+### Changed
+
+- Path arguments are now represented as a (typed) tuple.
+  - The `rouver.path_args` WSGI environment variable is now a variable-length
+    tuple instead of a list.
+  - `RouteHandlerBase` is now generic over the path arguments type.
+  - `RouteHandlerBase.path_args` now returns a tuple and raises a `TypeError`
+    if `rouver.path_args` is not a tuple.
+
 ## [2.7.0] – 2025-12-03
 
 ### Added

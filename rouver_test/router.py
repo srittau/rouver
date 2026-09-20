@@ -31,7 +31,7 @@ def handle_success(
 def handle_empty_path(
     environ: WSGIEnvironment, start_response: StartResponse
 ) -> Iterable[bytes]:
-    assert environ["rouver.path_args"] == []
+    assert environ["rouver.path_args"] == ()
     start_response("200 OK", [])
     return [b""]
 
@@ -296,7 +296,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == []
+            assert environ["rouver.path_args"] == ()
             start_response("200 OK", [])
             return [b""]
 
@@ -311,7 +311,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == ["xyzxyz"]
+            assert environ["rouver.path_args"] == ("xyzxyz",)
             start_response("200 OK", [])
             return [b""]
 
@@ -336,7 +336,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == ["xyz", 123]
+            assert environ["rouver.path_args"] == ("xyz", 123)
             start_response("200 OK", [])
             return [b""]
 
@@ -497,7 +497,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == []
+            assert environ["rouver.path_args"] == ()
             assert environ["rouver.wildcard_path"] == ""
             start_response("200 OK", [])
             return [b""]
@@ -514,7 +514,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == []
+            assert environ["rouver.path_args"] == ()
             assert environ["rouver.wildcard_path"] == "/"
             start_response("200 OK", [])
             return [b""]
@@ -531,7 +531,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == []
+            assert environ["rouver.path_args"] == ()
             assert environ["rouver.wildcard_path"] == "/abc/def"
             start_response("200 OK", [])
             return [b""]
@@ -547,7 +547,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == ["value"]
+            assert environ["rouver.path_args"] == ("value",)
             assert environ["rouver.wildcard_path"] == "/abc/def"
             start_response("200 OK", [])
             return [b""]
@@ -699,7 +699,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == []
+            assert environ["rouver.path_args"] == ()
             start_response("200 OK", [])
             return []
 
@@ -724,7 +724,7 @@ class TestRouter:
         def handle(
             environ: WSGIEnvironment, start_response: StartResponse
         ) -> Iterable[bytes]:
-            assert environ["rouver.path_args"] == ["xyzxyz"]
+            assert environ["rouver.path_args"] == ("xyzxyz",)
             start_response("200 OK", [])
             return []
 

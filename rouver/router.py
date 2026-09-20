@@ -301,11 +301,11 @@ class _MatcherBase:
         self._match_full_path = match_full_path
         self.matches, self.path_args = self._check_and_parse()
 
-    def _check_and_parse(self) -> tuple[bool, list[Any]]:
+    def _check_and_parse(self) -> tuple[bool, tuple[Any, ...]]:
         if self._path_length_matches():
             return self._parse()
         else:
-            return False, []
+            return False, ()
 
     def _path_length_matches(self) -> bool:
         if self._match_full_path:
@@ -313,28 +313,28 @@ class _MatcherBase:
         else:
             return len(self._match_path) <= len(self._request_path)
 
-    def _parse(self) -> tuple[bool, list[Any]]:
+    def _parse(self) -> tuple[bool, tuple[Any, ...]]:
         path_args: list[Any] = []
         for tmpl_part, path_part in self._path_compare_iter():
             try:
                 decoded = unquote(path_part, errors="strict")
             except UnicodeDecodeError:
-                return False, []
+                return False, ()
             tmpl_type, text = tmpl_part
             if tmpl_type == _TemplatePartType.STATIC:
                 if text != decoded:
-                    return False, []
+                    return False, ()
             elif tmpl_type == _TemplatePartType.PATTERN:
                 try:
                     arg = self._arguments.parse_argument(
                         tuple(path_args), text, decoded
                     )
                 except ValueError:
-                    return False, []
+                    return False, ()
                 path_args.append(arg)
             else:
                 raise AssertionError("unhandled template type")
-        return True, path_args
+        return True, tuple(path_args)
 
     def _path_compare_iter(
         self,

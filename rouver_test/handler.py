@@ -40,18 +40,19 @@ class TestRouteHandlerBase:
         assert handler.start_response is self.start_response
 
     def test_path_args__from_environment(self) -> None:
-        self.environ["rouver.path_args"] = ["foo"]
+        self.environ["rouver.path_args"] = ("foo",)
         handler = StubHandler(self.environ, self.start_response)
-        assert handler.path_args == ["foo"]
+        assert handler.path_args == ("foo",)
 
     def test_path_args__default(self) -> None:
         handler = StubHandler(self.environ, self.start_response)
-        assert handler.path_args == []
+        assert handler.path_args == ()
 
     def test_path_args__not_a_list(self) -> None:
-        self.environ["rouver.path_args"] = "not-a-list"
+        self.environ["rouver.path_args"] = "not-a-tuple"
         handler = StubHandler(self.environ, self.start_response)
-        assert handler.path_args == []
+        with pytest.raises(TypeError):
+            _ = handler.path_args
 
     def test_wildcard_path__from_environment(self) -> None:
         self.environ["rouver.wildcard_path"] = "/foo/bar"

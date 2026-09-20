@@ -22,14 +22,13 @@ A microframework for Python 3, based on werkzeug.
 ...     ("", "GET", get_index),
 ...     ("count", "GET", get_count),
 ... ])
-
 ```
 
 Routes with placeholders:
 
 ```python
 >>> def get_addition(environ, start_response):
-...     num1, num2 = path
+...     num1, num2 = environ["rouver.path_args"]
 ...     return response_with_json(start_response, {"result": num1 + num2})
 >>> def numeric_arg(request, path, value):
 ...     return int(value)
