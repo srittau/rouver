@@ -7,7 +7,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-09-15T14:22:58.233263275Z"
+exclude-newer = "2026-09-15T14:24:35.855093087Z"
 exclude-newer-span = "P5D"
 
 [[package]]
@@ -482,9 +482,9 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "mypy", specifier = ">=2.1,<2.4" },
+    { name = "mypy", specifier = "~=2.3.1" },
     { name = "pytest", specifier = ">=9.0.3" },
-    { name = "ruff", specifier = ">=0.15.8,<0.17.0" },
+    { name = "ruff", specifier = "~=0.16.7" },
     { name = "werkzeug", specifier = ">=3.1.7,<4" },
 ]
 
