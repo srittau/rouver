@@ -3,9 +3,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator, Sequence
 from http import HTTPStatus
 from json import JSONDecodeError, loads as json_loads
-from typing import Any, Generic, Protocol, TypeVar, cast
+from typing import Any, Generic, Protocol, cast
 from urllib.parse import unquote
 
+from typing_extensions import TypeVar  # default was added in Python 3.13
 from werkzeug.exceptions import UnsupportedMediaType
 from werkzeug.wrappers import Request
 
