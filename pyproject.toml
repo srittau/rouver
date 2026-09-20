@@ -16,6 +16,7 @@ dependencies = ["dectest >= 1.0.0, < 2", "werkzeug >= 2, < 4"]
 [dependency-groups]
 dev = [
     "mypy ~= 2.3.1",
+    "poethepoet>=0.48.0",
     "pytest >= 9.0.3",
     "ruff ~= 0.16.7",
     "werkzeug >= 3.1.7, < 4",
@@ -64,6 +65,18 @@ combine-as-imports = true
 
 [tool.pytest]
 python_files = ["rouver_test/**.py"]
+
+[tool.poe.tasks.lint]
+shell = "ruff check rouver rouver_test && ruff format --check rouver rouver_test"
+help = "Run ruff to lint the code"
+
+[tool.poe.tasks.test]
+cmd = "pytest"
+help = "Run Python unit and integration tests"
+
+[tool.poe.tasks.typecheck]
+cmd = "mypy rouver rouver_test"
+help = "Run mypy to check types"
 
 [build-system]
 requires = ["uv_build>=0.11.2,<0.13"]

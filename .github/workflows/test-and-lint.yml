@@ -21,10 +21,10 @@ jobs:
       - name: Lint with ruff
         run: |
           uv run ruff --version
-          uv run ruff check rouver rouver_test
+          uv run poe lint
       - name: Type checking with mypy
         run: |
           uv run mypy --version
-          uv run mypy rouver rouver_test
+          uv run typecheck
       - name: Test with unittest
-        run: uv run pytest
+        run: uv run poe test
