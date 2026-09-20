@@ -37,6 +37,15 @@ _FORM_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 class _ArgumentError(Exception):
     pass
 
+    # filename_param = rfc5987_encode("filename", filename)
+    # body = MULTIPART_FILE_BODY_TMPL.format(
+    #     name=name,
+    #     filename_param=filename_param,
+    #     content=file_content,
+    #     type=content_type,
+    # ).encode("utf-8")
+    # env["wsgi.input"] = BytesIO(body)
+
 
 class FileArgument:
     """File argument result.
@@ -44,7 +53,23 @@ class FileArgument:
     This is a file-like object, containing a byte stream. It has additional
     fields "filename" and "content_type".
 
-    >>> args = parse_args(..., [
+    >>> from io import BytesIO
+    >>> body = (
+    ...     "--1234567890\\n"
+    ...     "Content-Disposition: form-data; name=\\"file-arg\\"; "
+    ...     "filename=my-file.txt\\n"
+    ...     "Content-Type: text/plain\\n"
+    ...     "\\n"
+    ...     "file content\\n"
+    ...     "--1234567890--"
+    ... )
+    >>> environment = {
+    ...     "REQUEST_METHOD": "POST",
+    ...     "CONTENT_TYPE": "multipart/form-data; boundary=1234567890",
+    ...     "CONTENT_LENGTH": str(len(body)),
+    ...     "wsgi.input": BytesIO(body.encode("us-ascii")),
+    ... }
+    >>> args = parse_args(environment, [
     ...     ("file-arg", "file", Multiplicity.REQUIRED),
     ... ])
     >>> args["file-arg"].filename
@@ -268,17 +293,17 @@ def parse_args(
     >>> parse_args(environment, [("key", int, Multiplicity.REQUIRED)])
     Traceback (most recent call last):
     ...
-    ArgumentsError: 400 Bad Request
+    rouver.exceptions.ArgumentsError: 400 Bad Request: invalid arguments
     >>> parse_args(environment, [("missing", str, Multiplicity.REQUIRED)])
     Traceback (most recent call last):
     ...
-    ArgumentsError: 400 Bad Request
+    rouver.exceptions.ArgumentsError: 400 Bad Request: invalid arguments
     >>> parse_args(
     ...     environment, [("multi", str, Multiplicity.ANY)], exhaustive=True
     ... )
     Traceback (most recent call last):
     ...
-    ArgumentsError: 400 Bad Request
+    rouver.exceptions.ArgumentsError: 400 Bad Request: invalid arguments
 
     parse_args() consumes the request input, so multiple calls per request
     are not possible.

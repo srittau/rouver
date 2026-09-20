@@ -71,7 +71,7 @@ shell = "ruff check rouver rouver_test && ruff format --check rouver rouver_test
 help = "Run ruff to lint the code"
 
 [tool.poe.tasks.test]
-cmd = "pytest"
+cmd = "pytest --doctest-modules"
 help = "Run Python unit and integration tests"
 
 [tool.poe.tasks.typecheck]
