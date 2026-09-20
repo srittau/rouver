@@ -25,6 +25,6 @@ jobs:
       - name: Type checking with mypy
         run: |
           uv run mypy --version
-          uv run typecheck
+          uv run poe typecheck
       - name: Test with unittest
         run: uv run poe test
