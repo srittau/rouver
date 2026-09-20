@@ -2,6 +2,10 @@
 
 ## UNRELEASED
 
+### Added
+
+- Add support for Python 3.15.
+
 ## [2.7.0] – 2025-12-03
 
 ### Added
