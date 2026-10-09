@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from enum import Enum
 from io import BytesIO
-from typing import IO, TYPE_CHECKING, Any, Literal, TypeAlias
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 from urllib.parse import parse_qs
 
 from werkzeug.datastructures import FileStorage, MultiDict
@@ -36,15 +37,6 @@ _FORM_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 
 class _ArgumentError(Exception):
     pass
-
-    # filename_param = rfc5987_encode("filename", filename)
-    # body = MULTIPART_FILE_BODY_TMPL.format(
-    #     name=name,
-    #     filename_param=filename_param,
-    #     content=file_content,
-    #     type=content_type,
-    # ).encode("utf-8")
-    # env["wsgi.input"] = BytesIO(body)
 
 
 class FileArgument:
@@ -81,11 +73,17 @@ class FileArgument:
     """
 
     def __init__(
-        self, stream: IO[bytes], filename: str, content_type: str
+        self, stream: SupportsRead[bytes], filename: str, content_type: str
     ) -> None:
         self._stream = stream
         self.filename = filename
         self.content_type = content_type
+
+    def read(self, n: int = -1, /) -> bytes:
+        if n == -1:
+            return self._stream.read()
+        else:
+            return self._stream.read(n)
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._stream, name)
@@ -212,7 +210,7 @@ class _Argument:
             raise TypeError("value is not a list of strings")
         return self._value
 
-    def as_file(self) -> tuple[IO[bytes], str, str]:
+    def as_file(self) -> tuple[SupportsRead[bytes], str, str]:
         if not isinstance(self._value, FileStorage):
             raise TypeError("value is not a file")
         content_type = self._value.mimetype or "application/octet-stream"
@@ -313,12 +311,14 @@ def parse_args(
     return parser.parse_args(argument_template, exhaustive=exhaustive)
 
 
-class _ValueParserWrapper:
+class _ValueParserWrapper(ABC):
+    @abstractmethod
     def parse_from_string(self, s: str, /) -> Any:
         raise NotImplementedError()
 
+    @abstractmethod
     def parse_from_file(
-        self, stream: IO[bytes], filename: str, content_type: str, /
+        self, stream: SupportsRead[bytes], filename: str, content_type: str, /
     ) -> Any:
         raise NotImplementedError()
 
@@ -346,7 +346,7 @@ class _FileArgumentValueParser(_ValueParserWrapper):
         return FileArgument(stream, "", "application/octet-stream")
 
     def parse_from_file(
-        self, stream: IO[bytes], filename: str, content_type: str
+        self, stream: SupportsRead[bytes], filename: str, content_type: str
     ) -> FileArgument:
         return FileArgument(stream, filename, content_type)
 
@@ -356,7 +356,7 @@ class _OptionalFileArgumentValueParser(_ValueParserWrapper):
         return value
 
     def parse_from_file(
-        self, stream: IO[bytes], filename: str, content_type: str
+        self, stream: SupportsRead[bytes], filename: str, content_type: str
     ) -> FileArgument:
         return FileArgument(stream, filename, content_type)
 

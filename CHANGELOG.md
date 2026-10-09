@@ -14,6 +14,12 @@
   - `RouteHandlerBase` is now generic over the path arguments type.
   - `RouteHandlerBase.path_args` now returns a tuple and raises a `TypeError`
     if `rouver.path_args` is not a tuple.
+- Improve types in `rouver.args`:
+  - `FileArgument` not only requires a `SupportsRead[bytes]` argument (a
+    protocol), instead of `IO[bytes]` (a concrete base class).
+  - Add explicit `FileArgument.read()` method. This was previously proxied
+    via `__getattr__()`. This helps type checkers recognize that this
+    fulfills the `io.Reader[bytes]`/`SupportsRead[bytes]` protocols.
 
 ## [2.7.0] – 2025-12-03
 
